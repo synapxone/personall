@@ -30,7 +30,7 @@ function today(): string {
     return new Date().toISOString().split('T')[0];
 }
 
-function compressImage(file: File, maxSize = 800): Promise<{ base64: string; mimeType: string }> {
+function compressImage(file: File, maxSize = 512): Promise<{ base64: string; mimeType: string }> {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
         const img = new Image();
@@ -284,49 +284,63 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setSaving(true);
         const numQty = typeof formQty === 'number' ? formQty : 1;
         const fullDescription = formUnit ? `${numQty} ${formUnit} de ${formDesc}` : formDesc;
-        let finalCal = formCal;
-        let finalProt = formProt;
-        let finalCarbs = formCarbs;
-        let finalFat = formFat;
-
-        if (!analyzed && finalCal === 0) {
-            toast.loading('Calculando nutrientes...', { id: 'analyze_save' });
-            try {
-                const result = await geminiService.analyzeFoodText(fullDescription);
-                finalCal = result.calories;
-                finalProt = result.protein;
-                finalCarbs = result.carbs;
-                finalFat = result.fat;
-                toast.success('Nutrientes calculados!', { id: 'analyze_save' });
-            } catch (e) {
-                toast.error('O cálculo falhou. Salvando com zeros...', { id: 'analyze_save' });
-            }
-        }
-
         const mealData = {
             user_id: profile.id,
             meal_date: today(),
             meal_type: modalMealType,
             description: fullDescription,
-            calories: finalCal,
-            protein: finalProt,
-            carbs: finalCarbs,
-            fat: finalFat,
+            calories: formCal,
+            protein: formProt,
+            carbs: formCarbs,
+            fat: formFat,
             logged_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase.from('meals').insert(mealData);
-        if (error) {
+        const { data: insertedMeal, error } = await supabase.from('meals').insert(mealData).select().single();
+        if (error || !insertedMeal) {
             toast.error('Erro ao salvar refeição.');
-        } else {
-            toast.success('Refeição registrada!');
-            setShowModal(false);
-            resetForm();
-            await updateDailyNutrition([...meals, mealData as any]);
-            await loadData();
-            onUpdate();
+            setSaving(false);
+            return;
         }
+
+        toast.success('Refeição registrada!');
+        setShowModal(false);
+        resetForm();
         setSaving(false);
+
+        const newMeals = [...meals, insertedMeal as Meal];
+        setMeals(newMeals);
+        await updateDailyNutrition(newMeals);
+        onUpdate();
+
+        // Background calculation if not analyzed
+        if (!analyzed && formCal === 0) {
+            const toastId = toast.loading(`Calculando nutrientes do alimento...`);
+            try {
+                const result = await geminiService.analyzeFoodText(fullDescription);
+                const { error: updateErr } = await supabase.from('meals').update({
+                    calories: result.calories,
+                    protein: result.protein,
+                    carbs: result.carbs,
+                    fat: result.fat,
+                }).eq('id', insertedMeal.id);
+
+                if (!updateErr) {
+                    toast.success(`Nutrientes calculados!`, { id: toastId });
+                    const updatedMeal = { ...insertedMeal, ...result } as Meal;
+                    setMeals((prev) => {
+                        const updated = prev.map(m => m.id === insertedMeal.id ? updatedMeal : m);
+                        updateDailyNutrition(updated);
+                        return updated;
+                    });
+                    onUpdate();
+                } else {
+                    toast.error(`Falha ao atualizar nutrientes no banco.`, { id: toastId });
+                }
+            } catch (e) {
+                toast.error(`O cálculo de IA falhou. Continue usando com 0 calorias ou edite depois.`, { id: toastId });
+            }
+        }
     }
 
     function openMealDetail(meal: Meal) {
@@ -534,7 +548,6 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); }}
             />
@@ -546,17 +559,17 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-                        style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+                        className="fixed inset-0 z-50 flex items-start justify-center"
+                        style={{ backgroundColor: 'rgba(26,26,46,0.95)' }}
                         onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
                     >
                         <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4"
-                            style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)' }}
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="w-full h-full max-w-lg mx-auto p-6 flex flex-col gap-4 overflow-y-auto"
+                            style={{ backgroundColor: '#1A1A2E' }}
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="text-white font-bold">
