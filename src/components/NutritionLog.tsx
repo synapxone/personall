@@ -100,24 +100,28 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
     async function loadData() {
         setLoading(true);
-        const [mealsRes, histRes] = await Promise.all([
-            supabase.from('meals').select('*').eq('user_id', profile.id).eq('meal_date', today()).order('logged_at', { ascending: true }),
-            supabase.from('daily_nutrition').select('date,total_calories').eq('user_id', profile.id).order('date', { ascending: false }).limit(7),
-        ]);
-        const loadedMeals = (mealsRes.data as Meal[]) || [];
-        setMeals(loadedMeals);
-        if (histRes.data) {
-            setHistory(histRes.data.map((r: any) => ({ date: r.date, calories: r.total_calories })).reverse());
+        try {
+            const [mealsRes, histRes] = await Promise.all([
+                supabase.from('meals').select('*').eq('user_id', profile.id).eq('meal_date', today()).order('logged_at', { ascending: true }),
+                supabase.from('daily_nutrition').select('date,total_calories').eq('user_id', profile.id).order('date', { ascending: false }).limit(7),
+            ]);
+            const loadedMeals = (mealsRes.data as Meal[]) || [];
+            setMeals(loadedMeals);
+            if (histRes.data) {
+                setHistory(histRes.data.map((r: any) => ({ date: r.date, calories: r.total_calories })).reverse());
+            }
+            const totals = loadedMeals.reduce((acc, m) => ({
+                calories: acc.calories + (m.calories || 0),
+                protein: acc.protein + (m.protein || 0),
+                carbs: acc.carbs + (m.carbs || 0),
+                fat: acc.fat + (m.fat || 0),
+            }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+            onNutritionChange?.(totals);
+        } catch (e) {
+            console.error('NutritionLog loadData error:', e);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-
-        const totals = loadedMeals.reduce((acc, m) => ({
-            calories: acc.calories + (m.calories || 0),
-            protein: acc.protein + (m.protein || 0),
-            carbs: acc.carbs + (m.carbs || 0),
-            fat: acc.fat + (m.fat || 0),
-        }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
-        onNutritionChange?.(totals);
     }
 
     function getTodayTotals(): MacroTotals {
