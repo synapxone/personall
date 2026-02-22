@@ -583,10 +583,20 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         {exercise.tips && <p className="text-purple-300/80 text-xs mt-2 italic">💡 Dica: {exercise.tips}</p>}
                                                     </div>
 
-                                                    {gifUrl && (
+                                                    {gifUrl ? (
                                                         <div className="rounded-xl overflow-hidden bg-white/5 border border-white/5">
                                                             <img src={gifUrl} alt={exercise.name} className="w-full mix-blend-screen opacity-80" />
                                                         </div>
+                                                    ) : (
+                                                        <a
+                                                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' como fazer exercício')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white"
+                                                            style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.25)' }}
+                                                        >
+                                                            ▶ Ver demonstração no YouTube
+                                                        </a>
                                                     )}
                                                 </div>
                                             </motion.div>

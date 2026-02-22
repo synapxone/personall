@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, PenLine, X, Loader2, Sparkles, ChevronRight, Pencil, Trash2, Droplets } from 'lucide-react';
+import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Droplets, Images } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { geminiService } from '../services/geminiService';
@@ -63,6 +63,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [modalMode, setModalMode] = useState<'choose' | 'photo' | 'manual'>('choose');
     const [analyzeLoading, setAnalyzeLoading] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+    const galleryRef = useRef<HTMLInputElement>(null);
 
     // Form state
     const [formDesc, setFormDesc] = useState('');
@@ -97,21 +98,28 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
     useEffect(() => {
         loadData();
-        const saved = localStorage.getItem(`water_${profile.id}_${today()}`);
-        if (saved) setWaterCups(parseInt(saved));
     }, []);
 
     async function loadData() {
         setLoading(true);
         try {
-            const [mealsRes, histRes] = await Promise.all([
+            const [mealsRes, histRes, waterRes] = await Promise.all([
                 supabase.from('meals').select('*').eq('user_id', profile.id).eq('meal_date', today()).order('logged_at', { ascending: true }),
                 supabase.from('daily_nutrition').select('date,total_calories').eq('user_id', profile.id).order('date', { ascending: false }).limit(7),
+                supabase.from('daily_nutrition').select('water_cups').eq('user_id', profile.id).eq('date', today()).maybeSingle(),
             ]);
             const loadedMeals = (mealsRes.data as Meal[]) || [];
             setMeals(loadedMeals);
             if (histRes.data) {
                 setHistory(histRes.data.map((r: any) => ({ date: r.date, calories: r.total_calories })).reverse());
+            }
+            // Load water: prefer Supabase (cross-device), fallback to localStorage
+            const dbWater = (waterRes.data as any)?.water_cups;
+            if (typeof dbWater === 'number') {
+                setWaterCups(dbWater);
+            } else {
+                const saved = localStorage.getItem(`water_${profile.id}_${today()}`);
+                if (saved) setWaterCups(parseInt(saved));
             }
             const totals = loadedMeals.reduce((acc, m) => ({
                 calories: acc.calories + (m.calories || 0),
@@ -122,6 +130,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             onNutritionChange?.(totals);
         } catch (e) {
             console.error('NutritionLog loadData error:', e);
+            const saved = localStorage.getItem(`water_${profile.id}_${today()}`);
+            if (saved) setWaterCups(parseInt(saved));
         } finally {
             setLoading(false);
         }
@@ -276,6 +286,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             date: today(),
             ...totals,
             goal_calories: profile.daily_calorie_goal,
+            water_cups: waterCups,
         }, { onConflict: 'user_id,date' });
     }
 
@@ -410,11 +421,6 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const goal = profile.daily_calorie_goal || 2000;
     const calPct = Math.min((totals.calories / Math.max(goal, 1)) * 100, 100) || 0;
 
-    // SVG ring
-    const radius = 56;
-    const circ = 2 * Math.PI * radius;
-    const dashOffset = circ - (calPct / 100) * circ;
-
     // Estimated macro targets (rough)
     const protGoal = Math.round((goal * 0.3) / 4);
     const carbGoal = Math.round((goal * 0.4) / 4);
@@ -438,105 +444,139 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             let n = idx + 1;
             if (prev === n) n--;
             localStorage.setItem(`water_${profile.id}_${today()}`, n.toString());
+            // Persist to Supabase (update only — row is created by updateDailyNutrition on meal save)
+            supabase.from('daily_nutrition')
+                .update({ water_cups: n })
+                .eq('user_id', profile.id)
+                .eq('date', today())
+                .then(({ error }) => { if (error) console.warn('Water save error:', error.message); });
             return n;
         });
     };
 
     return (
         <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-24">
-            {/* Water Tracker */}
-            <div className="rounded-2xl p-5 flex flex-col items-center justify-center gap-3 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
-                <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-1.5"><Droplets size={14} /> Meta de Água: {Math.max(1, goalCups)} copos ({waterGoalMl} ml)</p>
-                <div className="flex gap-2 flex-wrap justify-center mt-1">
+            {/* Daily Summary Card (Foodvisor style) */}
+            <div className="rounded-[24px] p-6 bg-white/[0.02] border border-white/5 backdrop-blur-md shadow-xl flex flex-col gap-6 w-full">
+
+                {/* Header / Calorie Ring */}
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    {/* Ring */}
+                    <div className="relative w-32 h-32 flex-shrink-0">
+                        <svg width="128" height="128" viewBox="0 0 128 128" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="64" cy="64" r={52} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="12" />
+                            <circle
+                                cx="64" cy="64" r={52} fill="none"
+                                stroke={totals.calories > goal ? '#EF4444' : '#10B981'}
+                                strokeWidth="12"
+                                strokeDasharray={2 * Math.PI * 52}
+                                strokeDashoffset={(2 * Math.PI * 52) - ((calPct / 100) * (2 * Math.PI * 52))}
+                                strokeLinecap="round"
+                                style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center mt-1">
+                            {totals.calories >= goal ? (
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest leading-tight">Meta<br />Atingida!</span>
+                            ) : (
+                                <>
+                                    <span className="text-2xl font-black text-white leading-none">{goal - totals.calories}</span>
+                                    <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider mt-0.5">Kcal Restantes</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Macros */}
+                    <div className="flex flex-col gap-3.5 flex-1 w-full">
+                        <MacroBar label="Proteína" value={totals.protein} goal={protGoal} unit="g" color="#7C3AED" />
+                        <MacroBar label="Carboidratos" value={totals.carbs} goal={carbGoal} unit="g" color="#F59E0B" />
+                        <MacroBar label="Gorduras" value={totals.fat} goal={fatGoal} unit="g" color="#EF4444" />
+                    </div>
+                </div>
+
+                {/* Info Footer */}
+                <div className="pt-4 flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-widest border-t border-white/5">
+                    <span>Consumido: <span className="text-white">{totals.calories}</span> Kcal</span>
+                    <span>Meta: <span className="text-white">{goal}</span> Kcal</span>
+                </div>
+            </div>
+
+            {/* Water Tracker (Slimmer) */}
+            <div className="rounded-[20px] p-4 flex flex-row items-center justify-between gap-4 bg-white/[0.02] border border-blue-500/20 backdrop-blur-sm transition-colors hover:bg-white/[0.04]">
+                <div className="flex flex-col">
+                    <p className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5"><Droplets size={14} /> Água</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Meta: {Math.max(1, goalCups)} copos</p>
+                </div>
+                <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
                     {Array.from({ length: goalCups }).map((_, i) => (
                         <button
                             key={i}
                             onClick={() => handleCupClick(i)}
-                            className="text-2xl hover:scale-110 transition-transform"
-                            style={{ opacity: i < waterCups ? 1 : 0.3 }}
+                            className="text-xl hover:scale-110 transition-transform flex-shrink-0"
+                            style={{ opacity: i < waterCups ? 1 : 0.2, filter: i < waterCups ? 'drop-shadow(0 2px 4px rgba(59,130,246,0.5))' : 'none' }}
                         >
-                            🥤
+                            💧
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Calorie ring */}
-            <div className="flex flex-col items-center gap-2">
-                <div className="relative w-36 h-36">
-                    <svg width="144" height="144" viewBox="0 0 144 144" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="72" cy="72" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
-                        <circle
-                            cx="72" cy="72" r={radius} fill="none"
-                            stroke={totals.calories > goal ? '#EF4444' : '#10B981'}
-                            strokeWidth="10"
-                            strokeDasharray={circ}
-                            strokeDashoffset={dashOffset}
-                            strokeLinecap="round"
-                            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold text-white">{totals.calories}</span>
-                        <span className="text-xs text-gray-400">/ {goal} kcal</span>
-                    </div>
-                </div>
-                <p className="text-gray-400 text-sm">
-                    {totals.calories >= goal
-                        ? 'Meta atingida!'
-                        : `Faltam ${goal - totals.calories} kcal`}
-                </p>
-            </div>
-
-            {/* Macro bars */}
-            <div className="flex flex-col gap-4 rounded-2xl p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
-                <p className="text-white font-semibold text-sm mb-1">Macronutrientes</p>
-                <MacroBar label="Proteína" value={totals.protein} goal={protGoal} unit="g" color="#7C3AED" />
-                <MacroBar label="Carboidratos" value={totals.carbs} goal={carbGoal} unit="g" color="#F59E0B" />
-                <MacroBar label="Gordura" value={totals.fat} goal={fatGoal} unit="g" color="#EF4444" />
-            </div>
-
-            {/* Meal cards */}
-            <div className="flex flex-col gap-3">
+            {/* Meal cards (Foodvisor aesthetic) */}
+            <div className="flex flex-col gap-4">
                 {MEAL_TYPES.map((mt) => {
                     const mealItems = meals.filter((m) => m.meal_type === mt.id);
                     const mealCals = mealItems.reduce((sum, m) => sum + m.calories, 0);
 
                     return (
-                        <div key={mt.id} className="rounded-2xl overflow-hidden bg-white/[0.02] border border-white/5 backdrop-blur-sm transition-colors hover:bg-white/[0.03]">
-                            <div className="flex items-center justify-between px-4 py-3">
+                        <div key={mt.id} className="rounded-[20px] p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm transition-colors hover:bg-white/[0.03]">
+
+                            {/* Card Header */}
+                            <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xl">{mt.emoji}</span>
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/5 text-lg">
+                                        {mt.emoji}
+                                    </div>
                                     <div>
-                                        <p className="text-white font-semibold text-sm">{mt.label}</p>
-                                        <p className="text-gray-500 text-xs">{mt.time} · {mealCals} kcal</p>
+                                        <p className="text-white font-bold text-sm tracking-tight">{mt.label}</p>
+                                        <p className="text-gray-500 text-[11px] font-medium tracking-wide uppercase mt-0.5">{mt.time} · {mealCals} kcal</p>
                                     </div>
                                 </div>
+
                                 <button
                                     onClick={() => openModal(mt.id)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full text-white"
-                                    style={{ backgroundColor: 'rgba(124,58,237,0.3)', border: '1px solid rgba(124,58,237,0.4)' }}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 transition-all hover:bg-indigo-500/20"
                                 >
-                                    <Plus size={16} />
+                                    <Plus size={16} strokeWidth={2.5} />
                                 </button>
                             </div>
-                            {mealItems.length > 0 && (
-                                <div className="flex flex-col px-4 pb-3">
+
+                            {/* Food Items */}
+                            {mealItems.length > 0 ? (
+                                <div className="flex flex-col gap-2 mt-4">
                                     {mealItems.map((meal) => (
                                         <button
                                             key={meal.id}
                                             onClick={() => openMealDetail(meal)}
-                                            className="flex items-center justify-between text-xs py-2 w-full text-left group"
-                                            style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                                            className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 text-left group hover:bg-white/10 transition-colors"
                                         >
-                                            <span className="text-gray-300 flex-1 truncate group-hover:text-white transition-colors">{meal.description}</span>
-                                            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                                                <span className="text-gray-500">{meal.calories} kcal</span>
-                                                <ChevronRight size={12} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+                                            <div className="flex flex-col flex-1 min-w-0 pr-3">
+                                                <span className="text-gray-200 text-sm font-medium truncate">{meal.description}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end flex-shrink-0">
+                                                <span className="text-indigo-400 font-bold text-sm">{meal.calories}</span>
+                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">kcal</span>
                                             </div>
                                         </button>
                                     ))}
                                 </div>
+                            ) : (
+                                <button
+                                    onClick={() => openModal(mt.id)}
+                                    className="w-full mt-2 py-3 border border-dashed border-white/10 rounded-xl text-xs font-semibold text-gray-400 uppercase tracking-widest hover:bg-white/5 transition-colors"
+                                >
+                                    Adicionar Alimento
+                                </button>
                             )}
                         </div>
                     );
@@ -575,13 +615,21 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 </div>
             )}
 
-            {/* Hidden file input */}
+            {/* Hidden file inputs */}
             <input
                 ref={fileRef}
                 type="file"
                 accept="image/*"
+                capture="environment"
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); e.target.value = ''; }}
+            />
+            <input
+                ref={galleryRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); e.target.value = ''; }}
             />
 
             {/* Add modal */}
@@ -623,8 +671,21 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             <Camera size={20} style={{ color: '#7C3AED' }} />
                                         </div>
                                         <div>
-                                            <p className="text-white font-semibold text-sm">Foto</p>
-                                            <p className="text-gray-400 text-xs">IA analisa a refeição automaticamente</p>
+                                            <p className="text-white font-semibold text-sm">Câmera</p>
+                                            <p className="text-gray-400 text-xs">Tire uma foto agora — IA analisa automaticamente</p>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => galleryRef.current?.click()}
+                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
+                                        style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}
+                                    >
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(59,130,246,0.2)' }}>
+                                            <Images size={20} style={{ color: '#3B82F6' }} />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-semibold text-sm">Galeria</p>
+                                            <p className="text-gray-400 text-xs">Escolha uma foto existente — IA analisa automaticamente</p>
                                         </div>
                                     </button>
                                     <button
