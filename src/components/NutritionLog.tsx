@@ -49,6 +49,10 @@ function compressImage(file: File, maxSize = 512): Promise<{ base64: string; mim
             URL.revokeObjectURL(url);
             resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
         };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve({ base64: '', mimeType: 'image/jpeg' });
+        };
         img.src = url;
     });
 }
@@ -663,6 +667,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             {modalMode === 'choose' && (
                                 <div className="flex flex-col gap-3">
                                     <button
+                                        type="button"
                                         onClick={() => fileRef.current?.click()}
                                         className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
                                         style={{ backgroundColor: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)' }}
@@ -676,6 +681,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         </div>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => galleryRef.current?.click()}
                                         className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
                                         style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}
@@ -689,6 +695,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         </div>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setModalMode('manual')}
                                         className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
                                         style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}

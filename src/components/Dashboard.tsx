@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, Activity, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble } from 'lucide-react';
 import type { Profile, WorkoutPlan, Gamification } from '../types';
@@ -57,8 +57,15 @@ interface NutritionTotals {
 }
 
 export default function Dashboard({ profile, workoutPlan, gamification, onSignOut, onRefresh }: Props) {
-    const [activeTab, setActiveTab] = useState<Tab>('home');
+    const [activeTab, setActiveTab] = useState<Tab>(() => {
+        return (localStorage.getItem('activeTab') as Tab) || 'home';
+    });
     const [nutritionTotals, setNutritionTotals] = useState<NutritionTotals | null>(null);
+
+    useEffect(() => {
+        localStorage.setItem('activeTab', activeTab);
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }, [activeTab]);
 
     const todayWorkout = getTodayWorkout(workoutPlan);
 
