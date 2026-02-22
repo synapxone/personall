@@ -291,3 +291,18 @@ npx tsc --noEmit  # type check
   - Ganhar peso: TDEE + 500 kcal
   - Hipertrofia: TDEE + 300 kcal
   - Manutenção: TDEE
+
+---
+
+## Histórico / Changelog Diário (Comunicação entre Agentes)
+
+**Status e Versão Atual:** v1.0.3
+
+### Últimas Atualizações e Correções (Fev/2026):
+- **Design Nutrição (Foodvisor-like):** O Layout do `NutritionLog.tsx` foi reformulado inteiramente. Adicionado um cartão de resumo panorâmico (SVG), barras dinâmicas para macros e botões minimalistas tracejados nas refeições.
+- **Câmera Móvel (Fix iOS/Android):** Modificamos a Câmera e Galeria na aba de nutrição para usarem nativamente um `<label>` envelopando um `<input type="file" hidden>`. Anteriormente, cliques via script (`ref.current.click()`) forçavam as WebViews móveis a matar a rotina e reiniciar a aplicação (Refresh) em contextos de pouca RAM.
+- **Submissões de Formulários:** Adicionado `type="button"` aos botões da interface de Nutrição para impedir que eles acionassem submissões indesejadas (Submit), o que recarregava o app no mobile. Tratado também o erro `img.onerror` na compressão de base64.
+- **Treino da IA (Regra 7 dias):** A IA (`geminiService.ts`) foi ajustada no *prompt* para garantir que entregue planos de treinos divididos de Segunda a Domingo. Além disso, foi forçada a gerar GIFs com base SOMENTE em IDs EXATAMENTE numéricos vindos do repositório/API (ex: "0009") para o app não quebrar.
+- **Aparência e Temas:** Implementado suporte para alternância entre Claro e Escuro (Tema) persistindo no `localStorage`.
+- **Navegação de UI (Recuperação):** O app agora grava qual Aba o usuário estava vendo via `sessionStorage`. Se ao abrir a Câmera o aparelho ficar sem memória e der "Refresh" no painel inteiro, o componente vai renascer automaticamente de volta na Aba de Dieta ao invés de voltar pra Home inicial.
+- **Media Caching (Desempenho):** O serviço `exerciseMediaService` foi recentemente implementado para suportar vídeos embarcados além de GIFs para os exercícios do `WorkoutDay.tsx`.
