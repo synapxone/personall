@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, PenLine, X, Loader2, Sparkles, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Camera, PenLine, X, Loader2, Sparkles, ChevronRight, Pencil, Trash2, Droplets } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { geminiService } from '../services/geminiService';
@@ -443,10 +443,10 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     };
 
     return (
-        <div className="flex flex-col px-4 py-5 gap-5 max-w-lg mx-auto">
+        <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-24">
             {/* Water Tracker */}
-            <div className="rounded-2xl p-4 flex flex-col items-center justify-center gap-2" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(59,130,246,0.3)' }}>
-                <p className="text-sm font-bold text-white flex items-center gap-1">💧 Meta de Água: {Math.max(1, goalCups)} copos ({waterGoalMl} ml)</p>
+            <div className="rounded-2xl p-5 flex flex-col items-center justify-center gap-3 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
+                <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-1.5"><Droplets size={14} /> Meta de Água: {Math.max(1, goalCups)} copos ({waterGoalMl} ml)</p>
                 <div className="flex gap-2 flex-wrap justify-center mt-1">
                     {Array.from({ length: goalCups }).map((_, i) => (
                         <button
@@ -489,7 +489,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             </div>
 
             {/* Macro bars */}
-            <div className="flex flex-col gap-3 rounded-2xl p-4" style={{ backgroundColor: '#1A1A2E' }}>
+            <div className="flex flex-col gap-4 rounded-2xl p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
                 <p className="text-white font-semibold text-sm mb-1">Macronutrientes</p>
                 <MacroBar label="Proteína" value={totals.protein} goal={protGoal} unit="g" color="#7C3AED" />
                 <MacroBar label="Carboidratos" value={totals.carbs} goal={carbGoal} unit="g" color="#F59E0B" />
@@ -503,7 +503,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     const mealCals = mealItems.reduce((sum, m) => sum + m.calories, 0);
 
                     return (
-                        <div key={mt.id} className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div key={mt.id} className="rounded-2xl overflow-hidden bg-white/[0.02] border border-white/5 backdrop-blur-sm transition-colors hover:bg-white/[0.03]">
                             <div className="flex items-center justify-between px-4 py-3">
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl">{mt.emoji}</span>
@@ -545,7 +545,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
             {/* 7-day history */}
             {history.length > 0 && (
-                <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ backgroundColor: '#1A1A2E' }}>
+                <div className="rounded-2xl p-5 flex flex-col gap-4 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
                     <p className="text-white font-semibold text-sm">Últimos 7 dias</p>
                     <div className="flex items-end gap-2 h-20">
                         {history.map((h) => {
@@ -601,7 +601,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                             className="w-full h-full max-w-lg mx-auto p-6 flex flex-col gap-4 overflow-y-auto"
-                            style={{ backgroundColor: '#1A1A2E' }}
+                            style={{ backgroundColor: '#09090B' }}
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="text-white font-bold">
@@ -832,8 +832,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4"
-                            style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)' }}
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 bg-[#09090B] border border-white/5"
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between">

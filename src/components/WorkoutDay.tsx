@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Square, Save, Copy, Dumbbell, Settings2, X, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Square, Save, Copy, Dumbbell, Settings2, X, Loader2, BedDouble } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exerciseService } from '../services/exerciseService';
 import { geminiService } from '../services/geminiService';
@@ -357,17 +357,21 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
             {sessionDone ? (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 px-6 text-center gap-6">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.2 }} className="text-7xl">🏆</motion.div>
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.2 }} className="w-24 h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                        <Trophy size={48} className="text-emerald-500" />
+                    </motion.div>
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Treino Concluído!</h2>
-                        <p className="text-gray-400">{getCompletedCount()} de {totalCount} exercícios feitos</p>
+                        <h2 className="text-xl font-bold text-white tracking-tight mb-2">Treino Concluído!</h2>
+                        <p className="text-gray-400 text-sm font-medium">{getCompletedCount()} de {totalCount} exercícios feitos</p>
                     </div>
                 </motion.div>
             ) : (!todayData || todayData.type === 'rest') ? (
-                <div className="flex flex-col items-center justify-center py-20 px-6 text-center gap-5">
-                    <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} className="text-6xl">😴</motion.div>
-                    <h2 className="text-2xl font-bold text-white">Dia de Descanso</h2>
-                    <p className="text-gray-400 text-base max-w-xs">Hoje é dia de recuperação! O descanso é tão importante quanto o treino. Aproveite para relaxar e se hidratar bem.</p>
+                <div className="flex flex-col items-center justify-center py-24 px-6 text-center gap-5">
+                    <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                        <BedDouble size={40} className="text-indigo-400" />
+                    </motion.div>
+                    <h2 className="text-xl font-semibold text-white tracking-tight">Dia de Descanso</h2>
+                    <p className="text-gray-500 text-sm font-medium leading-relaxed max-w-[240px]">Aproveite para recuperar os músculos. O descanso também faz parte do treino!</p>
                 </div>
             ) : (
                 <>
@@ -378,7 +382,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-[#0F0F1A]"
+                                className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-[#09090B]"
                             >
                                 {activeSetModal.isCountingDown ? (
                                     <motion.div

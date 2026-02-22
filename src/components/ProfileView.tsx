@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Pencil, Plus, X, Camera, Loader2, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { LogOut, Pencil, Plus, X, Camera, Loader2, TrendingDown, TrendingUp, Minus, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { geminiService } from '../services/geminiService';
@@ -208,31 +208,29 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
         : null;
 
     return (
-        <div className="px-4 py-6 flex flex-col gap-5 max-w-lg mx-auto">
+        <div className="px-4 py-6 flex flex-col gap-6 max-w-lg mx-auto pb-24">
             {/* Avatar */}
-            <div className="flex flex-col items-center gap-3 py-4">
+            <div className="flex flex-col items-center gap-4 py-4">
                 {profile.photo_url ? (
-                    <img src={profile.photo_url} alt="Foto" className="w-24 h-24 rounded-full object-cover" style={{ border: '3px solid #7C3AED' }} />
+                    <img src={profile.photo_url} alt="Foto" className="w-24 h-24 rounded-full object-cover ring-2 ring-indigo-500/50 shadow-lg" />
                 ) : (
-                    <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white"
-                        style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}>
+                    <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-semibold text-white shadow-xl bg-gradient-to-br from-indigo-500 to-purple-600 ring-2 ring-indigo-500/30">
                         {profile.name.charAt(0).toUpperCase()}
                     </div>
                 )}
                 <div className="text-center">
-                    <h2 className="text-xl font-bold text-white">{profile.name}</h2>
-                    <p className="text-gray-400 text-sm">{GOAL_LABELS[profile.goal] || profile.goal}</p>
+                    <h2 className="text-lg font-bold text-white tracking-tight">{profile.name}</h2>
+                    <p className="text-indigo-400 text-[11px] uppercase tracking-wider font-medium mt-0.5">{GOAL_LABELS[profile.goal] || profile.goal}</p>
                 </div>
             </div>
 
             {/* Stats + edit button */}
-            <div className="rounded-2xl p-4" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Dados Pessoais</span>
+            <div className="rounded-2xl p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-gray-500 text-[11px] font-medium uppercase tracking-widest">Dados Pessoais</span>
                     <button
                         onClick={openEdit}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                        style={{ backgroundColor: 'rgba(124,58,237,0.2)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.3)' }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
                     >
                         <Pencil size={12} />
                         Editar
@@ -250,10 +248,10 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
             {/* Body Analysis Display */}
             {profile.body_analysis && (
-                <div className="rounded-2xl p-4" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)' }}>
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">🤖</span>
-                        <span className="text-sm font-bold text-white">Análise Física por IA</span>
+                <div className="rounded-2xl p-5 bg-indigo-500/5 border border-indigo-500/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Sparkles size={16} className="text-indigo-400" />
+                        <span className="text-xs font-semibold uppercase tracking-widest text-indigo-300">Análise Física por IA</span>
                     </div>
                     <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
                         {profile.body_analysis}
@@ -664,13 +662,13 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
 function StatItem({ label, value, trend }: { label: string; value: string; trend?: number | null }) {
     return (
-        <div className="rounded-xl px-3 py-3" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
-            <p className="text-gray-500 text-xs">{label}</p>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <p className="text-white font-bold text-sm">{value}</p>
+        <div className="rounded-xl p-3 bg-white/5 border border-white/5">
+            <p className="text-gray-500 text-[10px] uppercase font-medium tracking-wider mb-0.5">{label}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-white font-semibold text-sm">{value}</p>
                 {trend !== undefined && trend !== null && (
-                    <span className={`text-xs font-semibold flex items-center gap-0.5 ${trend < 0 ? 'text-green-400' : trend > 0 ? 'text-red-400' : 'text-gray-400'}`}>
-                        {trend < 0 ? <TrendingDown size={11} /> : trend > 0 ? <TrendingUp size={11} /> : <Minus size={11} />}
+                    <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${trend < 0 ? 'text-emerald-400 bg-emerald-400/10' : trend > 0 ? 'text-rose-400 bg-rose-400/10' : 'text-gray-400 bg-gray-400/10'}`}>
+                        {trend < 0 ? <TrendingDown size={10} /> : trend > 0 ? <TrendingUp size={10} /> : <Minus size={10} />}
                         {trend > 0 ? '+' : ''}{trend.toFixed(1)}kg
                     </span>
                 )}
