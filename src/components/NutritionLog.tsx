@@ -284,15 +284,34 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setSaving(true);
         const numQty = typeof formQty === 'number' ? formQty : 1;
         const fullDescription = formUnit ? `${numQty} ${formUnit} de ${formDesc}` : formDesc;
+        let finalCal = formCal;
+        let finalProt = formProt;
+        let finalCarbs = formCarbs;
+        let finalFat = formFat;
+
+        if (!analyzed && finalCal === 0) {
+            toast.loading('Calculando nutrientes...', { id: 'analyze_save' });
+            try {
+                const result = await geminiService.analyzeFoodText(fullDescription);
+                finalCal = result.calories;
+                finalProt = result.protein;
+                finalCarbs = result.carbs;
+                finalFat = result.fat;
+                toast.success('Nutrientes calculados!', { id: 'analyze_save' });
+            } catch (e) {
+                toast.error('O cálculo falhou. Salvando com zeros...', { id: 'analyze_save' });
+            }
+        }
+
         const mealData = {
             user_id: profile.id,
             meal_date: today(),
             meal_type: modalMealType,
             description: fullDescription,
-            calories: formCal,
-            protein: formProt,
-            carbs: formCarbs,
-            fat: formFat,
+            calories: finalCal,
+            protein: finalProt,
+            carbs: finalCarbs,
+            fat: finalFat,
             logged_at: new Date().toISOString(),
         };
 
