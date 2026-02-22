@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Square, Save, Copy, Dumbbell, Settings2, X, Loader2, BedDouble } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { exerciseService } from '../services/exerciseService';
+import { exerciseMediaService } from '../services/exerciseMediaService';
+import type { MediaResult } from '../services/exerciseMediaService';
 import { geminiService } from '../services/geminiService';
 import { POINTS } from '../types';
 import type { WorkoutPlan, Profile, Exercise } from '../types';
@@ -47,7 +48,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
     const todayData = weeks?.[0]?.days[selectedDayIndex] || null;
 
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-    const [gifUrls, setGifUrls] = useState<Record<string, string>>({});
+    const [mediaData, setMediaData] = useState<Record<string, MediaResult>>({});
+    const [loadingMedia, setLoadingMedia] = useState<Record<string, boolean>>({});
     const [restTimer, setRestTimer] = useState<{ active: boolean; seconds: number; exerciseIndex: number; setIndex: number } | null>(null);
     const [sessionDone, setSessionDone] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -71,8 +73,9 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
     useEffect(() => {
         if (!todayData || todayData.type === 'rest') return;
+        // Load cached media from DB (fast batch query)
         const exerciseMeta = todayData.exercises.map((e) => ({ id: e.exercise_id, name: e.name }));
-        exerciseService.preloadGifsByExercises(exerciseMeta).then(setGifUrls);
+        exerciseMediaService.getCachedBatch(exerciseMeta).then(setMediaData);
 
         const initialProgress: Record<number, SetState[]> = {};
         todayData.exercises.forEach((ex, i) => {
@@ -86,6 +89,20 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         });
         setSetsProgress(initialProgress);
     }, [todayData]);
+
+    // Lazy-load media when exercise is expanded and not yet cached
+    useEffect(() => {
+        if (expandedIndex === null || !todayData || todayData.type === 'rest') return;
+        const ex = todayData.exercises[expandedIndex];
+        if (!ex) return;
+        const id = ex.exercise_id;
+        if (mediaData[id] || loadingMedia[id]) return;
+        setLoadingMedia((prev) => ({ ...prev, [id]: true }));
+        exerciseMediaService.getMedia(ex.name, id).then((result) => {
+            if (result) setMediaData((prev) => ({ ...prev, [id]: result }));
+            setLoadingMedia((prev) => ({ ...prev, [id]: false }));
+        });
+    }, [expandedIndex]);
 
     // Active sets timer
     useEffect(() => {
@@ -482,14 +499,19 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                         {todayData.exercises.map((exercise: Exercise, i: number) => {
                             const done = isExerciseCompleted(i);
                             const expanded = expandedIndex === i || (expandedIndex === null && !done && i === todayData.exercises.findIndex((_, idx) => !isExerciseCompleted(idx)));
-                            const gifUrl = gifUrls[exercise.exercise_id];
+                            const media = mediaData[exercise.exercise_id];
+                            const isLoadingMedia = loadingMedia[exercise.exercise_id];
                             const sets = setsProgress[i] || [];
 
                             return (
                                 <motion.div key={i} layout className="rounded-2xl overflow-hidden transition-all duration-300" style={{ backgroundColor: '#1A1A2E', border: `1px solid ${done ? 'rgba(16,185,129,0.4)' : expanded ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.06)'}`, boxShadow: expanded ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : 'none' }}>
                                     <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setExpandedIndex(expanded ? null : i)}>
                                         <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
-                                            {gifUrl ? <img src={gifUrl} alt={exercise.name} className="w-full h-full object-cover" /> : <span className="text-2xl">💪</span>}
+                                            {media?.type === 'video'
+                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                                                : media?.url
+                                                    ? <img src={media.url} alt={exercise.name} className="w-full h-full object-cover" />
+                                                    : <span className="text-2xl">💪</span>}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className={`font-semibold text-sm truncate ${done ? 'text-green-400' : 'text-white'}`}>{exercise.name}</p>
@@ -583,9 +605,17 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         {exercise.tips && <p className="text-purple-300/80 text-xs mt-2 italic">💡 Dica: {exercise.tips}</p>}
                                                     </div>
 
-                                                    {gifUrl && (
+                                                    {isLoadingMedia && (
+                                                        <div className="flex items-center justify-center gap-2 py-4 text-purple-400 text-sm">
+                                                            <Loader2 size={16} className="animate-spin" />
+                                                            <span>Gerando demonstração…</span>
+                                                        </div>
+                                                    )}
+                                                    {!isLoadingMedia && media && (
                                                         <div className="rounded-xl overflow-hidden bg-white/5 border border-white/5">
-                                                            <img src={gifUrl} alt={exercise.name} className="w-full mix-blend-screen opacity-80" />
+                                                            {media.type === 'video'
+                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full mix-blend-screen opacity-80" />
+                                                                : <img src={media.url} alt={exercise.name} className="w-full mix-blend-screen opacity-80" />}
                                                         </div>
                                                     )}
                                                 </div>
