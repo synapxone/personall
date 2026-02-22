@@ -1,4 +1,4 @@
-import type { OnboardingData, FoodAnalysis } from '../types';
+import type { OnboardingData, FoodAnalysis, Profile } from '../types';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -186,6 +186,62 @@ Retorne APENAS JSON válido:
                 ]
             }],
         };
+    },
+
+    async generateWorkoutSingleDay(profile: Partial<Profile>, dayName: string, availableMinutes: number, location: string): Promise<any> {
+        const goalLabels: Record<string, string> = {
+            lose_weight: 'Perder Peso',
+            gain_muscle: 'Ganhar Músculo',
+            maintain: 'Manutenção',
+            gain_weight: 'Ganhar Peso',
+        };
+
+        const locationLabel = location === 'home' ? 'Em Casa (sem equipamentos)' : 'Academia (completa)';
+
+        const prompt = `Você é um personal trainer especialista. Recalcule APENAS UM DIA de treino em JSON.
+
+PERFIL DO USUÁRIO:
+- Objetivo: ${goalLabels[profile.goal || 'maintain'] || profile.goal}
+- Local: ${locationLabel}
+- Tempo disponível para ESTE DIA: ${availableMinutes} minutos
+- Nível de atividade: ${profile.activity_level}
+- Peso: ${profile.weight}kg | Altura: ${profile.height}cm | Idade: ${profile.age} anos
+- NOME/DIA: Quero um treino para o dia: ${dayName}
+
+INSTRUÇÕES:
+- Use IDs numéricos de exercícios do banco ExerciseDB (ex: "0009", "0094", "1347")
+- Para treino em casa sem equipamentos, use push-up, squat, lunge, plank, burpee, mountain-climber, jump-jack
+- Máximo de ${Math.floor(availableMinutes / 5)} exercícios
+- Crie um treino único (para apenas 1 dia) considerando o tempo e local acima informados.
+Se os minutos forem curtos (ex: 20 min), sugira um HIIT ou Full Body rápido.
+
+Retorne APENAS JSON válido, neste formato exato (sem Markdown):
+{
+  "day": 1,
+  "name": "Treino Exclusivo — [Grupos Musculares ou HIIT]",
+  "type": "strength",
+  "exercises": [
+    {
+      "exercise_id": "0009",
+      "name": "Nome do Exercício",
+      "sets": 3,
+      "reps": "10-12",
+      "recommended_weight": "10kg",
+      "rest_seconds": 60,
+      "instructions": "Como executar corretamente",
+      "tips": "Dica importante"
+    }
+  ]
+}`;
+
+        try {
+            const text = await generateWithFallback(prompt);
+            const match = text.match(/\{[\s\S]*\}/);
+            if (match) return JSON.parse(match[0]);
+        } catch (e) {
+            console.error('Error generating single workout day:', e);
+        }
+        return null;
     },
 
     async generateDietPlan(data: OnboardingData): Promise<any> {
