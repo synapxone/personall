@@ -40,21 +40,27 @@ export default function App() {
         if (loadingRef.current) return;
         loadingRef.current = true;
         if (!silent) setLoading(true);
-        const [profileRes, planRes, gamRes] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', userId).single(),
-            supabase.from('workout_plans').select('*').eq('user_id', userId).eq('is_active', true).single(),
-            supabase.from('gamification').select('*').eq('user_id', userId).single(),
-        ]);
-        if (profileRes.data) {
-            setProfile(profileRes.data as Profile);
-            setWorkoutPlan(planRes.data as WorkoutPlan | null);
-            setGamification(gamRes.data as Gamification | null);
-            if (!silent) setView('dashboard');
-        } else {
-            setView('onboarding');
+        try {
+            const [profileRes, planRes, gamRes] = await Promise.all([
+                supabase.from('profiles').select('*').eq('id', userId).single(),
+                supabase.from('workout_plans').select('*').eq('user_id', userId).eq('is_active', true).single(),
+                supabase.from('gamification').select('*').eq('user_id', userId).single(),
+            ]);
+            if (profileRes.data) {
+                setProfile(profileRes.data as Profile);
+                setWorkoutPlan(planRes.data as WorkoutPlan | null);
+                setGamification(gamRes.data as Gamification | null);
+                if (!silent) setView('dashboard');
+            } else {
+                setView('onboarding');
+            }
+        } catch (e) {
+            console.error('Failed to load user data:', e);
+            if (!silent) setView('landing');
+        } finally {
+            if (!silent) setLoading(false);
+            loadingRef.current = false;
         }
-        if (!silent) setLoading(false);
-        loadingRef.current = false;
     }
 
     async function handleOnboardingComplete(data: OnboardingData, workoutPlanData: any, _dietPlan: any) {
@@ -139,7 +145,7 @@ export default function App() {
             <AnimatePresence mode="wait">
                 {view === 'landing' && (
                     <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <LandingPage onAuthSuccess={() => {}} />
+                        <LandingPage onAuthSuccess={() => { }} />
                     </motion.div>
                 )}
                 {view === 'onboarding' && session && (
