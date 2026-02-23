@@ -56,7 +56,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
     const [saving, setSaving] = useState(false);
     const [setsProgress, setSetsProgress] = useState<Record<number, SetState[]>>({});
     const [activeSetModal, setActiveSetModal] = useState<ActiveSetModal | null>(null);
-    const [quickFinishModal, setQuickFinishModal] = useState<{ exerciseIndex: number; exerciseName: string; type: string } | null>(null);
+    const [quickFinishModal, setQuickFinishModal] = useState<{ exerciseIndex: number; exerciseName: string; type: string; step: 'question' | 'input' } | null>(null);
+    const [quickFinishWeight, setQuickFinishWeight] = useState('');
 
     // Post-workout summary stats (stored at save time to avoid state-reset race)
     const [summaryCompleted, setSummaryCompleted] = useState(0);
@@ -765,6 +766,24 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                             <p className="text-gray-400 text-xs mt-0.5">{exercise.sets} séries × {exercise.reps} · {exercise.rest_seconds}s desc.</p>
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0">
+                                            {!done && !sessionDone && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setQuickFinishModal({
+                                                            exerciseIndex: i,
+                                                            exerciseName: exercise.name,
+                                                            type: (exercise.name.toLowerCase().includes('cardio') || exercise.name.toLowerCase().includes('corrida')) ? 'time' : 'weight',
+                                                            step: 'question'
+                                                        });
+                                                        setQuickFinishWeight('');
+                                                    }}
+                                                    className="px-3 py-1.5 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20 transition-all flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider"
+                                                >
+                                                    <CheckCheck size={14} />
+                                                    Finalizar
+                                                </button>
+                                            )}
                                             {done && <div className="w-6 h-6 flex items-center justify-center rounded-full bg-green-500/20 text-green-500"><Check size={14} /></div>}
                                             <button className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                                                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -1001,49 +1020,90 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
                 {quickFinishModal && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1A1A2E] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-5 shadow-2xl relative">
-                            <button onClick={() => setQuickFinishModal(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
-                            <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                                <CheckCheck size={28} className="text-green-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white leading-tight">Concluir Exercício</h3>
-                                <p className="text-gray-400 text-sm mt-1">{quickFinishModal.exerciseName}</p>
-                            </div>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1A1A2E] border border-white/10 p-7 rounded-[32px] w-full max-w-sm flex flex-col gap-6 shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500/50 via-green-400 to-green-500/50" />
+                            <button onClick={() => setQuickFinishModal(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
 
-                            <div className="flex flex-col gap-3">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                    {quickFinishModal.type === 'time' ? 'Tempo total (minutos)' : 'Carga utilizada (kg)'}
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        autoFocus
-                                        type="number"
-                                        placeholder={quickFinishModal.type === 'time' ? 'Ex: 20' : 'Ex: 45'}
-                                        className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-5 text-lg font-bold text-white placeholder-gray-700 focus:outline-none focus:border-green-500 transition-all"
-                                        id="quick-finish-input"
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                const val = (e.target as HTMLInputElement).value;
-                                                if (val) handleConfirmQuickFinish(val);
-                                            }
-                                        }}
-                                    />
-                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-gray-600">
-                                        {quickFinishModal.type === 'time' ? 'min' : 'kg'}
-                                    </div>
+                            <div className="flex flex-col items-center text-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                                    <CheckCheck size={32} className="text-green-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white leading-tight">Finalizar Exercício</h3>
+                                    <p className="text-gray-400 text-sm mt-1">{quickFinishModal.exerciseName}</p>
                                 </div>
                             </div>
 
-                            <button
-                                onClick={() => {
-                                    const input = document.getElementById('quick-finish-input') as HTMLInputElement;
-                                    if (input.value) handleConfirmQuickFinish(input.value);
-                                }}
-                                className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-2"
-                            >
-                                Salvar e Concluir Séries
-                            </button>
+                            <div className="flex flex-col gap-5">
+                                {quickFinishModal.step === 'question' ? (
+                                    <>
+                                        <p className="text-lg font-medium text-white text-center px-2">
+                                            {quickFinishModal.type === 'time'
+                                                ? "Quanto tempo você levou?"
+                                                : "Você usou pesos nesse exercício?"}
+                                        </p>
+
+                                        <div className="flex flex-col gap-3">
+                                            <button
+                                                onClick={() => {
+                                                    if (quickFinishModal.type === 'time') {
+                                                        setQuickFinishModal(prev => prev ? { ...prev, step: 'input' } : null);
+                                                    } else {
+                                                        handleConfirmQuickFinish('0');
+                                                    }
+                                                }}
+                                                className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold transition-all flex items-center justify-center gap-2"
+                                            >
+                                                {quickFinishModal.type === 'time' ? 'Inserir Tempo' : 'Não usei pesos'}
+                                            </button>
+
+                                            {quickFinishModal.type !== 'time' && (
+                                                <button
+                                                    onClick={() => setQuickFinishModal(prev => prev ? { ...prev, step: 'input' } : null)}
+                                                    className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold transition-all shadow-lg shadow-green-900/20 flex items-center justify-center gap-2"
+                                                >
+                                                    Sim, eu usei!
+                                                </button>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex flex-col gap-3">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-center">
+                                                {quickFinishModal.type === 'time' ? 'Tempo total (minutos)' : 'Carga utilizada (kg)'}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    autoFocus
+                                                    type="number"
+                                                    placeholder={quickFinishModal.type === 'time' ? 'Ex: 20' : 'Ex: 45'}
+                                                    value={quickFinishWeight}
+                                                    onChange={(e) => setQuickFinishWeight(e.target.value)}
+                                                    className="w-full h-16 bg-black/40 border border-white/10 rounded-2xl px-6 text-2xl font-bold text-white placeholder-gray-700 focus:outline-none focus:border-green-500 transition-all text-center"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && quickFinishWeight) {
+                                                            handleConfirmQuickFinish(quickFinishWeight);
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-gray-600">
+                                                    {quickFinishModal.type === 'time' ? 'min' : 'kg'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                if (quickFinishWeight) handleConfirmQuickFinish(quickFinishWeight);
+                                            }}
+                                            className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-2"
+                                        >
+                                            Salvar e Concluir
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </motion.div>
                     </div>
                 )}
