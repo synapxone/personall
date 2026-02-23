@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "app:build": "npm run build && npx cap sync",
     "app:open:ios": "npx cap open ios",
-    "app:open:android": "npx cap open android"
+    "app:open:android": "npx cap open android",
+    "app:bundle:ota": "npm run build && powershell Compress-Archive -Path dist\\* -DestinationPath updates\\ota_bundle.zip -Force"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
