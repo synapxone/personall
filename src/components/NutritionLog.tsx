@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Droplets, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, Info, TrendingUp } from 'lucide-react';
+import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { geminiService } from '../services/geminiService';
@@ -797,10 +797,10 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                 key={i}
                                 onClick={() => handleCupClick(i)}
                                 className={`relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${isSelected
-                                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 scale-100 shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
-                                        : isNext
-                                            ? 'bg-white/5 border-white/10 text-gray-600 hover:border-blue-500/30'
-                                            : 'bg-white/[0.02] border-white/5 text-gray-800'
+                                    ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 scale-100 shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
+                                    : isNext
+                                        ? 'bg-white/5 border-white/10 text-gray-600 hover:border-blue-500/30'
+                                        : 'bg-white/[0.02] border-white/5 text-gray-800'
                                     } border`}
                             >
                                 <GlassWater
@@ -1554,23 +1554,4 @@ function MacroProgress({ label, current, target, color, icon }: { label: string;
     );
 }
 
-function MacroBar({ label, value, goal, unit, color }: { label: string; value: number; goal: number; unit: string; color: string }) {
-    const pct = Math.min((value / Math.max(goal, 1)) * 100, 100);
-    return (
-        <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest mb-0.5">
-                <span className="text-gray-500">{label}</span>
-                <span className="text-gray-300">{value}{unit} / {goal}{unit}</span>
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden bg-white/5">
-                <motion.div
-                    className="h-full rounded-full shadow-[0_0_8px_rgba(255,255,255,0.1)]"
-                    style={{ backgroundColor: color }}
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.5 }}
-                />
-            </div>
-        </div>
-    );
-}
 
