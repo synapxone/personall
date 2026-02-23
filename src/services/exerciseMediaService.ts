@@ -25,12 +25,15 @@ async function uploadToStorage(blob: Blob, slug: string, ext: string): Promise<s
 
 async function downloadAndReupload(url: string, slug: string): Promise<string | null> {
     try {
-        const res = await fetch(url);
+        // Use a CORS proxy since these image APIs often block direct browser fetch
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
         if (!res.ok) return null;
         const blob = await res.blob();
         const ext = url.includes('.mp4') ? 'mp4' : 'gif';
         return await uploadToStorage(blob, slug, ext);
-    } catch {
+    } catch (e) {
+        console.warn('downloadAndReupload failed', e);
         return null;
     }
 }
