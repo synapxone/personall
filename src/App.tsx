@@ -25,8 +25,34 @@ export default function App() {
     useEffect(() => {
         if (Capacitor.isNativePlatform()) {
             CapacitorUpdater.notifyAppReady();
+            checkForUpdates();
         }
     }, []);
+
+    async function checkForUpdates() {
+        try {
+            // URL onde você hospedará seu manifest.json e o .zip da atualização
+            // Exemplo: https://sua-conta-supabase.supabase.co/storage/v1/object/public/updates/manifest.json
+            const MANIFEST_URL = 'https://raw.githubusercontent.com/seu-usuario/seu-repo/main/updates/manifest.json';
+
+            const response = await fetch(MANIFEST_URL);
+            const manifest = await response.json();
+
+            const currentVersion = await CapacitorUpdater.getLatest();
+
+            if (manifest.version !== currentVersion.version) {
+                const id = toast.loading('Baixando atualização...');
+                const update = await CapacitorUpdater.download({
+                    url: manifest.url,
+                    version: manifest.version,
+                });
+                await CapacitorUpdater.set(update);
+                toast.success('Atualização aplicada! Reiniciando...', { id });
+            }
+        } catch (error) {
+            console.error('Erro ao buscar atualizações:', error);
+        }
+    }
 
     useEffect(() => {
         // onAuthStateChange fires on init too, so we only use it (not getSession)
