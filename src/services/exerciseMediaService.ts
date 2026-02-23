@@ -2,8 +2,6 @@ import { supabase } from '../lib/supabase';
 import { exerciseService } from './exerciseService';
 
 const BUCKET = 'exercise-media';
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const VEO_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 export type MediaResult = { url: string; type: 'gif' | 'video' };
 
@@ -34,64 +32,6 @@ async function downloadAndReupload(url: string, slug: string): Promise<string | 
         return await uploadToStorage(blob, slug, ext);
     } catch (e) {
         console.warn('downloadAndReupload failed', e);
-        return null;
-    }
-}
-
-// ── Veo 2 generation ──────────────────────────────────────────────────────────
-
-async function generateWithVeo(exerciseName: string, slug: string): Promise<string | null> {
-    if (!GEMINI_KEY) return null;
-    try {
-        const prompt =
-            `Side view silhouette of a person performing "${exerciseName}" exercise. ` +
-            `Minimalist style, clean white background, black silhouette figure, smooth fluid looping motion. ` +
-            `Fitness demonstration, perfect form, no text, no equipment labels.`;
-
-        const startRes = await fetch(
-            `${VEO_BASE}/models/veo-2.0-generate-001:generateVideo?key=${GEMINI_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt,
-                    generationConfig: {
-                        numberOfVideos: 1,
-                        durationSeconds: 6,
-                        aspectRatio: '16:9',
-                    },
-                }),
-            }
-        );
-        if (!startRes.ok) return null;
-
-        const operation = await startRes.json();
-        const opName: string | undefined = operation.name;
-        if (!opName) return null;
-
-        // Poll up to 3 minutes (36 × 5s)
-        for (let i = 0; i < 36; i++) {
-            await new Promise((r) => setTimeout(r, 5000));
-            const pollRes = await fetch(`${VEO_BASE}/${opName}?key=${GEMINI_KEY}`);
-            if (!pollRes.ok) continue;
-            const status = await pollRes.json();
-            if (!status.done) continue;
-
-            // Handle both known response shapes
-            const samples =
-                status.response?.generateVideoResponse?.generatedSamples ??
-                status.response?.videos ??
-                status.response?.predictions ??
-                [];
-
-            const videoUri: string | undefined =
-                samples[0]?.video?.uri ?? samples[0]?.uri;
-
-            if (!videoUri) return null;
-            return await downloadAndReupload(videoUri, slug);
-        }
-        return null;
-    } catch {
         return null;
     }
 }
@@ -158,13 +98,8 @@ export const exerciseMediaService = {
             }
         }
 
-        // 3. Veo 2 generation
-        const veoUrl = await generateWithVeo(exerciseName, slug);
-        if (veoUrl) {
-            await saveToDb(slug, veoUrl, 'video');
-            return { url: veoUrl, type: 'video' };
-        }
-
+        // 3. Fallback (Veo generation disabled in frontend due to CORS)
+        // In a real production app, this would be handled by a backend function.
         return null;
     },
 };

@@ -43,9 +43,10 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     });
 
+    const [selectedWeekIndex, setSelectedWeekIndex] = useState<number>(0);
     const [localPlan, setLocalPlan] = useState<WorkoutPlan>(plan);
-    const weeks = localPlan.plan_data?.weeks;
-    const todayData = weeks?.[0]?.days[selectedDayIndex] || null;
+    const weeksList = localPlan.plan_data?.weeks || [];
+    const todayData = weeksList[selectedWeekIndex]?.days[selectedDayIndex] || null;
 
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const [mediaData, setMediaData] = useState<Record<string, MediaResult>>({});
@@ -340,8 +341,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
             if (newDay) {
                 const updatedPlan = { ...localPlan };
                 if (!updatedPlan.plan_data.weeks) return;
-                updatedPlan.plan_data.weeks[0].days[selectedDayIndex] = {
-                    ...updatedPlan.plan_data.weeks[0].days[selectedDayIndex],
+                updatedPlan.plan_data.weeks[selectedWeekIndex].days[selectedDayIndex] = {
+                    ...updatedPlan.plan_data.weeks[selectedWeekIndex].days[selectedDayIndex],
                     ...newDay
                 };
                 await supabase.from('workout_plans').update({ plan_data: updatedPlan.plan_data }).eq('id', plan.id).throwOnError();
@@ -361,7 +362,6 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         setIsRebuildingWeek(true);
         try {
             // Reutiliza a lógica do profile para gerar toda a semana de uma vez pra pessoa
-            const ptDaysMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             const activeDaysMap = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
             const activeStrings = activeDaysMap.filter((_, i) => weekDaysActive[i]);
 
@@ -378,6 +378,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
             }
         } catch (e) {
             console.error(e);
+            alert("Erro ao recalcular sua semana. Verifique sua conexão.");
         } finally {
             setIsRebuildingWeek(false);
         }
@@ -400,20 +401,42 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                     </button>
                 ))}
             </div>
+            {/* Day and Week Selection */}
+            <div className="px-6 mb-4 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={() => setSelectedWeekIndex(prev => Math.max(0, prev - 1))}
+                        disabled={selectedWeekIndex === 0}
+                        className="p-2 text-gray-500 hover:text-white disabled:opacity-20"
+                    >
+                        <ChevronUp size={24} className="-rotate-90" />
+                    </button>
+                    <div className="text-center">
+                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-1 block">Fase do Treino</span>
+                        <h2 className="text-xl font-black text-white">Semana {selectedWeekIndex + 1}</h2>
+                    </div>
+                    <button
+                        onClick={() => setSelectedWeekIndex(prev => Math.min(weeksList.length - 1, prev + 1))}
+                        disabled={selectedWeekIndex >= weeksList.length - 1}
+                        className="p-2 text-gray-500 hover:text-white disabled:opacity-20"
+                    >
+                        <ChevronUp size={24} className="rotate-90" />
+                    </button>
+                </div>
 
-            {/* Config & Calendar Buttons */}
-            <div className="flex justify-between items-center bg-white/[0.02] p-2 rounded-xl border border-white/5">
-                <p className="text-indigo-300 text-xs font-bold uppercase tracking-wider pl-1 max-w-[40%] truncate">{localPlan.name}</p>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowCalendar(true)} className="flex items-center justify-center text-gray-400 bg-white/5 w-8 h-8 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
-                        <Calendar size={14} />
-                    </button>
-                    <button onClick={() => setShowWeekConfig(true)} className="flex items-center gap-1 text-xs text-indigo-400 bg-indigo-500/10 px-2 h-8 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
-                        <CalendarClock size={14} /> Semana
-                    </button>
-                    <button onClick={() => setShowConfig(true)} className="flex items-center gap-1 text-xs text-orange-400 bg-orange-500/10 px-2 h-8 rounded-lg border border-orange-500/20 hover:bg-orange-500/20 transition-colors">
-                        <Settings2 size={14} /> Dia
-                    </button>
+                <div className="flex items-center justify-between bg-white/5 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+                    <p className="text-indigo-300 text-xs font-bold uppercase tracking-wider pl-1 max-w-[40%] truncate">{localPlan.name}</p>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setShowCalendar(true)} className="flex items-center justify-center text-gray-400 bg-white/5 w-8 h-8 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                            <Calendar size={14} />
+                        </button>
+                        <button onClick={() => setShowWeekConfig(true)} className="flex items-center gap-1 text-xs text-indigo-400 bg-indigo-500/10 px-2 h-8 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                            <CalendarClock size={14} /> Semana
+                        </button>
+                        <button onClick={() => setShowConfig(true)} className="flex items-center gap-1 text-xs text-orange-400 bg-orange-500/10 px-2 h-8 rounded-lg border border-orange-500/20 hover:bg-orange-500/20 transition-colors">
+                            <Settings2 size={14} /> Dia
+                        </button>
+                    </div>
                 </div>
             </div>
 
