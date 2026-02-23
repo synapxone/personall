@@ -38,7 +38,7 @@ body,
 
 /* Safe area for mobile notch */
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: 16px;
 }
 
 .safe-bottom {

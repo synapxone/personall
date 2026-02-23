@@ -57,6 +57,13 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
     const [setsProgress, setSetsProgress] = useState<Record<number, SetState[]>>({});
     const [activeSetModal, setActiveSetModal] = useState<ActiveSetModal | null>(null);
 
+    // Post-workout summary stats (stored at save time to avoid state-reset race)
+    const [summaryCompleted, setSummaryCompleted] = useState(0);
+    const [summaryTotal, setSummaryTotal] = useState(0);
+    const [summaryDuration, setSummaryDuration] = useState(0);
+    const [summaryCalories, setSummaryCalories] = useState(0);
+    const [summaryLoadKg, setSummaryLoadKg] = useState(0);
+
     // Regenerate Modals
     const [showConfig, setShowConfig] = useState(false);
     const [showWeekConfig, setShowWeekConfig] = useState(false);
@@ -83,13 +90,53 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         setLocalPlan(plan);
     }, [plan]);
 
+    // Check if workout session already exists for today
     useEffect(() => {
         if (!todayData || todayData.type === 'rest') return;
+
+        async function loadTodaySession() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { data } = await supabase
+                .from('workout_sessions')
+                .select('*')
+                .eq('user_id', profile.id)
+                .eq('session_date', todayStr)
+                .maybeSingle();
+
+            if (data) {
+                setSessionDone(true);
+                setSummaryCompleted(data.exercises_completed?.length || 0);
+                setSummaryTotal(todayData.exercises.length);
+                setSummaryDuration(data.duration_minutes || 0);
+                setSummaryCalories(Math.round(5 * profile.weight * (data.duration_minutes / 60)));
+
+                const doneProgress: Record<number, SetState[]> = {};
+                todayData.exercises.forEach((ex, i) => {
+                    const isDone = data.exercises_completed?.includes(ex.name);
+                    doneProgress[i] = Array.from({ length: ex.sets }).map(() => ({
+                        weight: '0',
+                        status: (isDone ? 'done' : 'idle') as any,
+                        time: 0,
+                        showWeightInput: false
+                    }));
+                });
+                setSetsProgress(doneProgress);
+            }
+        }
+        loadTodaySession();
+
         // Preload free-exercise-db index in background for faster lazy loads
         exerciseMediaService.preloadFreeDb();
         // Load cached media from DB (fast batch query)
         const exerciseMeta = todayData.exercises.map((e) => ({ id: e.exercise_id, name: e.name }));
         exerciseMediaService.getCachedBatch(exerciseMeta).then(setMediaData);
+
+        // Don't reset mapping if already done
+        const alreadyDone = localStorage.getItem(`workout_done_${profile.id}_${new Date().toISOString().split('T')[0]}`);
+        if (alreadyDone === 'true') {
+            setSessionDone(true);
+            return;
+        }
 
         const initialProgress: Record<number, SetState[]> = {};
         todayData.exercises.forEach((ex, i) => {
@@ -312,12 +359,34 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         setSaving(true);
         const elapsed = Math.round((new Date().getTime() - startTimeRef.current.getTime()) / 60000);
 
-        const exercisesCompleted = todayData.exercises
-            .filter((_, i) => isExerciseCompleted(i))
-            .map((e) => e.name);
-
-        const allDone = getCompletedCount() === todayData.exercises.length;
+        const completedExercises = todayData.exercises.filter((_, i) => isExerciseCompleted(i));
+        const exercisesCompleted = completedExercises.map((e) => e.name);
+        const completedCount = completedExercises.length;
+        const allDone = completedCount === todayData.exercises.length;
         const pts = allDone ? POINTS.WORKOUT_COMPLETE : POINTS.WORKOUT_PARTIAL;
+
+        // Compute summary stats before state may get reset
+        const durationMin = Math.max(1, elapsed);
+        const calBurned = Math.round(5 * profile.weight * (durationMin / 60));
+        let loadKg = 0;
+        todayData.exercises.forEach((ex, i) => {
+            const sets = setsProgress[i];
+            if (sets) {
+                const reps = parseInt(String(ex.reps)) || 10;
+                sets.filter(s => s.status === 'done').forEach(s => {
+                    loadKg += (parseFloat(s.weight) || 0) * reps;
+                });
+            }
+        });
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        setSummaryCompleted(completedCount);
+        setSummaryTotal(todayData.exercises.length);
+        setSummaryDuration(durationMin);
+        setSummaryCalories(calBurned);
+        setSummaryLoadKg(Math.round(loadKg));
+
+        localStorage.setItem(`workout_done_${profile.id}_${todayStr}`, 'true');
 
         try {
             await supabase.from('workout_sessions').insert({
@@ -481,17 +550,36 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                 </div>
             </div>
 
-            {sessionDone ? (
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 px-6 text-center gap-6">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.2 }} className="w-24 h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                        <Trophy size={48} className="text-emerald-500" />
-                    </motion.div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight mb-2">Treino Concluído!</h2>
-                        <p className="text-gray-400 text-sm font-medium">{getCompletedCount()} de {totalCount} exercícios feitos</p>
+            {/* Post-workout summary banner (shown on top, exercises remain visible below) */}
+            {sessionDone && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl overflow-hidden border border-emerald-500/30" style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.06))' }}>
+                    <div className="flex items-center gap-3 px-5 pt-5 pb-4">
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 250, delay: 0.1 }} className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                            <Trophy size={24} className="text-emerald-400" />
+                        </motion.div>
+                        <div>
+                            <h2 className="text-base font-bold text-white">Treino Salvo! 🎉</h2>
+                            <p className="text-emerald-400 text-xs font-medium">{summaryCompleted} de {summaryTotal} exercícios concluídos</p>
+                        </div>
+                    </div>
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-px bg-white/5 border-t border-emerald-500/20">
+                        {[
+                            { label: 'Duração', value: `${summaryDuration}min`, icon: <Timer size={14} /> },
+                            { label: 'Calorias', value: `~${summaryCalories}kcal`, icon: <Activity size={14} /> },
+                            { label: 'Volume', value: summaryLoadKg > 0 ? `${summaryLoadKg}kg` : '—', icon: <Target size={14} /> },
+                        ].map((stat) => (
+                            <div key={stat.label} className="flex flex-col items-center gap-1 py-3 bg-black/20">
+                                <div className="text-emerald-400/80">{stat.icon}</div>
+                                <span className="text-white font-bold text-sm">{stat.value}</span>
+                                <span className="text-gray-500 text-[10px] uppercase tracking-wide">{stat.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </motion.div>
-            ) : (!todayData || todayData.type === 'rest') ? (
+            )}
+
+            {(!todayData || todayData.type === 'rest') ? (
                 <div className="flex flex-col items-center justify-center py-24 px-6 text-center gap-5">
                     <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
                         <BedDouble size={40} className="text-indigo-400" />
@@ -781,7 +869,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                         })}
                     </div>
 
-                    {getCompletedCount() > 0 && (
+                    {!sessionDone && getCompletedCount() > 0 && (
                         <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleFinishWorkout} disabled={saving} className="w-full py-4 rounded-2xl font-bold text-white text-base flex items-center justify-center gap-2 mb-8 mt-4" style={{ background: getCompletedCount() === totalCount ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #7C3AED, #6d28d9)', opacity: saving ? 0.7 : 1 }}>
                             {saving ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" /> : <><Trophy size={18} /> {getCompletedCount() === totalCount ? 'Treino Concluído! 🎉' : `Finalizar (${getCompletedCount()}/${totalCount})`}</>}
                         </motion.button>

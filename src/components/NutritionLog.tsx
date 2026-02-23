@@ -991,7 +991,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-start justify-center"
+                        className="fixed inset-0 z-[60] flex items-start justify-center"
                         style={{ backgroundColor: 'rgba(26,26,46,0.95)' }}
                         onClick={(e) => { if (e.target === e.currentTarget) { stopCamera(); setShowModal(false); } }}
                     >
@@ -1347,7 +1347,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+                        className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
                         style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
                         onClick={(e) => { if (e.target === e.currentTarget) setSelectedMeal(null); }}
                     >
@@ -1356,7 +1356,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 bg-[#09090B] border border-white/5"
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 pb-24 sm:pb-6 flex flex-col gap-4 bg-[#09090B] border border-white/5"
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between">

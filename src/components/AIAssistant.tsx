@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Loader2 } from 'lucide-react';
+import { Send, X, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { geminiService } from '../services/geminiService';
 import type { Profile, Message } from '../types';
@@ -308,6 +308,20 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
         await doSend(text);
     }
 
+    async function handleClearConversation() {
+        if (!confirm('Tem certeza que deseja apagar todo o histórico de conversas com o Pers?')) return;
+        await supabase.from('ai_conversations').delete().eq('user_id', profile.id);
+        const welcome: Message = {
+            id: 'welcome-new',
+            role: 'assistant',
+            content: `Conversa reiniciada! Olá, ${profile.name.split(' ')[0]}! 💪 Como posso te ajudar?`,
+            created_at: new Date().toISOString(),
+        };
+        setMessages([welcome]);
+        setInitialized(false);
+        contextRef.current = '';
+    }
+
     async function handleOpen() {
         setOpen(true);
         await initialize();
@@ -427,7 +441,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl"
+                        className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col rounded-t-3xl"
                         style={{
                             backgroundColor: '#0F0F1A',
                             border: '1px solid rgba(124,58,237,0.25)',
@@ -453,13 +467,23 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 </div>
                                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
                             </div>
-                            <button
-                                onClick={() => setOpen(false)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white"
-                                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-                            >
-                                <X size={16} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleClearConversation}
+                                    title="Limpar conversa"
+                                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 transition-colors"
+                                    style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                                <button
+                                    onClick={() => setOpen(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white transition-colors"
+                                    style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Messages */}
@@ -520,7 +544,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
 
                         {/* Input */}
                         <div
-                            className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
+                            className="flex items-center gap-3 px-4 pt-3 pb-24 sm:pb-3 flex-shrink-0"
                             style={{ borderTop: '1px solid rgba(255,255,255,0.07)', backgroundColor: '#1A1A2E' }}
                         >
                             <input
