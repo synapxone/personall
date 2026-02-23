@@ -1,0 +1,5 @@
+{
+    "version": "1.0.0",
+    "url": "https://sua-url-do-bucket-ou-github.com/updates/v1.0.0.zip",
+    "notes": "Versão inicial com suporte a OTA Ninja."
+}
