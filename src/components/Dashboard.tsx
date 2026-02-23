@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, Activity, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble } from 'lucide-react';
+import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, Activity, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble, ChevronUp } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { Profile, WorkoutPlan, Gamification } from '../types';
 import WorkoutDayView from './WorkoutDay';
 import NutritionLog from './NutritionLog';
@@ -58,14 +59,34 @@ interface NutritionTotals {
 
 export default function Dashboard({ profile, workoutPlan, gamification, onSignOut, onRefresh }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>(() => {
-        return (localStorage.getItem('activeTab') as Tab) || 'home';
+        return (sessionStorage.getItem('activeTab') as Tab) || 'home';
     });
     const [nutritionTotals, setNutritionTotals] = useState<NutritionTotals | null>(null);
 
     useEffect(() => {
-        localStorage.setItem('activeTab', activeTab);
+        sessionStorage.setItem('activeTab', activeTab);
         window.scrollTo({ top: 0, behavior: 'auto' });
-    }, [activeTab]);
+
+        if (activeTab === 'home' && !nutritionTotals) {
+            const d = new Date();
+            const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            supabase.from('meals')
+                .select('calories, protein, carbs, fat')
+                .eq('user_id', profile.id)
+                .eq('meal_date', ymd)
+                .then(({ data }) => {
+                    if (data) {
+                        const t = data.reduce((acc, curr) => ({
+                            calories: acc.calories + (curr.calories || 0),
+                            protein: acc.protein + (curr.protein || 0),
+                            carbs: acc.carbs + (curr.carbs || 0),
+                            fat: acc.fat + (curr.fat || 0)
+                        }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+                        setNutritionTotals(t);
+                    }
+                });
+        }
+    }, [activeTab, profile.id, nutritionTotals]);
 
     const todayWorkout = getTodayWorkout(workoutPlan);
 
@@ -78,9 +99,6 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
     const totalWeight = Object.keys(localStorage)
         .filter(k => k.startsWith('weight_'))
         .reduce((acc, k) => acc + (parseFloat(localStorage.getItem(k) || '0') || 0), 0) * (gamification?.total_workouts || 1); // rough estimate
-
-    // Total Cals burned roughly
-    const calsBurned = (gamification?.total_workouts || 0) * 350;
 
     return (
         <div className="min-h-screen flex flex-col font-sans" style={{ backgroundColor: '#09090B' }}>
@@ -141,57 +159,103 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                 </div>
 
                                 {/* Stats grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    {/* Today's workout */}
-                                    <StatCard
-                                        icon={todayWorkout?.type === 'rest' ? <BedDouble size={20} className="text-indigo-400" /> : <Dumbbell size={20} className="text-indigo-400" />}
-                                        label="Treino Hoje"
-                                        value={todayWorkout?.name || 'Sem plano'}
-                                        sub={todayWorkout?.type === 'rest' ? 'Descanso' : `${todayWorkout?.exercises?.length ?? 0} exercícios`}
-                                        borderColor="rgba(99,102,241,0.2)"
-                                        chartColor="rgba(99,102,241,0.8)"
-                                        chartType="line"
-                                    />
-                                    {/* Calories */}
-                                    <StatCard
-                                        icon={<Flame size={20} className="text-orange-400" />}
-                                        label="Meta Calórica"
-                                        value={`${profile.daily_calorie_goal}`}
-                                        sub="kcal / dia"
-                                        borderColor="rgba(249,115,22,0.2)"
-                                        chartColor="rgba(249,115,22,0.8)"
-                                        chartType="bar"
-                                    />
-                                    {/* Total Weight */}
-                                    <StatCard
-                                        icon={<TrendingUp size={20} className="text-emerald-400" />}
-                                        label="Carga Total"
-                                        value={`${totalWeight} kg`}
-                                        sub="estimativa"
-                                        borderColor="rgba(52,211,153,0.2)"
-                                        chartColor="rgba(52,211,153,0.8)"
-                                        chartType="line"
-                                    />
-                                    {/* Frequencia */}
-                                    <StatCard
-                                        icon={<CheckCircle2 size={20} className="text-pink-400" />}
-                                        label="Frequência"
-                                        value={`${gamification?.total_workouts || 0}`}
-                                        sub="treinos concluídos"
-                                        borderColor="rgba(244,113,181,0.2)"
-                                        chartColor="rgba(244,113,181,0.8)"
-                                        chartType="bar"
-                                    />
-                                    {/* Cals */}
-                                    <StatCard
-                                        icon={<Flame size={20} className="text-orange-600" />}
-                                        label="Cal. Queimadas"
-                                        value={`${calsBurned}`}
-                                        sub="estimativa total"
-                                        borderColor="rgba(234,88,12,0.2)"
-                                        chartColor="rgba(234,88,12,0.8)"
-                                        chartType="line"
-                                    />
+                                <div className="flex flex-col gap-3">
+                                    {/* 1. Treino Hoje (Full Width + Weekly Graph) */}
+                                    <div className="rounded-2xl p-4 relative overflow-hidden bg-white/[0.02] border border-indigo-500/20 backdrop-blur-sm transition-all shadow-[0_4px_20px_-5px_rgba(99,102,241,0.15)] flex flex-col gap-3">
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-500/20 border border-indigo-500/30">
+                                                    {todayWorkout?.type === 'rest' ? <BedDouble size={20} className="text-indigo-400" /> : <Dumbbell size={20} className="text-indigo-400" />}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-0.5">Treino Hoje</p>
+                                                    <h3 className="text-white font-bold text-base leading-tight">
+                                                        {todayWorkout?.name || 'Sem plano para hoje'}
+                                                    </h3>
+                                                    <p className="text-gray-400 text-xs mt-0.5 font-medium">
+                                                        {todayWorkout?.type === 'rest' ? 'Dia de descanso' : `${todayWorkout?.exercises?.length ?? 0} exercícios no total`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="w-16 h-8 flex items-end gap-1 opacity-70">
+                                                {/* Mock Weekly Performance Graph */}
+                                                {[30, 80, 50, 100, 60, 40, 90].map((h, i) => (
+                                                    <div key={i} className="flex-1 rounded-sm bg-indigo-500" style={{ height: `${h}%` }} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 2. Meta Calórica (Full Width + Consumed/Remaining) */}
+                                    <div className="rounded-2xl p-4 relative overflow-hidden bg-white/[0.02] border border-orange-500/20 backdrop-blur-sm shadow-[0_4px_20px_-5px_rgba(249,115,22,0.15)] flex flex-col gap-3">
+                                        <div className="flex items-center gap-3 relative z-10 w-full">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500/20 border border-orange-500/30 shrink-0">
+                                                <Flame size={20} className="text-orange-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-center mb-1 cursor-default">
+                                                    <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest">Meta Calórica</p>
+                                                    <span className="text-xs text-orange-300/80 font-bold tabular-nums">{nutritionTotals?.calories || 0} / {profile.daily_calorie_goal} kcal</span>
+                                                </div>
+                                                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden mb-1.5 relative">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${Math.min(100, ((nutritionTotals?.calories || 0) / profile.daily_calorie_goal) * 100)}%` }}
+                                                        transition={{ duration: 1 }}
+                                                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full"
+                                                    />
+                                                </div>
+                                                <p className="text-gray-400 text-xs font-medium truncate">
+                                                    Restam <span className="text-white font-bold">{Math.max(0, profile.daily_calorie_goal - (nutritionTotals?.calories || 0))} kcal</span> para o limite hoje.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 w-full">
+                                        {/* 3. Carga Total (Half Width + Volume Graph) */}
+                                        <div className="rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden bg-white/[0.02] border border-emerald-500/20 backdrop-blur-sm transition-all shadow-[0_4px_20px_-5px_rgba(16,185,129,0.1)]">
+                                            <div className="flex justify-between items-start relative z-10">
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/10 border border-emerald-500/20">
+                                                    <TrendingUp size={18} className="text-emerald-400" />
+                                                </div>
+                                                <div className="w-12 h-6 flex items-end opacity-60">
+                                                    <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
+                                                        <polyline fill="none" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points="0,35 25,20 50,25 75,10 100,5" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div className="relative z-10 mt-1">
+                                                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1 truncate">Volume de Carga</p>
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <p className="text-white font-extrabold text-[1.1rem] leading-none truncate">{totalWeight > 1000 ? (totalWeight / 1000).toFixed(1) + 'k' : totalWeight}</p>
+                                                    <span className="text-gray-400 text-xs font-medium">kg</span>
+                                                </div>
+                                                <p className="text-gray-500 text-[9px] mt-1.5 font-medium uppercase truncate">SEMANAL</p>
+                                            </div>
+                                        </div>
+
+                                        {/* 4. Frequência (Half Width + Comparison Trend) */}
+                                        <div className="rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden bg-white/[0.02] border border-pink-500/20 backdrop-blur-sm transition-all shadow-[0_4px_20px_-5px_rgba(236,72,153,0.1)]">
+                                            <div className="flex justify-between items-start relative z-10">
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-pink-500/10 border border-pink-500/20">
+                                                    <CheckCircle2 size={18} className="text-pink-400" />
+                                                </div>
+                                                <div className="flex items-center gap-1 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md">
+                                                    <ChevronUp size={12} className="text-green-400" />
+                                                    <span className="text-[10px] font-bold text-green-400">12%</span>
+                                                </div>
+                                            </div>
+                                            <div className="relative z-10 mt-1">
+                                                <p className="text-[10px] text-pink-400 font-bold uppercase tracking-widest mb-1 truncate">Frequência</p>
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <p className="text-white font-extrabold text-[1.1rem] leading-none truncate">{gamification?.total_workouts || 0}</p>
+                                                    <span className="text-gray-400 text-[10px] font-medium uppercase">Treinos</span>
+                                                </div>
+                                                <p className="text-gray-500 text-[9px] mt-1.5 font-medium uppercase truncate">V.S. SEMANA PASSADA</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 {todayWorkout && todayWorkout.type !== 'rest' && (
                                     <div className="rounded-2xl p-5 bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-colors">
@@ -331,53 +395,6 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                     })}
                 </div>
             </nav>
-        </div>
-    );
-}
-
-function StatCard({ icon, label, value, sub, borderColor, chartColor, chartType }: { icon: React.ReactNode; label: string; value: string; sub: string; borderColor: string; chartColor?: string; chartType?: 'line' | 'bar' }) {
-    // Generate some stable random-looking data points based on label length to draw the sparkline
-    const points = [0.3, 0.5, 0.4, 0.8, 0.6, 0.9, 1.0];
-    const bars = [40, 60, 45, 80, 55, 90, 100];
-
-    return (
-        <div className="rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden bg-white/[0.02] border backdrop-blur-sm transition-all hover:bg-white/[0.04]" style={{ borderColor }}>
-            <div className="flex justify-between items-start relative z-10">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    {icon}
-                </div>
-                {chartType === 'line' && (
-                    <div className="w-16 h-8 flex items-end opacity-60">
-                        <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
-                            <polyline
-                                fill="none"
-                                stroke={chartColor}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                points={points.map((p, i) => `${i * (100 / (points.length - 1))},${40 - (p * 35)}`).join(' ')}
-                            />
-                        </svg>
-                    </div>
-                )}
-                {chartType === 'bar' && (
-                    <div className="w-16 h-8 flex items-end justify-between opacity-60 gap-0.5">
-                        {bars.map((h, i) => (
-                            <div key={i} className="flex-1 rounded-t-sm" style={{ backgroundColor: chartColor, height: `${h}%` }} />
-                        ))}
-                    </div>
-                )}
-            </div>
-            <div className="relative z-10">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{label}</p>
-                <div className="flex items-baseline gap-1.5">
-                    <p className="text-white font-extrabold text-lg leading-none truncate">{value.replace(/[^\d.-]/g, '') || value}</p>
-                    <span className="text-gray-400 text-xs font-medium">{value.replace(/[\d.-]/g, '').trim()}</span>
-                </div>
-                <p className="text-gray-500 text-[10px] mt-1.5 font-medium">{sub}</p>
-            </div>
-            {/* Background glowing glow */}
-            <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-10" style={{ backgroundColor: chartColor }} />
         </div>
     );
 }
