@@ -673,7 +673,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     };
 
     return (
-        <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-40">
+        <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-56">
             {/* Date Navigation */}
             <div className="flex items-center justify-between gap-2">
                 <button

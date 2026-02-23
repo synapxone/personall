@@ -240,6 +240,8 @@ src/
 
 ### Treino
 - Visualização do treino do dia (calculado pelo dia da semana)
+- **Flexibilidade total**: Capacidade de redefinir treinos individuais ou a semana inteira.
+- **Dia de Descanso**: Botão "Quero treinar hoje" em dias de repouso, acionando a IA para gerar um treino sob demanda que evita repetir exercícios já realizados nos outros dias da mesma semana.
 - Mídia dos exercícios via pipeline em 3 camadas:
   1. Cache no Supabase (`exercise_media`) → resposta instantânea, URL direta sem Storage
   2. [`free-exercise-db`](https://github.com/yuhonas/free-exercise-db) (800+ exercícios, GitHub CDN, sem API key) → fuzzy matching por nome
@@ -269,12 +271,14 @@ src/
 
 ### Gamificação
 - Sistema de pontos, XP e níveis
+- **Cálculo de Evolução Inteligente**: Ao registrar evolução, a IA analisa os últimos 30 dias. Ganhe +25 XP base, +25 XP por cada treino realizado e +15 XP por cada dia dentro da meta calórica ideal.
 - Streak de dias consecutivos com bônus
 - Loja de recompensas (chocolate, pizza, hambúrguer, dia livre de dieta…)
 - Histórico de treinos concluídos
 
 ### Assistente IA (Pers)
 - Chat flutuante com contexto dos últimos 15 dias (treinos, refeições, gamificação)
+- **Central de Notificações Inteligente**: Todos os alertas (água, metas, treino) agora emanam da bolinha assistente através de balões de chat proativos com CTAs automáticos.
 - Alertas proativos de nutrição:
   - ≥ 80% da meta calórica + déficit de proteína → sugere próxima refeição
   - ≥ 80% da meta calórica → avisa que está próximo do limite
@@ -288,6 +292,7 @@ src/
 - Registro de evolução: peso + foto + observações
 - Timeline de progresso com indicador de tendência (↑↓) entre registros
 - Visualização em tela cheia das fotos de progresso
+- **Gerenciamento de Conta**: Botão Reset para reiniciar do zero (Onboarding) limpando todos os dados.
 
 ---
 

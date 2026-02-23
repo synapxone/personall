@@ -156,7 +156,7 @@ Formato:
         };
     },
 
-    async generateWorkoutSingleDay(profile: Partial<Profile>, dayName: string, availableMinutes: number, location: string): Promise<any> {
+    async generateWorkoutSingleDay(profile: Partial<Profile>, dayName: string, availableMinutes: number, location: string, avoidExercises: string[] = []): Promise<any> {
         const goalLabels: Record<string, string> = {
             lose_weight: 'Perder Peso',
             gain_muscle: 'Ganhar Músculo',
@@ -165,6 +165,7 @@ Formato:
         };
 
         const locationLabel = location === 'home' ? 'Em Casa (sem equipamentos)' : 'Academia (completa)';
+        const avoidList = avoidExercises.length > 0 ? avoidExercises.join(', ') : 'Nenhum';
 
         const prompt = `Você é um personal trainer especialista. Recalcule APENAS UM DIA de treino em JSON.
 
@@ -177,16 +178,17 @@ PERFIL DO USUÁRIO:
 - NOME/DIA: Quero um treino para o dia: ${dayName}
 
 INSTRUÇÕES OBRIGATÓRIAS:
+- EVITE REPETIR OS SEGUINTES EXERCÍCIOS JA REALIZADOS NA SEMANA: ${avoidList}. Use variações ou exercícios diferentes.
 - A chave "exercise_id" DEVE SER OBRIGATORIAMENTE um ID numérico de 4 dígitos do banco ExerciseDB (ex: "0009", "0094", "1347", "3214", "0043"). NUNCA use palavras (como "push-up") no campo "exercise_id"!
 - Se for treino em casa, use os IDs numéricos mais próximos do exercício: "0009" (Flexão), "0685" (Agachamento), "0001" (Abdominal), "3214" (Burpee), "1374" (Prancha).
-- Máximo de ${Math.floor(availableMinutes / 5)} exercícios
+- Máximo de ${Math.floor(availableMinutes / 5)} exercícios.
 - Crie um treino único (para apenas 1 dia) considerando o tempo e local acima informados.
 Se os minutos forem curtos (ex: 20 min), sugira um HIIT ou Full Body rápido.
 
 Retorne APENAS JSON válido, neste formato exato (sem Markdown):
 {
   "day": 1,
-  "name": "Treino Exclusivo — [Grupos Musculares ou HIIT]",
+  "name": "Treino Exclusiva — [Grupos Musculares ou HIIT]",
   "type": "strength",
   "exercises": [
     {

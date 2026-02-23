@@ -366,7 +366,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
 
                 {/* VERSION INDICATOR */}
                 <div className="flex justify-center mt-8 mb-4">
-                    <span className="text-[10px] text-gray-700 font-semibold tracking-widest uppercase">Versão 1.1.1</span>
+                    <span className="text-[10px] text-gray-700 font-semibold tracking-widest uppercase">Versão 1.1.2</span>
                 </div>
             </main>
 
@@ -387,8 +387,8 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
 
             {/* Bottom nav */}
             <nav
-                className="fixed bottom-0 left-0 right-0 safe-bottom"
-                style={{ backgroundColor: '#0F0F1A', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                className="fixed bottom-0 left-0 right-0 safe-bottom z-50 backdrop-blur-md"
+                style={{ backgroundColor: 'rgba(15, 15, 26, 0.95)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
             >
                 <div className="flex items-center justify-around px-2 py-2">
                     {tabs.map((t) => {

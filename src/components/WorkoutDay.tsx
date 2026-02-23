@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Settings2, X, Loader2, BedDouble, Zap, Target, Activity, Calendar, CalendarClock, Bell } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Settings2, X, Loader2, BedDouble, Zap, Target, Activity, Calendar, CalendarClock, Bell, Dumbbell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exerciseMediaService } from '../services/exerciseMediaService';
 import type { MediaResult } from '../services/exerciseMediaService';
@@ -339,7 +339,16 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         setIsGenerating(true);
         try {
             const dayName = WEEK_DAYS[selectedDayIndex];
-            const newDay = await geminiService.generateWorkoutSingleDay(profile, dayName, regenMin, regenLoc);
+
+            // Collect all exercises already in the week to avoid duplicates
+            const weekExercises: string[] = [];
+            localPlan.plan_data?.weeks?.[selectedWeekIndex]?.days?.forEach(d => {
+                if (d.exercises) {
+                    d.exercises.forEach(ex => weekExercises.push(ex.name));
+                }
+            });
+
+            const newDay = await geminiService.generateWorkoutSingleDay(profile, dayName, regenMin, regenLoc, weekExercises);
             if (newDay) {
                 const updatedPlan = { ...localPlan };
                 if (!updatedPlan.plan_data.weeks) return;
@@ -402,10 +411,10 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             key={i}
                             onClick={() => setSelectedDayIndex(i)}
                             className={`flex-1 min-w-[3rem] py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${selectedDayIndex === i
-                                    ? 'bg-indigo-600 text-white'
-                                    : isRest
-                                        ? 'bg-white/[0.02] text-gray-600 opacity-50 hover:bg-white/[0.05]'
-                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                ? 'bg-indigo-600 text-white'
+                                : isRest
+                                    ? 'bg-white/[0.02] text-gray-600 opacity-50 hover:bg-white/[0.05]'
+                                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                 }`}
                         >
                             {d}
@@ -470,6 +479,13 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                     </motion.div>
                     <h2 className="text-xl font-semibold text-white tracking-tight">Dia de Descanso</h2>
                     <p className="text-gray-500 text-sm font-medium leading-relaxed max-w-[240px]">Aproveite para recuperar os músculos. O descanso também faz parte do treino!</p>
+                    <button
+                        onClick={() => setShowConfig(true)}
+                        className="mt-4 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Dumbbell size={16} />
+                        Quero treinar hoje
+                    </button>
                 </div>
             ) : (
                 <>
