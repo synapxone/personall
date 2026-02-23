@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Personall</string>
+    <string name="title_activity_main">Personall</string>
+    <string name="package_name">com.personall.app</string>
+    <string name="custom_url_scheme">com.personall.app</string>
+</resources>

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import type { Profile, OnboardingData, WorkoutPlan, Gamification } from './types';
@@ -19,6 +21,12 @@ export default function App() {
     const [view, setView] = useState<AppView>('landing');
     const [loading, setLoading] = useState(true);
     const loadingRef = useRef(false);
+
+    useEffect(() => {
+        if (Capacitor.isNativePlatform()) {
+            CapacitorUpdater.notifyAppReady();
+        }
+    }, []);
 
     useEffect(() => {
         // onAuthStateChange fires on init too, so we only use it (not getSession)
