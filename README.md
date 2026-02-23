@@ -257,6 +257,11 @@ src/
 - Edição e exclusão de itens registrados
 - Anel de progresso calórico diário + barras de macros
 - Rastreador de água (copos) sincronizado com Supabase (`daily_nutrition.water_cups`)
+- Navegação entre dias: setas `<` / `>` e calendário mensal
+  - Ponto roxo nos dias com refeições registradas
+  - Atalho "Ir para Hoje"
+  - Refeições e água carregam para o dia selecionado
+  - Permite adicionar/editar refeições em dias anteriores
 - Histórico de 7 dias
 - Notificações às 14h (almoço) e 20h30 (jantar) se não houver registro
 
@@ -344,3 +349,4 @@ npx tsc --noEmit  # type check
 - **Tab Persistence (Fix):** A persistência da aba ativa foi corrigida de `sessionStorage` (perdido no refresh) para `localStorage` (persistente entre sessões). O app agora restaura a aba correta ao atualizar a página.
 - **Timezone Bug (Fix Crítico):** Corrigido bug onde `new Date().toISOString().split('T')[0]` retornava a data UTC — no Brasil (UTC-3), após as 21h local o app mostrava a dieta/treino do dia seguinte (vazios). Todos os arquivos (`NutritionLog.tsx`, `WorkoutDay.tsx`, `ProfileView.tsx`, `App.tsx`) passaram a usar `getFullYear()/getMonth()/getDate()` para data local.
 - **CI/CD (deploy.yml):** Adicionado `VITE_RAPIDAPI_KEY` nas variáveis de ambiente do GitHub Actions para que a ExerciseDB funcione em produção (GitHub Pages).
+- **Navegação de Datas (Dieta):** `NutritionLog.tsx` ganhou seletor de data com setas prev/next e calendário mensal. `loadData(date)` agora aceita parâmetro; `saveMeal`, `updateDailyNutrition` e water handler usam `selectedDate`. Calendário destaca dias com refeições via `fetchMealDates()`.
