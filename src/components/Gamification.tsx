@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Flame, Dumbbell, UtensilsCrossed, Gift, Lock, CheckCircle } from 'lucide-react';
+import { Star, Flame, Dumbbell, UtensilsCrossed, Gift, Lock, CheckCircle, TrendingUp, Settings2, X, Loader2, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { REWARDS_CATALOG, xpForLevel } from '../types';
@@ -20,7 +20,10 @@ function AnimatedCounter({ value }: { value: number }) {
         const start = prevRef.current;
         const end = value;
         const diff = end - start;
-        if (diff === 0) return;
+        if (diff === 0) {
+            setDisplay(value);
+            return;
+        }
         const duration = 600;
         const startTime = performance.now();
         function frame(now: number) {
@@ -40,6 +43,50 @@ function AnimatedCounter({ value }: { value: number }) {
 export default function GamificationView({ gamification, profile, onUpdate }: Props) {
     const [celebrating, setCelebrating] = useState<string | null>(null);
     const [loading, setLoading] = useState<string | null>(null);
+
+    // History & Config States
+    const [history, setHistory] = useState<any[]>([]);
+    const [showConfigModal, setShowConfigModal] = useState(false);
+    const [editCalGoal, setEditCalGoal] = useState(profile.daily_calorie_goal || 2000);
+    const [editWeight, setEditWeight] = useState(profile.weight || 70);
+    const [savingConfig, setSavingConfig] = useState(false);
+
+    useEffect(() => {
+        if (profile) {
+            fetchHistory();
+        }
+    }, [profile]);
+
+    async function fetchHistory() {
+        // Fetch last 7 days of daily nutrition
+        const { data, error } = await supabase
+            .from('daily_nutrition')
+            .select('date, total_calories, goal_calories')
+            .eq('user_id', profile.id)
+            .order('date', { ascending: false })
+            .limit(7);
+
+        if (!error && data) {
+            setHistory(data.reverse()); // oldest to newest
+        }
+    }
+
+    async function saveGoals() {
+        setSavingConfig(true);
+        const { error } = await supabase.from('profiles').update({
+            daily_calorie_goal: editCalGoal,
+            weight: editWeight,
+        }).eq('id', profile.id);
+
+        setSavingConfig(false);
+        if (error) {
+            toast.error('Erro ao atualizar metas.');
+        } else {
+            toast.success('Metas atualizadas com sucesso!');
+            setShowConfigModal(false);
+            onUpdate(); // Triggers app-wide refresh
+        }
+    }
 
     if (!gamification) {
         return (
@@ -98,6 +145,65 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
 
     return (
         <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-24">
+
+            {/* Header / Config row */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-white font-bold text-xl tracking-tight">Sua Evolução</h2>
+                    <p className="text-gray-400 text-xs">Acompanhe seu progresso e metas</p>
+                </div>
+                <button
+                    onClick={() => setShowConfigModal(true)}
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors shadow-sm"
+                >
+                    <Settings2 size={20} />
+                </button>
+            </div>
+
+            {/* Premium Chart & Macro Stats */}
+            <div className="relative overflow-hidden rounded-[24px] p-5 bg-gradient-to-br from-[#1A1A2E] to-[#12121A] border border-white/5 shadow-2xl flex flex-col gap-5">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/10 blur-[50px] rounded-full pointer-events-none" />
+
+                <div className="flex justify-between items-center relative z-10">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <TrendingUp size={16} className="text-indigo-400" />
+                        Histórico de Calorias da Semana
+                    </h3>
+                </div>
+
+                {history.length > 0 ? (
+                    <div className="flex items-end justify-between h-32 gap-2 relative z-10 custom-scrollbar overflow-x-auto pb-2">
+                        {history.map((day, idx) => {
+                            const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' });
+                            const goal = day.goal_calories || profile.daily_calorie_goal;
+                            const pct = Math.min((day.total_calories / goal) * 100, 100);
+                            const isOver = day.total_calories > goal;
+
+                            return (
+                                <div key={idx} className="flex flex-col items-center justify-end h-full gap-2 min-w-[30px] flex-1">
+                                    <div className="text-[9px] text-gray-500 font-bold">{day.total_calories}</div>
+                                    <div className="w-full flex justify-center h-[70px] bg-black/40 rounded-t-md relative overflow-hidden group">
+                                        <motion.div
+                                            initial={{ height: 0 }}
+                                            animate={{ height: `${pct}%` }}
+                                            transition={{ duration: 1, ease: 'easeOut' }}
+                                            className={`absolute bottom-0 w-full rounded-t-md ${isOver ? 'bg-orange-500' : 'bg-indigo-500'}`}
+                                        />
+                                        {/* Goal line tick */}
+                                        <div className="absolute top-[30%] w-full border-t border-dashed border-white/30" />
+                                    </div>
+                                    <div className="text-[10px] uppercase text-gray-400 font-semibold">{dateLabel.replace('.', '')}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="h-32 flex items-center justify-center text-gray-500 text-sm italic z-10 relative">
+                        Registre refeições para ver o gráfico.
+                    </div>
+                )}
+            </div>
+
             {/* Level & XP */}
             <div className="rounded-2xl p-6 flex flex-col gap-5 bg-white/[0.02] border backdrop-blur-sm shadow-xl" style={{ borderColor: 'rgba(99,102,241,0.1)' }}>
                 <div className="flex items-center justify-between">
@@ -288,6 +394,70 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
                     ))}
                 </div>
             )}
+
+            {/* Edit Goals Modal */}
+            <AnimatePresence>
+                {showConfigModal && (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <motion.div
+                            initial={{ y: 200, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 200, opacity: 0 }}
+                            className="bg-[#111116] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 -mb-6 sm:mb-0 pb-12 sm:pb-6"
+                        >
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                                    <Settings2 size={20} className="text-indigo-400" /> Metas
+                                </h3>
+                                <button onClick={() => setShowConfigModal(false)} disabled={savingConfig} className="text-gray-500 hover:text-white p-2 -mr-2">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <p className="text-gray-400 text-sm leading-relaxed">Ajuste manualmente os seus objetivos. Isso atualizará todo o seu perfil e gráficos.</p>
+
+                            <div className="flex flex-col gap-5">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Meta Diária (Kcal)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={editCalGoal}
+                                            onChange={e => setEditCalGoal(Number(e.target.value))}
+                                            disabled={savingConfig}
+                                            className="form-input w-full bg-white/5 border border-white/10 text-white rounded-xl h-12 px-4 focus:border-indigo-500 outline-none"
+                                        />
+                                        <Flame size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-400" />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Peso Atual (Kg)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={editWeight}
+                                            onChange={e => setEditWeight(Number(e.target.value))}
+                                            disabled={savingConfig}
+                                            className="form-input w-full bg-white/5 border border-white/10 text-white rounded-xl h-12 px-4 focus:border-indigo-500 outline-none"
+                                        />
+                                        <Dumbbell size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400" />
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">Isso ajustará automaticamente sua meta de hidratação (35ml x kg).</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={saveGoals}
+                                disabled={savingConfig}
+                                className="w-full h-14 mt-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2"
+                            >
+                                {savingConfig ? <><Loader2 size={18} className="animate-spin" /> Salvando...</> : <><Save size={18} /> Salvar Alterações</>}
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
