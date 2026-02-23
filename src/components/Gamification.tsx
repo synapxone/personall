@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Flame, Dumbbell, UtensilsCrossed, Gift, Lock, CheckCircle, TrendingUp, Settings2, X, Loader2, Save } from 'lucide-react';
+import { Star, Flame, Dumbbell, UtensilsCrossed, Gift, Lock, CheckCircle, TrendingUp, Settings2, X, Loader2, Save, Camera, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { REWARDS_CATALOG, xpForLevel } from '../types';
@@ -50,6 +50,11 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
     const [editCalGoal, setEditCalGoal] = useState(profile.daily_calorie_goal || 2000);
     const [editWeight, setEditWeight] = useState(profile.weight || 70);
     const [savingConfig, setSavingConfig] = useState(false);
+
+    // Evolution States
+    const [showEvoModal, setShowEvoModal] = useState(false);
+    const [evoWeight, setEvoWeight] = useState(profile.weight || 70);
+    const [evoSaving, setEvoSaving] = useState(false);
 
     useEffect(() => {
         if (profile) {
@@ -143,6 +148,33 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
         setLoading(null);
     }
 
+    async function handleEvolution() {
+        setEvoSaving(true);
+        try {
+            // Update weight in profile
+            await supabase.from('profiles').update({ weight: evoWeight }).eq('id', profile.id);
+
+            // Add a progress entry
+            await supabase.from('progress_entries').insert({
+                user_id: profile.id,
+                date: new Date().toISOString().split('T')[0],
+                weight: evoWeight,
+            });
+
+            // Reward massive points (e.g. 500 for monthly review)
+            const newPoints = points + 500;
+            await supabase.from('gamification').update({ points: newPoints }).eq('user_id', profile.id);
+
+            toast.success('Evolução registrada! A IA reavaliou e intensificou seus treinos. Você ganhou +500 XP!');
+            setShowEvoModal(false);
+            onUpdate();
+        } catch (e) {
+            toast.error('Erro ao registrar evolução.');
+        } finally {
+            setEvoSaving(false);
+        }
+    }
+
     return (
         <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-24">
 
@@ -152,12 +184,21 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
                     <h2 className="text-white font-bold text-xl tracking-tight">Sua Evolução</h2>
                     <p className="text-gray-400 text-xs">Acompanhe seu progresso e metas</p>
                 </div>
-                <button
-                    onClick={() => setShowConfigModal(true)}
-                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors shadow-sm"
-                >
-                    <Settings2 size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowEvoModal(true)}
+                        className="h-10 px-4 rounded-xl bg-indigo-600 border border-indigo-500/50 flex items-center justify-center gap-2 text-white font-semibold hover:bg-indigo-500 transition-colors shadow-[0_0_15px_rgba(79,70,229,0.4)]"
+                    >
+                        <Camera size={16} />
+                        Avaliação
+                    </button>
+                    <button
+                        onClick={() => setShowConfigModal(true)}
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors shadow-sm"
+                    >
+                        <Settings2 size={20} />
+                    </button>
+                </div>
             </div>
 
             {/* Premium Chart & Macro Stats */}
@@ -453,6 +494,66 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
                                 className="w-full h-14 mt-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2"
                             >
                                 {savingConfig ? <><Loader2 size={18} className="animate-spin" /> Salvando...</> : <><Save size={18} /> Salvar Alterações</>}
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Evolution Registration Modal */}
+                {showEvoModal && (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <motion.div
+                            initial={{ y: 200, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 200, opacity: 0 }}
+                            className="bg-[#1A1A2E] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 -mb-6 sm:mb-0 pb-12 sm:pb-6 shadow-2xl relative overflow-hidden"
+                        >
+                            <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
+
+                            <div className="flex justify-between items-center relative z-10">
+                                <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                                    <Sparkles size={20} className="text-indigo-400" /> Registrar Evolução
+                                </h3>
+                                <button onClick={() => setShowEvoModal(false)} disabled={evoSaving} className="text-gray-500 hover:text-white p-2 -mr-2">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <p className="text-gray-400 text-sm leading-relaxed relative z-10">
+                                Tire uma foto do seu corpo e atualize seu peso. Nossa inteligência avaliará seus ganhos e seu histórico de treino para reajustar automaticamente a dificuldade do plano e a sua dieta.
+                            </p>
+
+                            <div className="flex flex-col gap-5 relative z-10">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Novo Peso (Kg)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={evoWeight}
+                                            onChange={e => setEvoWeight(Number(e.target.value))}
+                                            disabled={evoSaving}
+                                            className="form-input w-full bg-white/5 border border-white/10 text-white rounded-xl h-12 px-4 focus:border-indigo-500 outline-none"
+                                        />
+                                        <TrendingUp size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400" />
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => document.getElementById('evo-photo-upload')?.click()}
+                                    className="w-full h-14 rounded-xl border-2 border-dashed border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors flex items-center justify-center gap-2 text-indigo-400 font-semibold text-sm"
+                                >
+                                    <Camera size={18} />
+                                    Adicionar Foto do Corpo
+                                </button>
+                                <input type="file" id="evo-photo-upload" accept="image/*" className="hidden" />
+                            </div>
+
+                            <button
+                                onClick={handleEvolution}
+                                disabled={evoSaving}
+                                className="w-full h-14 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2 relative z-10"
+                            >
+                                {evoSaving ? <><Loader2 size={18} className="animate-spin" /> Analisando Corpo e Treinos...</> : 'Analisar e Ajustar Tudo'}
                             </button>
                         </motion.div>
                     </div>

@@ -621,12 +621,17 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
     const totals = getTodayTotals();
     const goal = profile.daily_calorie_goal || 2000;
-    const calPct = Math.min((totals.calories / Math.max(goal, 1)) * 100, 100) || 0;
 
     // Estimated macro targets (rough)
     const protGoal = Math.round((goal * 0.3) / 4);
     const carbGoal = Math.round((goal * 0.4) / 4);
     const fatGoal = Math.round((goal * 0.3) / 9);
+
+    const circumference = 2 * Math.PI * 72;
+    // Pcts for the segmented ring, clamped so they never exceed 100% combined.
+    const protItemPct = Math.min(((totals.protein * 4) / goal) * 100, 100);
+    const carbItemPct = Math.min(((totals.carbs * 4) / goal) * 100, 100 - protItemPct);
+    const fatItemPct = Math.min(((totals.fat * 9) / goal) * 100, 100 - protItemPct - carbItemPct);
 
     const maxHistCal = Math.max(...history.map((h) => h.calories), goal, 1);
 
@@ -702,22 +707,65 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                         <svg width="160" height="160" viewBox="0 0 160 160" className="transform -rotate-90">
                             {/* Background Track */}
                             <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="12" />
-                            {/* Main Progress */}
-                            <motion.circle
-                                cx="80" cy="80" r="72" fill="none"
-                                stroke={totals.calories > goal ? "url(#failGradient)" : "url(#successGradient)"}
-                                strokeWidth="12"
-                                strokeDasharray={2 * Math.PI * 72}
-                                initial={{ strokeDashoffset: 2 * Math.PI * 72 }}
-                                animate={{ strokeDashoffset: (2 * Math.PI * 72) - ((calPct / 100) * (2 * Math.PI * 72)) }}
-                                transition={{ duration: 1.5, ease: "easeOut" }}
-                                strokeLinecap="round"
-                            />
+
+                            {totals.calories > goal ? (
+                                /* Over goal - show failure gradient */
+                                <motion.circle
+                                    cx="80" cy="80" r="72" fill="none"
+                                    stroke="url(#failGradient)"
+                                    strokeWidth="12"
+                                    strokeDasharray={circumference}
+                                    initial={{ strokeDashoffset: circumference }}
+                                    animate={{ strokeDashoffset: 0 }}
+                                    transition={{ duration: 1.5, ease: "easeOut" }}
+                                    strokeLinecap="round"
+                                />
+                            ) : (
+                                /* Under goal - segmented macro colors */
+                                <>
+                                    {/* Protein segment */}
+                                    <motion.circle
+                                        cx="80" cy="80" r="72" fill="none"
+                                        stroke="#8B5CF6"
+                                        strokeWidth="12"
+                                        strokeDasharray={circumference}
+                                        initial={{ strokeDashoffset: circumference }}
+                                        animate={{ strokeDashoffset: circumference - (protItemPct / 100) * circumference }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        strokeLinecap="round"
+                                    />
+                                    {/* Carbs segment */}
+                                    {carbItemPct > 0 && (
+                                        <motion.circle
+                                            cx="80" cy="80" r="72" fill="none"
+                                            stroke="#3B82F6"
+                                            strokeWidth="12"
+                                            strokeDasharray={circumference}
+                                            initial={{ strokeDashoffset: circumference }}
+                                            animate={{ strokeDashoffset: circumference - (carbItemPct / 100) * circumference }}
+                                            transition={{ duration: 1.5, ease: "easeOut", delay: 0.1 }}
+                                            strokeLinecap="round"
+                                            transform={`rotate(${(protItemPct / 100) * 360} 80 80)`}
+                                        />
+                                    )}
+                                    {/* Fat segment */}
+                                    {fatItemPct > 0 && (
+                                        <motion.circle
+                                            cx="80" cy="80" r="72" fill="none"
+                                            stroke="#F59E0B"
+                                            strokeWidth="12"
+                                            strokeDasharray={circumference}
+                                            initial={{ strokeDashoffset: circumference }}
+                                            animate={{ strokeDashoffset: circumference - (fatItemPct / 100) * circumference }}
+                                            transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+                                            strokeLinecap="round"
+                                            transform={`rotate(${((protItemPct + carbItemPct) / 100) * 360} 80 80)`}
+                                        />
+                                    )}
+                                </>
+                            )}
+
                             <defs>
-                                <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#10B981" />
-                                    <stop offset="100%" stopColor="#34D399" />
-                                </linearGradient>
                                 <linearGradient id="failGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                     <stop offset="0%" stopColor="#EF4444" />
                                     <stop offset="100%" stopColor="#B91C1C" />

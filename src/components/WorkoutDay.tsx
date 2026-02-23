@@ -393,15 +393,25 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         <div className="flex flex-col px-4 py-5 gap-5 max-w-lg mx-auto pb-24">
             {/* Week Tab Selector */}
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
-                {WEEK_DAYS.map((d, i) => (
-                    <button
-                        key={i}
-                        onClick={() => setSelectedDayIndex(i)}
-                        className={`flex-1 min-w-[3rem] py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${selectedDayIndex === i ? 'bg-indigo-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-                    >
-                        {d}
-                    </button>
-                ))}
+                {WEEK_DAYS.map((d, i) => {
+                    const dayData = localPlan.plan_data?.weeks?.[selectedWeekIndex]?.days?.[i];
+                    const isRest = dayData?.type === 'rest';
+
+                    return (
+                        <button
+                            key={i}
+                            onClick={() => setSelectedDayIndex(i)}
+                            className={`flex-1 min-w-[3rem] py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${selectedDayIndex === i
+                                    ? 'bg-indigo-600 text-white'
+                                    : isRest
+                                        ? 'bg-white/[0.02] text-gray-600 opacity-50 hover:bg-white/[0.05]'
+                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                }`}
+                        >
+                            {d}
+                        </button>
+                    )
+                })}
             </div>
 
             {/* Day and Week Selection */}
