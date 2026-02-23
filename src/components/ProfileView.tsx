@@ -204,7 +204,14 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                 }).eq('id', profile.id);
                 onRefresh();
             }
-            toast.success('Evolução registrada!');
+
+            // Reward massive points (500 XP for monthly review)
+            const { data: gamData } = await supabase.from('gamification').select('points').eq('user_id', profile.id).single();
+            if (gamData) {
+                await supabase.from('gamification').update({ points: gamData.points + 500 }).eq('user_id', profile.id);
+            }
+
+            toast.success('Evolução registrada! A IA reavaliou e intensificou seus treinos. Você ganhou +500 XP!');
             resetAddProgress();
             setShowAddProgress(false);
             await loadEntries();

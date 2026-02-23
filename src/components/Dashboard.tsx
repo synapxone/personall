@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, Activity, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble, ChevronUp, Sparkles } from 'lucide-react';
+import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, Activity, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Profile, WorkoutPlan, Gamification } from '../types';
 import WorkoutDayView from './WorkoutDay';
@@ -163,49 +163,6 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                     </p>
                                 </div>
 
-                                {/* Proactive AI Tip Card */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex gap-3 shadow-[0_4px_20px_-5px_rgba(99,102,241,0.15)] backdrop-blur-sm"
-                                >
-                                    <div className="w-10 h-10 shrink-0 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                        <Sparkles size={18} className="text-indigo-400" />
-                                    </div>
-                                    <div className="flex flex-col gap-1 justify-center">
-                                        <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Dica da sua IA</h4>
-                                        <p className="text-sm font-medium text-white leading-relaxed">
-                                            {(() => {
-                                                const todayStr = new Date().toISOString().split('T')[0];
-                                                const waterStr = localStorage.getItem(`water_${profile.id}_${todayStr}`);
-                                                const waterCups = waterStr ? parseInt(waterStr) : 0;
-                                                const goalCups = Math.ceil((profile.weight * 35) / 250);
-                                                const hour = new Date().getHours();
-
-                                                if (waterCups < goalCups / 2 && hour > 14) {
-                                                    return "Alerta de Hidratação 💧: Você bebeu pouca água para essa hora do dia! Que tal levantar e pegar um copo agora?";
-                                                }
-
-                                                const cals = nutritionTotals?.calories || 0;
-                                                const remaining = profile.daily_calorie_goal - cals;
-
-                                                if (hour >= 18 && remaining > 200 && remaining < 600) {
-                                                    return `Boa noite! Faltam ${remaining} kcal. 🍲 Sugestão: um grelhado leve com vegetais para bater a meta sem pesar no estômago!`;
-                                                }
-
-                                                if (hour < 20 && remaining <= 50) {
-                                                    return "Você já atingiu a meta do dia! 🛑 Se a fome bater à noite, vá de chá, gelatina zero ou água com limão.";
-                                                }
-
-                                                if (todayWorkout && todayWorkout.type !== 'rest') {
-                                                    return "Hoje é dia de treino! 🔥 Lembre-se de dar o seu máximo e anotar as cargas para que eu possa avaliar sua evolução.";
-                                                }
-
-                                                return "A consistência é o segredo do resultado! 🚀 Continue registrando seus hábitos para eu poder te guiar melhor.";
-                                            })()}
-                                        </p>
-                                    </div>
-                                </motion.div>
 
                                 {/* Results Analysis Overview */}
                                 <div className="p-5 rounded-2xl bg-white/5 border border-white/5 shadow-2xl backdrop-blur-sm">

@@ -78,7 +78,7 @@ ${recentMeals || 'Nenhuma refeição registrada'}
 `.trim();
 }
 
-function computeAlert(data: NutritionData): NutritionAlert | null {
+function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | null {
     const calPct = data.calories / data.calGoal;
     const protPct = data.protein / data.protGoal;
     const calRemaining = Math.max(0, data.calGoal - data.calories);
@@ -112,6 +112,34 @@ function computeAlert(data: NutritionData): NutritionAlert | null {
         };
     }
 
+    // General proactive tips based on time, hydration and calories remaining
+    const todayStr = new Date().toISOString().split('T')[0];
+    const waterStr = localStorage.getItem(`water_${profile.id}_${todayStr}`);
+    const waterCups = waterStr ? parseInt(waterStr) : 0;
+    const goalCups = Math.ceil((profile.weight * 35) / 250);
+    const hour = new Date().getHours();
+
+    if (waterCups < goalCups / 2 && hour > 14) {
+        return {
+            message: "Alerta de Hidratação 💧: Você bebeu pouca água para essa hora do dia! Que tal levantar e pegar um copo agora?",
+            autoPrompt: "Beber mais água me ajuda nos treinos? Como criar o hábito?",
+        };
+    }
+
+    if (hour >= 18 && calRemaining > 200 && calRemaining < 600) {
+        return {
+            message: `Boa noite! Faltam ${calRemaining} kcal. 🍲 Sugestão: um grelhado leve com vegetais para bater a meta sem pesar no estômago!`,
+            autoPrompt: `Faltam ${calRemaining} kcal para a minha meta de hoje e já é noite. Me sugira preparos de jantar que sejam leves e ricos em nutrientes!`,
+        };
+    }
+
+    if (hour < 20 && calRemaining <= 50 && data.calories > 0) {
+        return {
+            message: "Você já atingiu a meta do dia! 🛑 Se a fome bater à noite, vá de chá, gelatina zero ou água com limão.",
+            autoPrompt: "Já atingi minha meta de calorias hoje mas estou com um pouco de vontade de comer algo. O que posso consumir com 0 calorias que engane o estômago?",
+        };
+    }
+
     return null;
 }
 
@@ -127,7 +155,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const contextRef = useRef<string>('');
-    const prevNutritionRef = useRef<NutritionData | null>(null);
+    const prevNutritionRef = useRef<(NutritionData & { lastMessage?: string }) | null>(null);
     const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -140,14 +168,10 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
     useEffect(() => {
         if (!nutritionData) return;
 
-        const prev = prevNutritionRef.current;
-        prevNutritionRef.current = nutritionData;
-
-        // Only trigger when calories increase (new meal added), never on initial load
-        if (!prev || nutritionData.calories <= prev.calories) return;
-
-        const alert = computeAlert(nutritionData);
-        if (alert) {
+        // Ensure we only show alerts occasionally so it's not spamming every render
+        const alert = computeAlert(nutritionData, profile);
+        if (alert && alert.message !== prevNutritionRef.current?.lastMessage) {
+            prevNutritionRef.current = { ...nutritionData, lastMessage: alert.message };
             setNutritionAlert(alert);
             setAlertDismissed(false);
 
@@ -155,7 +179,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
             if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
             alertTimerRef.current = setTimeout(() => setAlertDismissed(true), 12000);
         }
-    }, [nutritionData]);
+    }, [nutritionData, profile]);
 
     // Cleanup timer on unmount
     useEffect(() => () => {

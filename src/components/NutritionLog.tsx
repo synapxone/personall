@@ -673,7 +673,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     };
 
     return (
-        <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-24">
+        <div className="flex flex-col px-4 py-5 gap-6 max-w-lg mx-auto pb-40">
             {/* Date Navigation */}
             <div className="flex items-center justify-between gap-2">
                 <button
@@ -847,7 +847,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     />
                 </div>
 
-                <div className="flex flex-wrap gap-2.5 justify-between">
+                <div className="flex flex-wrap gap-2.5 justify-start">
                     {Array.from({ length: Math.max(12, goalCups, waterCups) }).map((_, i) => {
                         const isSelected = i < waterCups;
                         const isNext = i === waterCups;
