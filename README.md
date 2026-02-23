@@ -215,7 +215,7 @@ src/
 ├── services/
 │   ├── geminiService.ts          # Integração Gemini: plano de treino, dieta, análise de foto/texto
 │   ├── exerciseService.ts        # ExerciseDB via RapidAPI + fallback API gratuita (por nome)
-│   ├── exerciseMediaService.ts   # Pipeline de mídia: DB cache → ExerciseDB download → Veo 2
+│   ├── exerciseMediaService.ts   # Pipeline de mídia: DB cache → free-exercise-db → ExerciseDB free API
 │   └── notificationService.ts
 └── components/
     ├── LandingPage.tsx      # Tela inicial + autenticação (magic link / OAuth)
@@ -241,12 +241,12 @@ src/
 ### Treino
 - Visualização do treino do dia (calculado pelo dia da semana)
 - Mídia dos exercícios via pipeline em 3 camadas:
-  1. Cache no Supabase (`exercise_media` + bucket `exercise-media`) → resposta instantânea
-  2. ExerciseDB (RapidAPI ou API gratuita por nome) → faz download e armazena no Supabase
-  3. Veo 2 (Google) → gera vídeo com estilo silhueta minimalista, armazena permanentemente
+  1. Cache no Supabase (`exercise_media`) → resposta instantânea, URL direta sem Storage
+  2. [`free-exercise-db`](https://github.com/yuhonas/free-exercise-db) (800+ exercícios, GitHub CDN, sem API key) → fuzzy matching por nome
+  3. ExerciseDB free API (`exercisedb-api.vercel.app`) → fallback por nome, URL direta armazenada no cache
+- Índice do `free-exercise-db` carregado em background no mount (`preloadFreeDb`)
 - Carregamento lazy (dispara apenas quando o exercício é expandido)
-- Spinner "Gerando demonstração…" enquanto Veo processa (~1 min, apenas na 1ª vez)
-- Suporte a `<img>` (GIF) e `<video autoplay loop muted>` (MP4)
+- Suporte a `<img>` (JPG/GIF) e `<video autoplay loop muted>` (MP4)
 - Registro de conclusão com seleção de exercícios completados
 - Ganho de pontos ao concluir (150 pts completo / 75 pts parcial)
 
@@ -331,7 +331,7 @@ npx tsc --noEmit  # type check
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.1.3
+**Status e Versão Atual:** v1.1.4
 
 ### Últimas Atualizações e Correções (Fev/2026):
 - **Design Dashboard Stats:** Os cartões na `Dashboard.tsx` receberam uma reformulação completa para exibir pequenos gráficos SVG/Backgrounds renderizados atrás dos números.
@@ -355,3 +355,4 @@ npx tsc --noEmit  # type check
 - **Câmera Multi-Item (Dieta):** Botão "Câmera" agora usa `capture="environment"` (abre câmera nativa em mobile). IA analisa todos os alimentos do prato individualmente (`geminiService.analyzeFoodPhotoItems`). Tela de revisão exibe cada item com macros; usuário pode remover itens antes de salvar todos de uma vez. Galeria mantém fluxo de item único.
 - **Rastreador de Água (Premium):** Removido scroll horizontal. Copos em `flex-wrap`. Exibe litros consumidos vs. meta (L) e quanto falta. Barra de progresso animada. Layout de cartão vertical com header/stats/grid.
 - **Câmera In-App (Fix crítico):** `capture="environment"` causava reload do WebView em dispositivos com pouca RAM (foto nunca chegava ao `onChange`). Substituído por câmera in-app via `navigator.mediaDevices.getUserMedia`. Preview de vídeo dentro do modal, botão "Capturar" congela o frame, canvas converte para blob e envia para a IA — sem sair do app, sem reload.
+- **Imagens de Exercícios (Fix + Fonte Nova):** Todos os exercícios mostravam a mesma imagem de fallback (Unsplash) pois o pipeline ExerciseDB/corsproxy falhava. `exerciseMediaService.ts` foi reescrito: pipeline passa a usar `yuhonas/free-exercise-db` (800+ exercícios, GitHub CDN direto, sem API key) como fonte primária com fuzzy matching por nome. Supabase Storage removido do pipeline (URLs diretas armazenadas no DB cache). ExerciseDB free API mantido como último fallback. Limpar tabela `exercise_media` no Supabase remove entradas inválidas do cache antigo.
