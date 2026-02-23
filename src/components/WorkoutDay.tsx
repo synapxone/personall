@@ -56,6 +56,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
     const [saving, setSaving] = useState(false);
     const [setsProgress, setSetsProgress] = useState<Record<number, SetState[]>>({});
     const [activeSetModal, setActiveSetModal] = useState<ActiveSetModal | null>(null);
+    const [quickFinishModal, setQuickFinishModal] = useState<{ exerciseIndex: number; exerciseName: string; type: string } | null>(null);
 
     // Post-workout summary stats (stored at save time to avoid state-reset race)
     const [summaryCompleted, setSummaryCompleted] = useState(0);
@@ -335,23 +336,30 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         return totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
     };
 
-    const handleFinishAll = () => {
-        if (!todayData) return;
+    const handleConfirmQuickFinish = (weightOrTime: string) => {
+        if (!quickFinishModal || !todayData) return;
+        const { exerciseIndex } = quickFinishModal;
+        const ex = todayData.exercises[exerciseIndex];
+        const numSets = ex.sets || 3;
+
         const newProgress = { ...setsProgress };
-        todayData.exercises.forEach((ex, exIdx) => {
-            const numSets = ex.sets || 3;
-            const sets: SetState[] = [];
-            for (let i = 0; i < numSets; i++) {
-                sets.push({
-                    status: 'done' as const,
-                    weight: '0',
-                    time: 0,
-                    showWeightInput: false
-                });
-            }
-            newProgress[exIdx] = sets;
-        });
+        const sets: SetState[] = [];
+        for (let i = 0; i < numSets; i++) {
+            sets.push({
+                status: 'done' as const,
+                weight: weightOrTime,
+                time: quickFinishModal.type === 'time' ? parseInt(weightOrTime) || 0 : 0,
+                showWeightInput: false
+            });
+        }
+        newProgress[exerciseIndex] = sets;
         setSetsProgress(newProgress);
+        setQuickFinishModal(null);
+
+        // Save weight to local storage for future reference
+        if (quickFinishModal.type !== 'time') {
+            localStorage.setItem(`weight_${ex.exercise_id}`, weightOrTime);
+        }
     };
 
     async function handleFinishWorkout() {
@@ -691,15 +699,6 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             <h2 className="text-xl font-bold text-white">{todayData?.name || ''}</h2>
                             <p className="text-gray-500 text-sm">{totalCount} exercícios</p>
                         </div>
-                        {progressPct < 100 && (
-                            <button
-                                onClick={handleFinishAll}
-                                className="px-3 py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-xs font-bold flex items-center gap-1.5 hover:bg-green-500/20 transition-all"
-                            >
-                                <CheckCheck size={14} />
-                                Finalizar Tudo
-                            </button>
-                        )}
                     </div>
 
                     <div>
@@ -981,6 +980,55 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             </div>
                             <button onClick={() => setShowCalendar(false)} className="w-full h-12 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold transition-colors mt-2">
                                 Voltar aos Treinos Atuais
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+
+                {quickFinishModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1A1A2E] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-5 shadow-2xl relative">
+                            <button onClick={() => setQuickFinishModal(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
+                            <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                                <CheckCheck size={28} className="text-green-500" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white leading-tight">Concluir Exercício</h3>
+                                <p className="text-gray-400 text-sm mt-1">{quickFinishModal.exerciseName}</p>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                    {quickFinishModal.type === 'time' ? 'Tempo total (minutos)' : 'Carga utilizada (kg)'}
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        autoFocus
+                                        type="number"
+                                        placeholder={quickFinishModal.type === 'time' ? 'Ex: 20' : 'Ex: 45'}
+                                        className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-5 text-lg font-bold text-white placeholder-gray-700 focus:outline-none focus:border-green-500 transition-all"
+                                        id="quick-finish-input"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                const val = (e.target as HTMLInputElement).value;
+                                                if (val) handleConfirmQuickFinish(val);
+                                            }
+                                        }}
+                                    />
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-gray-600">
+                                        {quickFinishModal.type === 'time' ? 'min' : 'kg'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    const input = document.getElementById('quick-finish-input') as HTMLInputElement;
+                                    if (input.value) handleConfirmQuickFinish(input.value);
+                                }}
+                                className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-2"
+                            >
+                                Salvar e Concluir Séries
                             </button>
                         </motion.div>
                     </div>
