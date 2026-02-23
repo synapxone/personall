@@ -69,29 +69,59 @@ function buildCalendarDays(month: Date): (string | null)[] {
 }
 
 function compressImage(file: File, maxSize = 512): Promise<{ base64: string; mimeType: string }> {
-    return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-            let { width, height } = img;
-            if (width > maxSize || height > maxSize) {
-                const ratio = Math.min(maxSize / width, maxSize / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
+    return new Promise(async (resolve) => {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+
+            // Use createImageBitmap if available for MASSIVE memory savings (prevents iOS Safari OOM crash)
+            if ('createImageBitmap' in window) {
+                try {
+                    const bitmap = await createImageBitmap(file);
+                    let { width, height } = bitmap;
+                    if (width > maxSize || height > maxSize) {
+                        const ratio = Math.min(maxSize / width, maxSize / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(bitmap, 0, 0, width, height);
+                    bitmap.close(); // free memory immediately
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+                    return;
+                } catch (err) {
+                    console.warn('createImageBitmap failed, falling back to Image', err);
+                }
             }
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-            URL.revokeObjectURL(url);
-            resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
+
+            // Fallback for older browsers
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxSize || height > maxSize) {
+                    const ratio = Math.min(maxSize / width, maxSize / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                URL.revokeObjectURL(url);
+                resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve({ base64: '', mimeType: 'image/jpeg' });
+            };
+            img.src = url;
+        } catch (e) {
+            console.error('compressImage crash', e);
             resolve({ base64: '', mimeType: 'image/jpeg' });
-        };
-        img.src = url;
+        }
     });
 }
 
@@ -746,9 +776,15 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            capture="environment"
                                             className="hidden"
-                                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); e.target.value = ''; }}
+                                            onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) {
+                                                    // Add strict delay so iOS/Android WebView can finish native camera lifecycle and free RAM before React unmounts input
+                                                    setTimeout(() => handlePhotoAnalysis(f), 500);
+                                                }
+                                                e.target.value = '';
+                                            }}
                                         />
                                     </label>
                                     <label
@@ -766,7 +802,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             type="file"
                                             accept="image/*"
                                             className="hidden"
-                                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoAnalysis(f); e.target.value = ''; }}
+                                            onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) {
+                                                    setTimeout(() => handlePhotoAnalysis(f), 500);
+                                                }
+                                                e.target.value = '';
+                                            }}
                                         />
                                     </label>
                                     <button
