@@ -4,7 +4,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.5-flash-lite'];
 
-async function callGemini(model: string, prompt: string, timeoutMs = 60000): Promise<string> {
+async function callGemini(model: string, prompt: string, timeoutMs = 60000, maxOutputTokens = 8192): Promise<string> {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -13,7 +13,7 @@ async function callGemini(model: string, prompt: string, timeoutMs = 60000): Pro
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                generationConfig: { temperature: 0.7, maxOutputTokens },
             }),
             signal: controller.signal,
         });
@@ -46,10 +46,10 @@ async function callGeminiVision(model: string, base64Data: string, mimeType: str
     }
 }
 
-async function generateWithFallback(prompt: string): Promise<string> {
+async function generateWithFallback(prompt: string, maxOutputTokens = 8192): Promise<string> {
     for (const modelName of MODELS) {
         try {
-            const text = await callGemini(modelName, prompt);
+            const text = await callGemini(modelName, prompt, 60000, maxOutputTokens);
             if (text) return text;
         } catch (e) {
             console.warn(`Model ${modelName} failed, trying next...`, e);
@@ -131,7 +131,7 @@ Formato:
 }`;
 
         try {
-            const text = await generateWithFallback(prompt);
+            const text = await generateWithFallback(prompt, 16384);
             return parseSafeJSON(text);
         } catch (e) {
             console.error('Error generating workout plan:', e);
@@ -422,16 +422,28 @@ function parseSafeJSON(text: string): any {
 
         try {
             return JSON.parse(jsonStr);
-        } catch (e) {
-            // Try to repair truncated JSON by closing all open brackets/braces
-            let repaired = jsonStr;
+        } catch {
+            // Repair truncated JSON: track strings and open brackets/braces
             const stack: ('{' | '[')[] = [];
+            let inString = false;
+            let escaped = false;
+
             for (let i = 0; i < jsonStr.length; i++) {
-                const char = jsonStr[i];
-                if (char === '{' || char === '[') stack.push(char);
-                else if (char === '}') stack.pop();
-                else if (char === ']') stack.pop();
+                const ch = jsonStr[i];
+                if (escaped) { escaped = false; continue; }
+                if (ch === '\\' && inString) { escaped = true; continue; }
+                if (ch === '"') { inString = !inString; continue; }
+                if (!inString) {
+                    if (ch === '{' || ch === '[') stack.push(ch as '{' | '[');
+                    else if (ch === '}' || ch === ']') stack.pop();
+                }
             }
+
+            let repaired = jsonStr;
+            // Close unterminated string first, then remove trailing comma if any
+            if (inString) repaired += '"';
+            repaired = repaired.replace(/,\s*$/, '');
+            // Close open structures
             while (stack.length > 0) {
                 const last = stack.pop();
                 repaired += (last === '{' ? '}' : ']');
