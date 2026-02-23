@@ -299,8 +299,13 @@ npx tsc --noEmit  # type check
 **Status e Versão Atual:** v1.0.3
 
 ### Últimas Atualizações e Correções (Fev/2026):
-- **Design Nutrição (Foodvisor-like):** O Layout do `NutritionLog.tsx` foi reformulado inteiramente. Adicionado um cartão de resumo panorâmico (SVG), barras dinâmicas para macros e botões minimalistas tracejados nas refeições.
+- **Design Dashboard Stats:** Os cartões na `Dashboard.tsx` receberam uma reformulação completa para exibir pequenos gráficos SVG/Backgrounds renderizados atrás dos números.
+- **Design Sessão de Treinos:** Reformulação pesada no `WorkoutDay.tsx`:
+  - O modal de "Descanso" agora possui um layout flutuante com *backdrop-blur* (*glassmorphism*).
+  - O modal de tempo ativo ("Active Set") recebeu um arco em gradiente ao redor dos números, garantindo foco central e aspecto premium (*stopColors* SVG).
+  - Foram removidos o estilo `mix-blend-screen` das mídias/vídeos dos exercícios, garantindo que as imagens/demonstrações carregadas de origens externas sejam exibidas corretamente sem ficar invisíveis num tema claro com fundo dark.
 - **Câmera Móvel (Fix iOS/Android):** Modificamos a Câmera e Galeria na aba de nutrição para usarem nativamente um `<label>` envelopando um `<input type="file" hidden>`. Anteriormente, cliques via script (`ref.current.click()`) forçavam as WebViews móveis a matar a rotina e reiniciar a aplicação (Refresh) em contextos de pouca RAM.
+- **Design Nutrição (Foodvisor-like):** O Layout do `NutritionLog.tsx` foi reformulado inteiramente. Adicionado um cartão de resumo panorâmico (SVG), barras dinâmicas para macros e botões minimalistas tracejados nas refeições.
 - **Submissões de Formulários:** Adicionado `type="button"` aos botões da interface de Nutrição para impedir que eles acionassem submissões indesejadas (Submit), o que recarregava o app no mobile. Tratado também o erro `img.onerror` na compressão de base64.
 - **Treino da IA (Regra 7 dias):** A IA (`geminiService.ts`) foi ajustada no *prompt* para garantir que entregue planos de treinos divididos de Segunda a Domingo. Além disso, foi forçada a gerar GIFs com base SOMENTE em IDs EXATAMENTE numéricos vindos do repositório/API (ex: "0009") para o app não quebrar.
 - **Aparência e Temas:** Implementado suporte para alternância entre Claro e Escuro (Tema) persistindo no `localStorage`.

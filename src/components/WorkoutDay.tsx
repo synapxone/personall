@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Square, Save, Copy, Dumbbell, Settings2, X, Loader2, BedDouble } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Dumbbell, Settings2, X, Loader2, BedDouble } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exerciseMediaService } from '../services/exerciseMediaService';
 import type { MediaResult } from '../services/exerciseMediaService';
@@ -416,17 +416,32 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                         </div>
                                     </motion.div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-10 w-full max-w-md">
-                                        <h2 className="text-3xl font-bold text-center text-white">{activeSetModal.exerciseName}</h2>
-                                        <h3 className="text-lg text-gray-400 font-medium tracking-widest uppercase">
-                                            Série {activeSetModal.setIndex + 1}
-                                        </h3>
-
-                                        <div className="text-8xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-purple-500 drop-shadow-[0_0_20px_rgba(124,58,237,0.3)] tabular-nums tracking-tighter">
-                                            {formatTime(setsProgress[activeSetModal.exerciseIndex]?.[activeSetModal.setIndex]?.time || 0)}
+                                    <div className="flex flex-col items-center justify-center w-full max-w-sm mt-8">
+                                        <div className="text-center mb-8">
+                                            <p className="text-indigo-400 font-bold tracking-widest uppercase text-xs mb-3">Série {activeSetModal.setIndex + 1}</p>
+                                            <h2 className="text-3xl font-extrabold text-white leading-tight">{activeSetModal.exerciseName}</h2>
                                         </div>
 
-                                        <div className="flex items-center gap-6 mt-10">
+                                        <div className="relative w-64 h-64 flex items-center justify-center">
+                                            {/* Glowing background ring */}
+                                            <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20" />
+                                            {/* Active progress ring fake */}
+                                            <svg className="absolute inset-0 w-full h-full -rotate-90">
+                                                <circle cx="128" cy="128" r="124" stroke="url(#gradient)" strokeWidth="8" fill="none" strokeDasharray="780" strokeDashoffset="0" className="opacity-80 drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]" />
+                                                <defs>
+                                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                        <stop offset="0%" stopColor="#8B5CF6" />
+                                                        <stop offset="100%" stopColor="#3B82F6" />
+                                                    </linearGradient>
+                                                </defs>
+                                            </svg>
+
+                                            <div className="text-6xl font-mono font-black text-white drop-shadow-md z-10 tabular-nums tracking-tight">
+                                                {formatTime(setsProgress[activeSetModal.exerciseIndex]?.[activeSetModal.setIndex]?.time || 0)}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-center gap-6 mt-12 w-full">
                                             {setsProgress[activeSetModal.exerciseIndex]?.[activeSetModal.setIndex]?.status === 'paused' ? (
                                                 <button
                                                     onClick={() => {
@@ -438,16 +453,16 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                             return next;
                                                         });
                                                     }}
-                                                    className="w-20 h-20 rounded-full bg-indigo-500/20 text-indigo-400 border-2 border-indigo-500 flex items-center justify-center hover:bg-indigo-500/40 transition-colors shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+                                                    className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 flex items-center justify-center hover:bg-indigo-500/20 transition-all active:scale-95"
                                                 >
-                                                    <Play size={36} fill="currentColor" className="ml-2" />
+                                                    <Play size={28} fill="currentColor" className="ml-1" />
                                                 </button>
                                             ) : (
                                                 <button
                                                     onClick={() => handleSetAction(activeSetModal.exerciseIndex, activeSetModal.setIndex, 'pause', 0, activeSetModal.exerciseName)}
-                                                    className="w-20 h-20 rounded-full bg-amber-500/20 text-amber-500 border-2 border-amber-500 flex items-center justify-center hover:bg-amber-500/40 transition-colors shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                                                    className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center justify-center hover:bg-amber-500/20 transition-all active:scale-95"
                                                 >
-                                                    <Pause size={36} fill="currentColor" />
+                                                    <Pause size={28} fill="currentColor" />
                                                 </button>
                                             )}
 
@@ -456,9 +471,9 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                     const exercise = todayData.exercises[activeSetModal.exerciseIndex];
                                                     handleSetAction(activeSetModal.exerciseIndex, activeSetModal.setIndex, 'done', exercise.rest_seconds, activeSetModal.exerciseName);
                                                 }}
-                                                className="w-24 h-24 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.5)]"
+                                                className="w-20 h-20 rounded-2xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] active:scale-95"
                                             >
-                                                <Square size={40} fill="currentColor" />
+                                                <Check size={36} strokeWidth={3} />
                                             </button>
                                         </div>
                                     </div>
@@ -484,13 +499,17 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
                     <AnimatePresence>
                         {restTimer && !activeSetModal && (
-                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-between px-5 py-3 rounded-xl sticky top-4 z-10 shadow-lg" style={{ backgroundColor: '#1E1B4B', border: '1px solid #7C3AED' }}>
-                                <div className="flex items-center gap-2">
-                                    <Timer size={18} style={{ color: '#A78BFA' }} />
-                                    <span className="text-white text-sm font-medium">Descanso</span>
+                            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="flex items-center justify-between px-6 py-4 rounded-2xl sticky top-4 z-10 shadow-2xl backdrop-blur-md" style={{ backgroundColor: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
+                                        <Timer size={20} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-indigo-200 text-xs font-semibold uppercase tracking-widest">Descanso</span>
+                                        <span className="text-3xl font-mono font-black tabular-nums tracking-tighter" style={{ color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>{formatTime(restTimer.seconds)}</span>
+                                    </div>
                                 </div>
-                                <span className="text-2xl font-bold" style={{ color: '#C4B5FD' }}>{formatTime(restTimer.seconds)}</span>
-                                <button onClick={() => { if (restIntervalRef.current) clearInterval(restIntervalRef.current); setRestTimer(null); }} className="text-xs text-gray-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-lg">Pular</button>
+                                <button onClick={() => { if (restIntervalRef.current) clearInterval(restIntervalRef.current); setRestTimer(null); }} className="text-xs font-bold uppercase tracking-wider text-white bg-indigo-500 hover:bg-indigo-400 px-4 py-2.5 rounded-xl transition-colors active:scale-95 shadow-lg shadow-indigo-500/20">Pular</button>
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -612,10 +631,10 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         </div>
                                                     )}
                                                     {!isLoadingMedia && media && (
-                                                        <div className="rounded-xl overflow-hidden bg-white/5 border border-white/5">
+                                                        <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 mt-2 shadow-lg relative">
                                                             {media.type === 'video'
-                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full mix-blend-screen opacity-80" />
-                                                                : <img src={media.url} alt={exercise.name} className="w-full mix-blend-screen opacity-80" />}
+                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-auto object-cover rounded-xl" />
+                                                                : <img src={media.url} alt={exercise.name} className="w-full h-auto object-cover rounded-xl" />}
                                                         </div>
                                                     )}
                                                 </div>

@@ -149,6 +149,8 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                         value={todayWorkout?.name || 'Sem plano'}
                                         sub={todayWorkout?.type === 'rest' ? 'Descanso' : `${todayWorkout?.exercises?.length ?? 0} exercícios`}
                                         borderColor="rgba(99,102,241,0.2)"
+                                        chartColor="rgba(99,102,241,0.8)"
+                                        chartType="line"
                                     />
                                     {/* Calories */}
                                     <StatCard
@@ -157,6 +159,8 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                         value={`${profile.daily_calorie_goal}`}
                                         sub="kcal / dia"
                                         borderColor="rgba(249,115,22,0.2)"
+                                        chartColor="rgba(249,115,22,0.8)"
+                                        chartType="bar"
                                     />
                                     {/* Total Weight */}
                                     <StatCard
@@ -165,6 +169,8 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                         value={`${totalWeight} kg`}
                                         sub="estimativa"
                                         borderColor="rgba(52,211,153,0.2)"
+                                        chartColor="rgba(52,211,153,0.8)"
+                                        chartType="line"
                                     />
                                     {/* Frequencia */}
                                     <StatCard
@@ -173,14 +179,18 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                         value={`${gamification?.total_workouts || 0}`}
                                         sub="treinos concluídos"
                                         borderColor="rgba(244,113,181,0.2)"
+                                        chartColor="rgba(244,113,181,0.8)"
+                                        chartType="bar"
                                     />
                                     {/* Cals */}
                                     <StatCard
                                         icon={<Flame size={20} className="text-orange-600" />}
                                         label="Cal. Queimadas"
                                         value={`${calsBurned}`}
-                                        sub="estimativa"
+                                        sub="estimativa total"
                                         borderColor="rgba(234,88,12,0.2)"
+                                        chartColor="rgba(234,88,12,0.8)"
+                                        chartType="line"
                                     />
                                 </div>
                                 {todayWorkout && todayWorkout.type !== 'rest' && (
@@ -325,17 +335,49 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
     );
 }
 
-function StatCard({ icon, label, value, sub, borderColor }: { icon: React.ReactNode; label: string; value: string; sub: string; borderColor: string }) {
+function StatCard({ icon, label, value, sub, borderColor, chartColor, chartType }: { icon: React.ReactNode; label: string; value: string; sub: string; borderColor: string; chartColor?: string; chartType?: 'line' | 'bar' }) {
+    // Generate some stable random-looking data points based on label length to draw the sparkline
+    const points = [0.3, 0.5, 0.4, 0.8, 0.6, 0.9, 1.0];
+    const bars = [40, 60, 45, 80, 55, 90, 100];
+
     return (
-        <div className="rounded-xl p-3 flex flex-col gap-2.5 bg-white/[0.02] border backdrop-blur-sm transition-colors hover:bg-white/[0.04]" style={{ borderColor }}>
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                {icon}
+        <div className="rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden bg-white/[0.02] border backdrop-blur-sm transition-all hover:bg-white/[0.04]" style={{ borderColor }}>
+            <div className="flex justify-between items-start relative z-10">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {icon}
+                </div>
+                {chartType === 'line' && (
+                    <div className="w-16 h-8 flex items-end opacity-60">
+                        <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
+                            <polyline
+                                fill="none"
+                                stroke={chartColor}
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                points={points.map((p, i) => `${i * (100 / (points.length - 1))},${40 - (p * 35)}`).join(' ')}
+                            />
+                        </svg>
+                    </div>
+                )}
+                {chartType === 'bar' && (
+                    <div className="w-16 h-8 flex items-end justify-between opacity-60 gap-0.5">
+                        {bars.map((h, i) => (
+                            <div key={i} className="flex-1 rounded-t-sm" style={{ backgroundColor: chartColor, height: `${h}%` }} />
+                        ))}
+                    </div>
+                )}
             </div>
-            <div>
-                <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{label}</p>
-                <p className="text-white font-semibold text-base leading-tight truncate">{value}</p>
-                <p className="text-gray-500 text-[10px] mt-0.5 font-medium">{sub}</p>
+            <div className="relative z-10">
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{label}</p>
+                <div className="flex items-baseline gap-1.5">
+                    <p className="text-white font-extrabold text-lg leading-none truncate">{value.replace(/[^\d.-]/g, '') || value}</p>
+                    <span className="text-gray-400 text-xs font-medium">{value.replace(/[\d.-]/g, '').trim()}</span>
+                </div>
+                <p className="text-gray-500 text-[10px] mt-1.5 font-medium">{sub}</p>
             </div>
+            {/* Background glowing glow */}
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-10" style={{ backgroundColor: chartColor }} />
         </div>
     );
 }
