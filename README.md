@@ -252,7 +252,7 @@ src/
 
 ### Nutrição
 - Registro por foto:
-  - **Câmera** (`capture="environment"`) → abre câmera nativa; IA detecta **cada item do prato individualmente** (`analyzeFoodPhotoItems`); tela de revisão permite remover itens antes de salvar todos de uma vez
+  - **Câmera** → preview de vídeo in-app via `getUserMedia` (sem sair do app); botão "Capturar" congela frame; IA detecta **cada item do prato individualmente** (`analyzeFoodPhotoItems`); tela de revisão permite remover itens antes de salvar todos de uma vez
   - **Galeria** (sem capture) → fluxo existente de item único
 - Registro por texto com busca inteligente + sugestão de unidades de medida
 - Gemini Vision identifica alimento e estima macros automaticamente
@@ -331,7 +331,7 @@ npx tsc --noEmit  # type check
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.1.2
+**Status e Versão Atual:** v1.1.3
 
 ### Últimas Atualizações e Correções (Fev/2026):
 - **Design Dashboard Stats:** Os cartões na `Dashboard.tsx` receberam uma reformulação completa para exibir pequenos gráficos SVG/Backgrounds renderizados atrás dos números.
@@ -354,3 +354,4 @@ npx tsc --noEmit  # type check
 - **Navegação de Datas (Dieta):** `NutritionLog.tsx` ganhou seletor de data com setas prev/next e calendário mensal. `loadData(date)` agora aceita parâmetro; `saveMeal`, `updateDailyNutrition` e water handler usam `selectedDate`. Calendário destaca dias com refeições via `fetchMealDates()`.
 - **Câmera Multi-Item (Dieta):** Botão "Câmera" agora usa `capture="environment"` (abre câmera nativa em mobile). IA analisa todos os alimentos do prato individualmente (`geminiService.analyzeFoodPhotoItems`). Tela de revisão exibe cada item com macros; usuário pode remover itens antes de salvar todos de uma vez. Galeria mantém fluxo de item único.
 - **Rastreador de Água (Premium):** Removido scroll horizontal. Copos em `flex-wrap`. Exibe litros consumidos vs. meta (L) e quanto falta. Barra de progresso animada. Layout de cartão vertical com header/stats/grid.
+- **Câmera In-App (Fix crítico):** `capture="environment"` causava reload do WebView em dispositivos com pouca RAM (foto nunca chegava ao `onChange`). Substituído por câmera in-app via `navigator.mediaDevices.getUserMedia`. Preview de vídeo dentro do modal, botão "Capturar" congela o frame, canvas converte para blob e envia para a IA — sem sair do app, sem reload.
