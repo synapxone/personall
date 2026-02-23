@@ -17,6 +17,7 @@ interface NutritionData {
 }
 
 interface NutritionAlert {
+    type: 'cal_over' | 'cal_near' | 'prot_low' | 'water' | 'dinner' | 'goal_hit';
     message: string;
     autoPrompt: string;
 }
@@ -86,6 +87,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (calPct >= 1.0) {
         return {
+            type: 'cal_over',
             message: `Você passou da meta calórica em ${calExcess} kcal hoje! 🛑 Evite refeições pesadas no restante do dia.`,
             autoPrompt: `Passei ${calExcess} kcal da minha meta hoje (${data.calories}/${data.calGoal} kcal). O que posso fazer para minimizar o impacto? O que é seguro comer no restante do dia?`,
         };
@@ -93,6 +95,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (calPct >= 0.8 && protPct < 0.5) {
         return {
+            type: 'prot_low',
             message: `Quase na meta calórica (${Math.round(calPct * 100)}%)! Mas só ${data.protein}g de ${data.protGoal}g de proteína. 💪 Quer uma sugestão proteica que caiba nos ${calRemaining} kcal restantes?`,
             autoPrompt: `Estou com ${data.calories} kcal de ${data.calGoal} (faltam ${calRemaining} kcal) mas só ${data.protein}g de ${data.protGoal}g de proteína. Me sugira uma refeição rica em proteína que caiba no déficit calórico restante.`,
         };
@@ -100,6 +103,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (calPct >= 0.8) {
         return {
+            type: 'cal_near',
             message: `Você já consumiu ${Math.round(calPct * 100)}% da sua meta calórica hoje! 🔥 Faltam apenas ${calRemaining} kcal. Quer saber o que ainda pode comer?`,
             autoPrompt: `Já consumi ${Math.round(calPct * 100)}% da meta calórica (faltam ${calRemaining} kcal, ${data.protein}g de proteína consumidos de ${data.protGoal}g). Quais opções leves e nutritivas posso comer no restante do dia?`,
         };
@@ -107,8 +111,9 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (calPct >= 0.65 && protPct < 0.4) {
         return {
+            type: 'prot_low',
             message: `Proteína ainda baixa! Apenas ${data.protein}g de ${data.protGoal}g consumidos hoje. 💪 Ainda tem espaço nas calorias — quer uma sugestão?`,
-            autoPrompt: `Consumi apenas ${data.protein}g de proteína (meta: ${data.protGoal}g) com ${data.calories} kcal hoje. Me sugira refeições ou lanches ricos em proteína para o restante do dia.`,
+            autoPrompt: `Consumi apenas ${data.protein}g de proteína (meta: ${data.protGoal}g) with ${data.calories} kcal hoje. Me sugira refeições ou lanches ricos em proteína para o restante do dia.`,
         };
     }
 
@@ -121,6 +126,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (waterCups < goalCups / 2 && hour > 14) {
         return {
+            type: 'water',
             message: "Alerta de Hidratação 💧: Você bebeu pouca água para essa hora do dia! Que tal levantar e pegar um copo agora?",
             autoPrompt: "Beber mais água me ajuda nos treinos? Como criar o hábito?",
         };
@@ -128,6 +134,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (hour >= 18 && calRemaining > 200 && calRemaining < 600) {
         return {
+            type: 'dinner',
             message: `Boa noite! Faltam ${calRemaining} kcal. 🍲 Sugestão: um grelhado leve com vegetais para bater a meta sem pesar no estômago!`,
             autoPrompt: `Faltam ${calRemaining} kcal para a minha meta de hoje e já é noite. Me sugira preparos de jantar que sejam leves e ricos em nutrientes!`,
         };
@@ -135,6 +142,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
 
     if (hour < 20 && calRemaining <= 50 && data.calories > 0) {
         return {
+            type: 'goal_hit',
             message: "Você já atingiu a meta do dia! 🛑 Se a fome bater à noite, vá de chá, gelatina zero ou água com limão.",
             autoPrompt: "Já atingi minha meta de calorias hoje mas estou com um pouco de vontade de comer algo. O que posso consumir com 0 calorias que engane o estômago?",
         };
@@ -168,16 +176,26 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
     useEffect(() => {
         if (!nutritionData) return;
 
-        // Ensure we only show alerts occasionally so it's not spamming every render
         const alert = computeAlert(nutritionData, profile);
-        if (alert && alert.message !== prevNutritionRef.current?.lastMessage) {
-            prevNutritionRef.current = { ...nutritionData, lastMessage: alert.message };
-            setNutritionAlert(alert);
-            setAlertDismissed(false);
+        if (alert) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const alertKey = `ai_alert_${profile.id}_${alert.type}_${todayStr}`;
 
-            // Auto-dismiss after 12s
-            if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
-            alertTimerRef.current = setTimeout(() => setAlertDismissed(true), 12000);
+            // Check if this type of alert was already shown today
+            const alreadyShown = localStorage.getItem(alertKey);
+
+            if (!alreadyShown && alert.message !== prevNutritionRef.current?.lastMessage) {
+                prevNutritionRef.current = { ...nutritionData, lastMessage: alert.message };
+                setNutritionAlert(alert);
+                setAlertDismissed(false);
+
+                // Mark as shown for today
+                localStorage.setItem(alertKey, 'true');
+
+                // Auto-dismiss after 12s
+                if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+                alertTimerRef.current = setTimeout(() => setAlertDismissed(true), 12000);
+            }
         }
     }, [nutritionData, profile]);
 

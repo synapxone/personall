@@ -114,7 +114,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
     return (
         <div className="min-h-screen flex flex-col font-sans" style={{ backgroundColor: '#09090B' }}>
             {/* Top header */}
-            <header className="flex items-center justify-between px-5 pt-8 pb-4 safe-top border-b" style={{ backgroundColor: '#09090B', borderColor: 'rgba(255,255,255,0.05)' }}>
+            <header className="flex items-center justify-between px-5 pt-14 pb-4 safe-top border-b" style={{ backgroundColor: '#09090B', borderColor: 'rgba(255,255,255,0.05)' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/10 border border-indigo-500/20">
                         <Activity size={18} className="text-indigo-400" />
@@ -366,7 +366,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
 
                 {/* VERSION INDICATOR */}
                 <div className="flex justify-center mt-8 mb-4">
-                    <span className="text-[10px] text-gray-700 font-semibold tracking-widest uppercase">Versão 1.1.2</span>
+                    <span className="text-[10px] text-gray-700 font-semibold tracking-widest uppercase">Versão 1.1.3</span>
                 </div>
             </main>
 
