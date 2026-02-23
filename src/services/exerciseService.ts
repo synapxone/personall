@@ -46,11 +46,11 @@ export const exerciseService = {
         if (nameCache.has(key)) return nameCache.get(key)!;
         try {
             const encoded = encodeURIComponent(key);
-            const res = await fetch(`${FREE_API_URL}/exercises/name/${encoded}?limit=1`);
+            const res = await fetch(`${FREE_API_URL}/exercises?name=${encoded}&limit=1`);
             if (!res.ok) { nameCache.set(key, null); return null; }
             const json = await res.json();
-            // API returns { success, data: { exercises: [...] } }
-            const list: any[] = Array.isArray(json) ? json : json?.data?.exercises ?? [];
+
+            const list: any[] = Array.isArray(json) ? json : json?.data ?? [];
             if (!list.length) { nameCache.set(key, null); return null; }
             const ex = list[0];
             const mapped: ExerciseDBItem = {

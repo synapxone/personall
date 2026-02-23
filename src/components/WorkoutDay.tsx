@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Dumbbell, Settings2, X, Loader2, BedDouble } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Settings2, X, Loader2, BedDouble, Zap, Target, Activity, Calendar, CalendarClock, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exerciseMediaService } from '../services/exerciseMediaService';
 import type { MediaResult } from '../services/exerciseMediaService';
@@ -58,8 +58,19 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
     // Regenerate Modals
     const [showConfig, setShowConfig] = useState(false);
-    const [regenMin, setRegenMin] = useState(profile.available_minutes);
-    const [regenLoc, setRegenLoc] = useState(profile.training_location);
+    const [showWeekConfig, setShowWeekConfig] = useState(false);
+    const [showCalendar, setShowCalendar] = useState(false);
+
+    // Week Rebuild state
+    const [regenWeekLoc, setRegenWeekLoc] = useState<string>(profile.training_location || 'gym');
+    const [regenWeekMin, setRegenWeekMin] = useState(profile.available_minutes || 45);
+    const [remindTime, setRemindTime] = useState('06:00');
+    const [weekDaysActive, setWeekDaysActive] = useState<boolean[]>([true, true, true, true, true, false, false]);
+    const [isRebuildingWeek, setIsRebuildingWeek] = useState(false);
+
+    // Single Day Rebuild state
+    const [regenMin, setRegenMin] = useState(45);
+    const [regenLoc, setRegenLoc] = useState<string>(profile.training_location || 'gym');
     const [isGenerating, setIsGenerating] = useState(false);
 
     const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -346,6 +357,28 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
         }
     };
 
+    const handleRebuildWeek = async () => {
+        setIsRebuildingWeek(true);
+        try {
+            // Reutiliza a lógica do profile para gerar toda a semana de uma vez pra pessoa
+            const newProfileData = { ...profile, training_location: regenWeekLoc as any, available_minutes: regenWeekMin };
+            const newPlanJson = await geminiService.generateWorkoutPlan(newProfileData);
+
+            if (newPlanJson && newPlanJson.weeks) {
+                await supabase.from('workout_plans').update({ plan_data: newPlanJson }).eq('id', plan.id).throwOnError();
+                setLocalPlan({ ...localPlan, name: newPlanJson.name, plan_data: newPlanJson });
+                setShowWeekConfig(false);
+                alert("Sua semana foi reajustada com sucesso! Lembrete salvo para as " + remindTime);
+            } else {
+                alert("Falha ao gerar nova semana.");
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsRebuildingWeek(false);
+        }
+    };
+
     const totalCount = todayData ? todayData.exercises.length : 0;
     const progressPct = getProgressPct();
 
@@ -364,12 +397,20 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                 ))}
             </div>
 
-            {/* Config Regenerate Button */}
-            <div className="flex justify-between items-center">
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide">{localPlan.name}</p>
-                <button onClick={() => setShowConfig(true)} className="flex items-center gap-1 text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
-                    <Settings2 size={14} /> Ajustar Dia
-                </button>
+            {/* Config & Calendar Buttons */}
+            <div className="flex justify-between items-center bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                <p className="text-indigo-300 text-xs font-bold uppercase tracking-wider pl-1 max-w-[40%] truncate">{localPlan.name}</p>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setShowCalendar(true)} className="flex items-center justify-center text-gray-400 bg-white/5 w-8 h-8 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                        <Calendar size={14} />
+                    </button>
+                    <button onClick={() => setShowWeekConfig(true)} className="flex items-center gap-1 text-xs text-indigo-400 bg-indigo-500/10 px-2 h-8 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                        <CalendarClock size={14} /> Semana
+                    </button>
+                    <button onClick={() => setShowConfig(true)} className="flex items-center gap-1 text-xs text-orange-400 bg-orange-500/10 px-2 h-8 rounded-lg border border-orange-500/20 hover:bg-orange-500/20 transition-colors">
+                        <Settings2 size={14} /> Dia
+                    </button>
+                </div>
             </div>
 
             {sessionDone ? (
@@ -523,14 +564,14 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             const sets = setsProgress[i] || [];
 
                             return (
-                                <motion.div key={i} layout className="rounded-2xl overflow-hidden transition-all duration-300" style={{ backgroundColor: '#1A1A2E', border: `1px solid ${done ? 'rgba(16,185,129,0.4)' : expanded ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.06)'}`, boxShadow: expanded ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : 'none' }}>
-                                    <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setExpandedIndex(expanded ? null : i)}>
-                                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
+                                <motion.div key={i} layout className="rounded-2xl overflow-hidden transition-all duration-300 relative group" style={{ backgroundColor: '#1A1A2E', border: `1px solid ${done ? 'rgba(16,185,129,0.4)' : expanded ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.06)'}`, boxShadow: expanded ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : 'none' }}>
+                                    <div className="flex items-center gap-3 p-4 cursor-pointer relative z-10" onClick={() => setExpandedIndex(expanded ? null : i)}>
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90 border border-white/10 shadow-inner" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
                                             {media?.type === 'video'
                                                 ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                                                 : media?.url
                                                     ? <img src={media.url} alt={exercise.name} className="w-full h-full object-cover" />
-                                                    : <span className="text-2xl">💪</span>}
+                                                    : <Zap size={24} className="text-indigo-400" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className={`font-semibold text-sm truncate ${done ? 'text-green-400' : 'text-white'}`}>{exercise.name}</p>
@@ -543,7 +584,6 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                             </button>
                                         </div>
                                     </div>
-
                                     <AnimatePresence>
                                         {expanded && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -613,15 +653,15 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                     </div>
 
                                                     <div className="mt-2 text-sm">
-                                                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Como executar</p>
+                                                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1 flex items-center gap-1"><Activity size={12} className="text-indigo-400" />Como executar</p>
                                                         <p className="text-gray-300">{exercise.instructions}</p>
                                                         {exercise.recommended_weight && (
-                                                            <div className="mt-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 flex items-center gap-2 text-sm font-medium">
-                                                                <Dumbbell size={16} />
+                                                            <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 flex items-center gap-2 text-sm font-medium">
+                                                                <Target size={16} />
                                                                 <span>Sugestão da IA: {exercise.recommended_weight}</span>
                                                             </div>
                                                         )}
-                                                        {exercise.tips && <p className="text-purple-300/80 text-xs mt-2 italic">💡 Dica: {exercise.tips}</p>}
+                                                        {exercise.tips && <p className="text-purple-300/80 text-xs mt-3 italic p-2 bg-purple-500/5 rounded-lg border border-purple-500/10">💡 Dica: {exercise.tips}</p>}
                                                     </div>
 
                                                     {isLoadingMedia && (
@@ -631,10 +671,19 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         </div>
                                                     )}
                                                     {!isLoadingMedia && media && (
-                                                        <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 mt-2 shadow-lg relative">
+                                                        <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 mt-3 shadow-lg relative aspect-video">
                                                             {media.type === 'video'
-                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-auto object-cover rounded-xl" />
-                                                                : <img src={media.url} alt={exercise.name} className="w-full h-auto object-cover rounded-xl" />}
+                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded-xl" />
+                                                                : <img src={media.url} alt={exercise.name} className="w-full h-full object-cover rounded-xl" />}
+                                                        </div>
+                                                    )}
+                                                    {!isLoadingMedia && !media && (
+                                                        <div className="rounded-xl mt-3 flex items-center justify-center relative bg-gradient-to-r from-gray-800 to-gray-900 border border-white/10 aspect-video overflow-hidden">
+                                                            <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" alt="Gym" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                                                            <div className="relative z-10 flex flex-col items-center opacity-70">
+                                                                <Activity size={32} className="text-gray-400 mb-2" />
+                                                                <span className="text-gray-400 text-xs font-semibold tracking-wider">PREPARE-SE</span>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -657,31 +706,110 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
             {/* Config Regenerate Modal */}
             <AnimatePresence>
                 {showConfig && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="w-full max-w-sm rounded-3xl p-6" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-white">Ajustar dia</h3>
-                                <button onClick={() => setShowConfig(false)} className="text-gray-400 hover:text-white p-1 rounded-full"><X size={20} /></button>
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-[#111116] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 -mb-6 sm:mb-0 pb-12 sm:pb-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-white tracking-tight">Regerar Dia</h3>
+                                <button onClick={() => setShowConfig(false)} disabled={isGenerating} className="text-gray-500 hover:text-white transition-colors p-2 -mr-2">
+                                    <X size={20} />
+                                </button>
                             </div>
 
                             <div className="flex flex-col gap-5">
-                                <div>
-                                    <label className="text-sm text-gray-400 mb-2 block">Tempo Disponível Hoje (min)</label>
-                                    <input type="number" min="10" max="180" value={regenMin} onChange={(e) => setRegenMin(Number(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500" />
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Local do Treino</label>
+                                    <select value={regenLoc} onChange={(e) => setRegenLoc(e.target.value)} disabled={isGenerating} className="form-select w-full bg-white/5 border border-white/10 text-white rounded-xl focus:border-indigo-500 h-12 px-4 shadow-inner appearance-none">
+                                        <option value="gym">Academia (Máquinas e Pesos Livres)</option>
+                                        <option value="home">Casa (Sem Equipamentos)</option>
+                                    </select>
                                 </div>
-                                <div>
-                                    <label className="text-sm text-gray-400 mb-2 block">Onde vou treinar?</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button onClick={() => setRegenLoc('home')} className={`py-3 rounded-xl border ${regenLoc === 'home' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>Casa</button>
-                                        <button onClick={() => setRegenLoc('gym')} className={`py-3 rounded-xl border ${regenLoc === 'gym' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>Academia</button>
-                                    </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider text-center">Tempo Disponível</label>
+                                    <div className="text-center font-bold text-4xl text-indigo-400 my-2">{regenMin} <span className="text-sm font-semibold uppercase">min</span></div>
+                                    <input type="range" min="15" max="120" step="5" value={regenMin} onChange={(e) => setRegenMin(Number(e.target.value))} disabled={isGenerating} className="w-full accent-indigo-500 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                                    <div className="flex justify-between text-xs text-gray-600 font-medium px-1"><span>15m</span><span>Curto</span><span>120m</span></div>
                                 </div>
-                                <button onClick={handleRebuildDay} disabled={isGenerating} className="w-full py-4 mt-2 rounded-xl font-bold text-white flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
-                                    {isGenerating ? <><Loader2 size={18} className="animate-spin" /> Recalculando...</> : <><Settings2 size={18} /> Recalcular Treino via IA</>}
+                            </div>
+
+                            <button onClick={handleRebuildDay} disabled={isGenerating} className="w-full mt-2 h-14 rounded-xl bg-orange-600 hover:bg-orange-500 disabled:opacity-50 font-bold text-white transition-all shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2">
+                                {isGenerating ? <><Loader2 size={18} className="animate-spin" /> Recalculando Inteligência...</> : 'Confirmar Novo Treino'}
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showWeekConfig && (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-[#111116] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-5 -mb-6 sm:mb-0 pb-12 sm:pb-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2"><CalendarClock size={20} className="text-indigo-400" /> Reajustar Semana</h3>
+                                <button onClick={() => setShowWeekConfig(false)} disabled={isRebuildingWeek} className="text-gray-500 hover:text-white p-2 -mr-2">
+                                    <X size={20} />
                                 </button>
                             </div>
+
+                            <div className="flex flex-col gap-4 overflow-y-auto max-h-[60vh] custom-scrollbar px-1 pb-2">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Dias da Semana</label>
+                                    <div className="flex gap-1.5 justify-between">
+                                        {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => {
+                                            const realIdx = i === 0 ? 6 : i - 1; // Map D to 6, S to 0...
+                                            return (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => { const n = [...weekDaysActive]; n[realIdx] = !n[realIdx]; setWeekDaysActive(n); }}
+                                                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${weekDaysActive[realIdx] ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                                                >
+                                                    {day}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Local Base</label>
+                                    <select value={regenWeekLoc} onChange={(e) => setRegenWeekLoc(e.target.value)} disabled={isRebuildingWeek} className="form-select w-full bg-white/5 border border-white/10 text-white rounded-xl focus:border-indigo-500 h-10 px-4">
+                                        <option value="gym">Academia (Máquinas e Pesos Livres)</option>
+                                        <option value="home">Casa (Sem Equipamentos)</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Tempo por dia: <span className="text-indigo-400">{regenWeekMin} min</span></label>
+                                    <input type="range" min="15" max="120" step="5" value={regenWeekMin} onChange={(e) => setRegenWeekMin(Number(e.target.value))} disabled={isRebuildingWeek} className="w-full accent-indigo-500" />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"><Bell size={14} /> Lembrete Diário</label>
+                                    <input type="time" value={remindTime} onChange={(e) => setRemindTime(e.target.value)} disabled={isRebuildingWeek} className="form-input bg-white/5 border border-white/10 text-white rounded-xl h-10 px-4 w-full" />
+                                    <p className="text-[10px] text-gray-500">Notificaremos você 30 minutos antes desse horário.</p>
+                                </div>
+                            </div>
+
+                            <button onClick={handleRebuildWeek} disabled={isRebuildingWeek} className="w-full mt-2 h-14 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                                {isRebuildingWeek ? <><Loader2 size={18} className="animate-spin" /> Gerando 7 dias...</> : 'Salvar e Gerar Programação'}
+                            </button>
                         </motion.div>
-                    </motion.div>
+                    </div>
+                )}
+
+                {showCalendar && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1A1A2E] border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 text-center shadow-2xl">
+                            <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 mx-auto flex items-center justify-center">
+                                <CalendarClock size={32} className="text-indigo-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">Histórico de Semanas</h3>
+                                <p className="text-sm text-gray-400">Em uma futura atualização, você poderá voltar no tempo e consultar os detalhes antigos, evoluções de carga e treinos passados registrados em seu histórico.</p>
+                            </div>
+                            <button onClick={() => setShowCalendar(false)} className="w-full h-12 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold transition-colors mt-2">
+                                Voltar aos Treinos Atuais
+                            </button>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>
