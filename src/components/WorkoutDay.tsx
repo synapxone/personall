@@ -85,6 +85,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
 
     useEffect(() => {
         if (!todayData || todayData.type === 'rest') return;
+        // Preload free-exercise-db index in background for faster lazy loads
+        exerciseMediaService.preloadFreeDb();
         // Load cached media from DB (fast batch query)
         const exerciseMeta = todayData.exercises.map((e) => ({ id: e.exercise_id, name: e.name }));
         exerciseMediaService.getCachedBatch(exerciseMeta).then(setMediaData);
