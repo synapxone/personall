@@ -114,42 +114,21 @@ export const geminiService = {
             activeDaysPrompt = `\n- DICA: Planeje os treinos para SEGUNDA a DOMINGO com pelo menos 1 a 2 dias de descanso na semana.`;
         }
 
-        const prompt = `Você é um personal trainer especialista. Crie um plano de treino completo em JSON.
+        const prompt = `Persona: Personal Trainer. Crie um plano de treino JSON.
+Perfil: ${goalLabels[data.goal] || data.goal}, ${locationLabel}, ${data.available_minutes}min/dia, ${data.weight}kg.
+Instruções: 4 semanas (7 dias cada). IDs numéricos 4 dígitos (ex: "0009"). Instruções CURTAS.
+${activeDaysPrompt}
 
-PERFIL DO USUÁRIO:
-- Objetivo: ${goalLabels[data.goal] || data.goal}
-- Local: ${locationLabel}
-- Tempo disponível: ${data.available_minutes} minutos por dia
-- Nível de atividade atual: ${data.activity_level}
-- Peso: ${data.weight}kg | Altura: ${data.height}cm | Idade: ${data.age} anos
-        INSTRUÇÕES:
-        - Plano de 4 semanas com progressão.
-        - Dias 1-7 (Segunda a Domingo).
-        - Use IDs numéricos do ExerciseDB (4 dígitos).
-        - Descrições e instruções CURTAS e DIREIRAS.
-        - Máximo de 5-6 exercícios por dia.
-        ${activeDaysPrompt}
-
-        Retorne APENAS o JSON no formato:
-        {
-          "name": "Nome",
-          "estimated_weeks": 4,
-          "weeks": [
-            {
-              "week": 1,
-              "days": [
-                {
-                  "day": 1,
-                  "name": "Treino A",
-                  "type": "strength",
-                  "exercises": [
-                    { "exercise_id": "0009", "name": "Flexão", "sets": 3, "reps": "10-12", "rest_seconds": 60, "instructions": "...", "tips": "..." }
-                  ]
-                }
-              ]
-            }
-          ]
-        }`;
+Formato:
+{
+  "name": "...",
+  "weeks": [
+    {
+      "week": 1,
+      "days": [{ "day": 1, "name": "...", "type": "strength", "exercises": [{ "exercise_id": "0009", "name": "...", "sets": 3, "reps": "12", "rest_seconds": 60, "instructions": "..." }] }]
+    }
+  ]
+}`;
 
         try {
             const text = await generateWithFallback(prompt);
@@ -433,31 +412,39 @@ Responda de forma útil, motivadora e personalizada com base no contexto acima. 
 
 function parseSafeJSON(text: string): any {
     try {
-        // Strip markdown backticks if present
         const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        // Look for the first { or [ and last } or ]
         const firstBrace = cleaned.indexOf('{');
         const firstBracket = cleaned.indexOf('[');
-        const lastBrace = cleaned.lastIndexOf('}');
-        const lastBracket = cleaned.lastIndexOf(']');
+        if (firstBrace === -1 && firstBracket === -1) return null;
 
-        let start = -1;
-        let end = -1;
+        const start = (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) ? firstBrace : firstBracket;
+        const jsonStr = cleaned.slice(start);
 
-        if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-            start = firstBrace;
-            end = lastBrace;
-        } else if (firstBracket !== -1) {
-            start = firstBracket;
-            end = lastBracket;
+        try {
+            return JSON.parse(jsonStr);
+        } catch (e) {
+            // Try to repair truncated JSON by closing all open brackets/braces
+            let repaired = jsonStr;
+            const stack: ('{' | '[')[] = [];
+            for (let i = 0; i < jsonStr.length; i++) {
+                const char = jsonStr[i];
+                if (char === '{' || char === '[') stack.push(char);
+                else if (char === '}') stack.pop();
+                else if (char === ']') stack.pop();
+            }
+            while (stack.length > 0) {
+                const last = stack.pop();
+                repaired += (last === '{' ? '}' : ']');
+            }
+            try {
+                return JSON.parse(repaired);
+            } catch (innerError) {
+                console.warn('JSON repair failed:', innerError);
+                return null;
+            }
         }
-
-        if (start === -1 || end === -1 || end < start) return null;
-
-        const jsonStr = cleaned.slice(start, end + 1);
-        return JSON.parse(jsonStr);
     } catch (e) {
-        console.warn('parseSafeJSON failed to parse text:', text.slice(0, 100) + '...', e);
+        console.warn('parseSafeJSON critical failure', e);
         return null;
     }
 }

@@ -401,6 +401,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                     </button>
                 ))}
             </div>
+
             {/* Day and Week Selection */}
             <div className="px-6 mb-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
