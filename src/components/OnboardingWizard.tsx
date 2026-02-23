@@ -177,7 +177,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
 
     const progressPercent = step === 'done' ? 100
         : step === 'generating' ? 90
-        : Math.round((stepIndex / (totalSteps)) * 100);
+            : Math.round((stepIndex / (totalSteps)) * 100);
 
     const bmi = calcBMI(data.weight ?? 70, data.height ?? 170);
     const bmiInfo = bmiLabel(bmi);
@@ -188,13 +188,12 @@ export default function OnboardingWizard({ onComplete }: Props) {
         : 0;
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0F0F1A' }}>
+        <div className="min-h-screen flex flex-col bg-background">
             {/* Progress bar */}
             {step !== 'welcome' && (
-                <div className="w-full h-1" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div className="w-full h-1 bg-text-main/5">
                     <motion.div
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: '#7C3AED' }}
+                        className="h-full rounded-full bg-primary"
                         animate={{ width: `${progressPercent}%` }}
                         transition={{ duration: 0.4 }}
                     />
@@ -206,7 +205,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                 <div className="flex items-center justify-between px-4 pt-4">
                     <div>
                         {showBack && (
-                            <button onClick={goBack} className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-sm">
+                            <button onClick={goBack} className="flex items-center gap-1 text-text-muted hover:text-text-main transition-colors text-sm">
                                 <ChevronLeft size={18} />
                                 Voltar
                             </button>
@@ -214,7 +213,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                     </div>
                     <button
                         onClick={() => supabase.auth.signOut()}
-                        className="flex items-center gap-1.5 text-gray-600 hover:text-red-400 transition-colors text-xs"
+                        className="flex items-center gap-1.5 text-text-muted opacity-60 hover:text-red-400 transition-colors text-xs"
                         title="Sair da conta"
                     >
                         <LogOut size={14} />
@@ -247,18 +246,17 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                     💪
                                 </motion.div>
                                 <div>
-                                    <h1 className="text-3xl font-extrabold text-white mb-2">Bem-vindo ao Personall</h1>
-                                    <p className="text-gray-400 text-base">Vamos criar seu plano personalizado!</p>
+                                    <h1 className="text-3xl font-extrabold text-text-main mb-2">Bem-vindo ao Personall</h1>
+                                    <p className="text-text-muted text-base">Vamos criar seu plano personalizado!</p>
                                 </div>
-                                <p className="text-gray-500 text-sm max-w-xs">
+                                <p className="text-text-muted/80 text-sm max-w-xs">
                                     Em poucos passos, nossa IA vai montar o treino e a dieta ideal para o seu objetivo.
                                 </p>
                                 <motion.button
                                     whileHover={{ scale: 1.04 }}
                                     whileTap={{ scale: 0.97 }}
                                     onClick={goNext}
-                                    className="px-10 py-4 rounded-2xl font-bold text-white text-lg mt-4"
-                                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                    className="px-10 py-4 rounded-2xl font-bold text-white text-lg mt-4 bg-primary"
                                 >
                                     Começar
                                 </motion.button>
@@ -269,37 +267,37 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'basics' && (
                             <div className="flex flex-col gap-6 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Informações Básicas</h2>
-                                    <p className="text-gray-400 text-sm">Como podemos te chamar?</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Informações Básicas</h2>
+                                    <p className="text-text-muted text-sm">Como podemos te chamar?</p>
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-white text-sm font-medium">Seu nome</label>
+                                    <label className="text-text-main text-sm font-medium">Seu nome</label>
                                     <input
                                         type="text"
                                         placeholder="Ex: João Silva"
                                         value={data.name || ''}
                                         onChange={(e) => updateData({ name: e.target.value })}
-                                        className="w-full px-4 py-3.5 rounded-xl text-white text-sm outline-none"
-                                        style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.1)' }}
+                                        className="w-full px-4 py-3.5 rounded-xl text-text-main text-sm outline-none bg-card border"
+                                        style={{ borderColor: 'var(--border-main)' }}
                                     />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-white text-sm font-medium">Idade</label>
+                                    <label className="text-text-main text-sm font-medium">Idade</label>
                                     <input
                                         type="number"
                                         min={10}
                                         max={100}
                                         value={data.age || ''}
                                         onChange={(e) => updateData({ age: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3.5 rounded-xl text-white text-sm outline-none"
-                                        style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.1)' }}
+                                        className="w-full px-4 py-3.5 rounded-xl text-text-main text-sm outline-none bg-card border"
+                                        style={{ borderColor: 'var(--border-main)' }}
                                     />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-white text-sm font-medium">Gênero</label>
+                                    <label className="text-text-main text-sm font-medium">Gênero</label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {(['male', 'female', 'other'] as Gender[]).map((g) => {
                                             const labels = { male: 'Masculino', female: 'Feminino', other: 'Outro' };
@@ -311,9 +309,9 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                                     onClick={() => updateData({ gender: g })}
                                                     className="flex flex-col items-center gap-1 py-3 rounded-xl text-sm font-medium transition-all"
                                                     style={{
-                                                        backgroundColor: selected ? 'rgba(124,58,237,0.2)' : '#1A1A2E',
-                                                        border: `1px solid ${selected ? '#7C3AED' : 'rgba(255,255,255,0.1)'}`,
-                                                        color: selected ? '#a78bfa' : '#9ca3af',
+                                                        backgroundColor: selected ? 'var(--primary-10)' : 'var(--bg-card)',
+                                                        border: `1px solid ${selected ? 'var(--primary)' : 'var(--border-main)'}`,
+                                                        color: selected ? 'var(--primary)' : 'var(--text-muted)',
                                                     }}
                                                 >
                                                     <span className="text-xl">{emojis[g]}</span>
@@ -336,8 +334,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'body' && (
                             <div className="flex flex-col gap-6 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Medidas Corporais</h2>
-                                    <p className="text-gray-400 text-sm">Nos ajude a calibrar seu plano</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Medidas Corporais</h2>
+                                    <p className="text-text-muted text-sm">Nos ajude a calibrar seu plano</p>
                                 </div>
 
                                 <SliderField
@@ -359,10 +357,10 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                 />
 
                                 {bmi > 0 && (
-                                    <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ backgroundColor: '#1A1A2E' }}>
-                                        <span className="text-gray-400 text-sm">IMC</span>
+                                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-card border" style={{ borderColor: 'var(--border-main)' }}>
+                                        <span className="text-text-muted text-sm">IMC</span>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-white font-bold">{bmi.toFixed(1)}</span>
+                                            <span className="text-text-main font-bold">{bmi.toFixed(1)}</span>
                                             <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${bmiInfo.color}20`, color: bmiInfo.color }}>
                                                 {bmiInfo.label}
                                             </span>
@@ -378,8 +376,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'activity' && (
                             <div className="flex flex-col gap-4 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Nível de Atividade</h2>
-                                    <p className="text-gray-400 text-sm">Qual é a sua rotina atual?</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Nível de Atividade</h2>
+                                    <p className="text-text-muted text-sm">Qual é a sua rotina atual?</p>
                                 </div>
                                 <div className="flex flex-col gap-3">
                                     {ACTIVITY_LEVELS.map((a) => {
@@ -390,16 +388,16 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                                 onClick={() => updateData({ activity_level: a.value })}
                                                 className="flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all"
                                                 style={{
-                                                    backgroundColor: selected ? 'rgba(124,58,237,0.15)' : '#1A1A2E',
-                                                    border: `1px solid ${selected ? '#7C3AED' : 'rgba(255,255,255,0.08)'}`,
+                                                    backgroundColor: selected ? 'var(--primary-15)' : 'var(--bg-card)',
+                                                    border: `1px solid ${selected ? 'var(--primary)' : 'var(--border-main)'}`,
                                                 }}
                                             >
                                                 <span className="text-2xl">{a.emoji}</span>
                                                 <div className="flex-1">
-                                                    <p className="text-white font-medium text-sm">{a.label}</p>
-                                                    <p className="text-gray-400 text-xs mt-0.5">{a.desc}</p>
+                                                    <p className="text-text-main font-medium text-sm">{a.label}</p>
+                                                    <p className="text-text-muted text-xs mt-0.5">{a.desc}</p>
                                                 </div>
-                                                {selected && <Check size={18} style={{ color: '#7C3AED' }} />}
+                                                {selected && <Check size={18} className="text-primary" />}
                                             </button>
                                         );
                                     })}
@@ -412,8 +410,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'goal' && (
                             <div className="flex flex-col gap-4 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Seu Objetivo</h2>
-                                    <p className="text-gray-400 text-sm">O que você quer alcançar?</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Seu Objetivo</h2>
+                                    <p className="text-text-muted text-sm">O que você quer alcançar?</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     {GOALS.map((g) => {
@@ -424,15 +422,15 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                                 onClick={() => updateData({ goal: g.value })}
                                                 className="flex flex-col items-center gap-2 py-5 px-3 rounded-xl transition-all"
                                                 style={{
-                                                    backgroundColor: selected ? 'rgba(124,58,237,0.15)' : '#1A1A2E',
-                                                    border: `1px solid ${selected ? '#7C3AED' : 'rgba(255,255,255,0.08)'}`,
+                                                    backgroundColor: selected ? 'var(--primary-15)' : 'var(--bg-card)',
+                                                    border: `1px solid ${selected ? 'var(--primary)' : 'var(--border-main)'}`,
                                                 }}
                                             >
                                                 <span className="text-3xl">{g.emoji}</span>
-                                                <p className="text-white font-semibold text-sm text-center">{g.label}</p>
-                                                <p className="text-gray-400 text-xs text-center">{g.desc}</p>
+                                                <p className="text-text-main font-semibold text-sm text-center">{g.label}</p>
+                                                <p className="text-text-muted text-xs text-center">{g.desc}</p>
                                                 {selected && (
-                                                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: '#7C3AED' }}>
+                                                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary">
                                                         <Check size={12} className="text-white" />
                                                     </div>
                                                 )}
@@ -448,8 +446,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'location' && (
                             <div className="flex flex-col gap-4 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Local de Treino</h2>
-                                    <p className="text-gray-400 text-sm">Onde você vai treinar?</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Local de Treino</h2>
+                                    <p className="text-text-muted text-sm">Onde você vai treinar?</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     {([
@@ -463,13 +461,13 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                                 onClick={() => updateData({ training_location: loc.value })}
                                                 className="flex flex-col items-center gap-3 py-8 rounded-2xl transition-all"
                                                 style={{
-                                                    backgroundColor: selected ? 'rgba(124,58,237,0.15)' : '#1A1A2E',
-                                                    border: `2px solid ${selected ? '#7C3AED' : 'rgba(255,255,255,0.08)'}`,
+                                                    backgroundColor: selected ? 'var(--primary-15)' : 'var(--bg-card)',
+                                                    border: `2px solid ${selected ? 'var(--primary)' : 'var(--border-main)'}`,
                                                 }}
                                             >
                                                 <span className="text-5xl">{loc.emoji}</span>
-                                                <p className="text-white font-bold">{loc.label}</p>
-                                                <p className="text-gray-400 text-xs text-center px-2">{loc.desc}</p>
+                                                <p className="text-text-main font-bold">{loc.label}</p>
+                                                <p className="text-text-muted text-xs text-center px-2">{loc.desc}</p>
                                             </button>
                                         );
                                     })}
@@ -482,13 +480,13 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'time' && (
                             <div className="flex flex-col gap-6 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Tempo Disponível</h2>
-                                    <p className="text-gray-400 text-sm">Quanto tempo você tem por sessão?</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Tempo Disponível</h2>
+                                    <p className="text-text-muted text-sm">Quanto tempo você tem por sessão?</p>
                                 </div>
 
                                 <div className="flex flex-col items-center gap-2 py-6">
-                                    <span className="text-6xl font-extrabold text-white">{data.available_minutes ?? 45}</span>
-                                    <span className="text-gray-400">minutos por dia</span>
+                                    <span className="text-6xl font-extrabold text-text-main">{data.available_minutes ?? 45}</span>
+                                    <span className="text-text-muted">minutos por dia</span>
                                 </div>
 
                                 <input
@@ -500,7 +498,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                     onChange={(e) => updateData({ available_minutes: parseInt(e.target.value) })}
                                     className="w-full accent-violet-600"
                                 />
-                                <div className="flex justify-between text-xs text-gray-500">
+                                <div className="flex justify-between text-xs text-text-muted">
                                     <span>20 min</span>
                                     <span>120 min</span>
                                 </div>
@@ -510,8 +508,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                         {(data.available_minutes ?? 45) <= 30
                                             ? '⚡ Treino rápido e intenso — ótimo para quem tem pouco tempo!'
                                             : (data.available_minutes ?? 45) <= 60
-                                            ? '💪 Tempo ideal para um treino completo e eficiente.'
-                                            : '🏆 Tempo excelente para treinos detalhados com volume extra.'}
+                                                ? '💪 Tempo ideal para um treino completo e eficiente.'
+                                                : '🏆 Tempo excelente para treinos detalhados com volume extra.'}
                                     </p>
                                 </div>
 
@@ -523,8 +521,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'food' && (
                             <div className="flex flex-col gap-6 max-w-md w-full mx-auto">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Preferências Alimentares</h2>
-                                    <p className="text-gray-400 text-sm">Selecione o que você gosta e tem em casa</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Preferências Alimentares</h2>
+                                    <p className="text-text-muted text-sm">Selecione o que você gosta e tem em casa</p>
                                 </div>
 
                                 <FoodSection
@@ -555,8 +553,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'photo' && (
                             <div className="flex flex-col gap-6 max-w-md w-full mx-auto items-center">
                                 <div className="text-center">
-                                    <h2 className="text-2xl font-bold text-white mb-1">Foto Corporal</h2>
-                                    <p className="text-gray-400 text-sm">Nossa IA analisará seu corpo para personalizar ainda mais o plano (opcional)</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Foto Corporal</h2>
+                                    <p className="text-text-muted text-sm">Nossa IA analisará seu corpo para personalizar ainda mais o plano (opcional)</p>
                                 </div>
 
                                 <input
@@ -585,14 +583,14 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                         whileTap={{ scale: 0.97 }}
                                         onClick={() => fileRef.current?.click()}
                                         className="flex flex-col items-center gap-3 w-48 h-64 rounded-2xl justify-center"
-                                        style={{ backgroundColor: '#1A1A2E', border: '2px dashed rgba(124,58,237,0.4)' }}
+                                        style={{ backgroundColor: 'var(--bg-card)', border: '2px dashed var(--primary-40)' }}
                                     >
-                                        <Camera size={36} style={{ color: '#7C3AED' }} />
-                                        <span className="text-sm text-gray-400">Tirar ou escolher foto</span>
+                                        <Camera size={36} className="text-primary" />
+                                        <span className="text-sm text-text-muted">Tirar ou escolher foto</span>
                                     </motion.button>
                                 )}
 
-                                <div className="text-xs text-gray-500 text-center max-w-xs px-4 py-3 rounded-xl" style={{ backgroundColor: '#1A1A2E' }}>
+                                <div className="text-xs text-text-muted text-center max-w-xs px-4 py-3 rounded-xl bg-card border" style={{ borderColor: 'var(--border-main)' }}>
                                     Sua foto é processada de forma segura e nunca compartilhada.
                                 </div>
 
@@ -600,7 +598,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                     <PrimaryButton onClick={startGeneration} label={photoPreview ? 'Gerar Meu Plano!' : 'Gerar Plano com IA'} />
                                     <button
                                         onClick={startGeneration}
-                                        className="flex items-center justify-center gap-2 py-3 text-gray-400 text-sm hover:text-white transition-colors"
+                                        className="flex items-center justify-center gap-2 py-3 text-text-muted text-sm hover:text-text-main transition-colors"
                                     >
                                         <SkipForward size={16} />
                                         Pular foto
@@ -621,18 +619,16 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                 </motion.div>
 
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Criando seu plano...</h2>
-                                    <p className="text-gray-400 text-sm">Nossa IA está trabalhando para você</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-2">Criando seu plano...</h2>
+                                    <p className="text-text-muted text-sm">Nossa IA está trabalhando para você</p>
                                 </div>
 
                                 <div className="w-full max-w-xs">
                                     <motion.div
-                                        className="h-2 rounded-full overflow-hidden"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                                        className="h-2 rounded-full overflow-hidden bg-text-main/10"
                                     >
                                         <motion.div
-                                            className="h-full rounded-full"
-                                            style={{ backgroundColor: '#7C3AED' }}
+                                            className="h-full rounded-full bg-primary"
                                             animate={{ width: `${[0, 25, 60, 80, 100][generatingPhase] || 0}%` }}
                                             transition={{ duration: 0.8 }}
                                         />
@@ -650,14 +646,14 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                         <div key={i} className="flex items-center gap-3">
                                             <div className="w-5 h-5 flex items-center justify-center">
                                                 {generatingPhase > i ? (
-                                                    <span className="text-green-400 text-sm">✓</span>
+                                                    <span className="text-emerald-500 text-sm">✓</span>
                                                 ) : generatingPhase === i ? (
-                                                    <Loader2 size={16} className="animate-spin" style={{ color: '#7C3AED' }} />
+                                                    <Loader2 size={16} className="animate-spin text-primary" />
                                                 ) : (
-                                                    <div className="w-2 h-2 rounded-full bg-gray-700" />
+                                                    <div className="w-2 h-2 rounded-full bg-text-main/20" />
                                                 )}
                                             </div>
-                                            <span className={`text-sm ${generatingPhase >= i ? 'text-white' : 'text-gray-600'}`}>
+                                            <span className={`text-sm ${generatingPhase >= i ? 'text-text-main' : 'text-text-muted/40'}`}>
                                                 {phase}
                                             </span>
                                         </div>
@@ -678,37 +674,37 @@ export default function OnboardingWizard({ onComplete }: Props) {
                                     >
                                         🎉
                                     </motion.div>
-                                    <h2 className="text-2xl font-bold text-white mb-1">Plano Pronto!</h2>
-                                    <p className="text-gray-400 text-sm">Seu plano personalizado foi criado com sucesso</p>
+                                    <h2 className="text-2xl font-bold text-text-main mb-1">Plano Pronto!</h2>
+                                    <p className="text-text-muted text-sm">Seu plano personalizado foi criado com sucesso</p>
                                 </div>
 
                                 {/* Plan card */}
-                                <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)' }}>
+                                <div className="rounded-2xl p-5 flex flex-col gap-3 bg-card border" style={{ borderColor: 'var(--primary-20)' }}>
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-white font-bold">{generatedPlan.name}</h3>
-                                            <p className="text-gray-400 text-xs mt-0.5">{generatedPlan.estimated_weeks} semanas</p>
+                                            <h3 className="text-text-main font-bold">{generatedPlan.name}</h3>
+                                            <p className="text-text-muted text-xs mt-0.5">{generatedPlan.estimated_weeks} semanas</p>
                                         </div>
                                         <span className="text-2xl">💪</span>
                                     </div>
                                     {generatedPlan.description && (
-                                        <p className="text-gray-400 text-sm">{generatedPlan.description}</p>
+                                        <p className="text-text-muted text-sm">{generatedPlan.description}</p>
                                     )}
 
                                     {/* First day preview */}
                                     {generatedPlan.weeks?.[0]?.days?.[0]?.exercises?.length > 0 && (
                                         <div>
-                                            <p className="text-gray-500 text-xs mb-2">Primeiro treino:</p>
+                                            <p className="text-text-muted text-xs mb-2">Primeiro treino:</p>
                                             <div className="flex flex-col gap-1">
                                                 {generatedPlan.weeks[0].days[0].exercises.slice(0, 3).map((ex: any, i: number) => (
                                                     <div key={i} className="flex items-center gap-2 text-sm">
-                                                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#7C3AED' }} />
-                                                        <span className="text-gray-300">{ex.name}</span>
-                                                        <span className="text-gray-500 text-xs">{ex.sets}x{ex.reps}</span>
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                                        <span className="text-text-main/80">{ex.name}</span>
+                                                        <span className="text-text-muted text-xs">{ex.sets}x{ex.reps}</span>
                                                     </div>
                                                 ))}
                                                 {generatedPlan.weeks[0].days[0].exercises.length > 3 && (
-                                                    <span className="text-gray-500 text-xs">+{generatedPlan.weeks[0].days[0].exercises.length - 3} exercícios</span>
+                                                    <span className="text-text-muted text-xs">+{generatedPlan.weeks[0].days[0].exercises.length - 3} exercícios</span>
                                                 )}
                                             </div>
                                         </div>
@@ -717,15 +713,15 @@ export default function OnboardingWizard({ onComplete }: Props) {
 
                                 {/* Calorie goal */}
                                 {calorieGoal > 0 && (
-                                    <div className="flex items-center justify-between px-5 py-4 rounded-2xl" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(16,185,129,0.2)' }}>
+                                    <div className="flex items-center justify-between px-5 py-4 rounded-2xl bg-card border" style={{ borderColor: 'var(--proteina-20)' }}>
                                         <div className="flex items-center gap-3">
                                             <span className="text-2xl">🥗</span>
                                             <div>
-                                                <p className="text-white font-semibold">Meta Calórica</p>
-                                                <p className="text-gray-400 text-xs">Diária personalizada</p>
+                                                <p className="text-text-main font-semibold">Meta Calórica</p>
+                                                <p className="text-text-muted text-xs">Diária personalizada</p>
                                             </div>
                                         </div>
-                                        <span className="text-2xl font-extrabold" style={{ color: '#10B981' }}>{calorieGoal}</span>
+                                        <span className="text-2xl font-extrabold text-proteina">{calorieGoal}</span>
                                     </div>
                                 )}
 
@@ -767,9 +763,9 @@ function PrimaryButton({ onClick, label, disabled }: { onClick: () => void; labe
             whileTap={{ scale: disabled ? 1 : 0.97 }}
             onClick={onClick}
             disabled={disabled}
-            className="w-full py-4 rounded-2xl font-bold text-white text-base mt-2"
+            className="w-full py-4 rounded-2xl font-bold text-white text-base mt-2 bg-primary"
             style={{
-                background: disabled ? 'rgba(124,58,237,0.4)' : 'linear-gradient(135deg, #7C3AED, #6d28d9)',
+                opacity: disabled ? 0.4 : 1,
                 cursor: disabled ? 'not-allowed' : 'pointer',
             }}
         >
@@ -791,7 +787,7 @@ function SliderField({ label, value, min, max, unit, onChange }: SliderFieldProp
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-                <label className="text-white text-sm font-medium">{label}</label>
+                <label className="text-text-main text-sm font-medium">{label}</label>
                 <div className="flex items-center gap-1">
                     <input
                         type="number"
@@ -799,10 +795,10 @@ function SliderField({ label, value, min, max, unit, onChange }: SliderFieldProp
                         max={max}
                         value={value}
                         onChange={(e) => onChange(parseInt(e.target.value))}
-                        className="w-16 text-center px-2 py-1 rounded-lg text-white text-sm font-bold outline-none"
-                        style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.3)' }}
+                        className="w-16 text-center px-2 py-1 rounded-lg text-text-main text-sm font-bold outline-none bg-card border"
+                        style={{ borderColor: 'var(--primary-30)' }}
                     />
-                    <span className="text-gray-400 text-sm">{unit}</span>
+                    <span className="text-text-muted text-sm">{unit}</span>
                 </div>
             </div>
             <input
@@ -813,7 +809,7 @@ function SliderField({ label, value, min, max, unit, onChange }: SliderFieldProp
                 onChange={(e) => onChange(parseInt(e.target.value))}
                 className="w-full accent-violet-600"
             />
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-text-muted">
                 <span>{min}{unit}</span>
                 <span>{max}{unit}</span>
             </div>
@@ -835,8 +831,8 @@ function FoodSection({ title, subtitle, selected, onToggle, customInput, onCusto
     return (
         <div className="flex flex-col gap-3">
             <div>
-                <h3 className="text-white font-semibold text-sm">{title}</h3>
-                <p className="text-gray-500 text-xs">{subtitle}</p>
+                <h3 className="text-text-main font-semibold text-sm">{title}</h3>
+                <p className="text-text-muted text-xs">{subtitle}</p>
             </div>
             <div className="flex flex-wrap gap-2">
                 {FOOD_OPTIONS.map((food) => {
@@ -847,9 +843,9 @@ function FoodSection({ title, subtitle, selected, onToggle, customInput, onCusto
                             onClick={() => onToggle(food)}
                             className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
                             style={{
-                                backgroundColor: sel ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
-                                border: `1px solid ${sel ? '#7C3AED' : 'rgba(255,255,255,0.1)'}`,
-                                color: sel ? '#a78bfa' : '#9ca3af',
+                                backgroundColor: sel ? 'var(--primary-20)' : 'var(--text-main-5)',
+                                border: `1px solid ${sel ? 'var(--primary)' : 'var(--text-main-10)'}`,
+                                color: sel ? 'var(--primary)' : 'var(--text-muted)',
                             }}
                         >
                             {food}
@@ -862,9 +858,9 @@ function FoodSection({ title, subtitle, selected, onToggle, customInput, onCusto
                         onClick={() => onToggle(food)}
                         className="px-3 py-1.5 rounded-full text-xs font-medium"
                         style={{
-                            backgroundColor: 'rgba(124,58,237,0.2)',
-                            border: '1px solid #7C3AED',
-                            color: '#a78bfa',
+                            backgroundColor: 'var(--primary-20)',
+                            border: '1px solid var(--primary)',
+                            color: 'var(--primary)',
                         }}
                     >
                         {food} ✕
@@ -878,13 +874,12 @@ function FoodSection({ title, subtitle, selected, onToggle, customInput, onCusto
                     value={customInput}
                     onChange={(e) => onCustomChange(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onCustomAdd(); } }}
-                    className="flex-1 px-3 py-2 rounded-lg text-white text-sm outline-none"
-                    style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.1)' }}
+                    className="flex-1 px-3 py-2 rounded-lg text-text-main text-sm outline-none bg-card border"
+                    style={{ borderColor: 'var(--border-main)' }}
                 />
                 <button
                     onClick={onCustomAdd}
-                    className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-                    style={{ backgroundColor: 'rgba(124,58,237,0.3)', border: '1px solid rgba(124,58,237,0.4)' }}
+                    className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-primary/30 border border-primary/40"
                 >
                     +
                 </button>

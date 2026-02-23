@@ -19,11 +19,11 @@ interface MacroTotals {
     fat: number;
 }
 
-const MEAL_TYPES: { id: MealType; label: string; icon: React.ReactNode; time: string; color: string }[] = [
-    { id: 'breakfast', label: 'Café da manhã', icon: <Flame size={18} />, time: '07:00', color: 'var(--primary)' },
-    { id: 'lunch', label: 'Almoço', icon: <Activity size={18} />, time: '12:00', color: 'var(--primary)' },
-    { id: 'snack', label: 'Lanche', icon: <Zap size={18} />, time: '15:30', color: 'var(--accent)' },
-    { id: 'dinner', label: 'Jantar', icon: <TrendingUp size={18} />, time: '19:00', color: 'var(--proteina)' },
+const MEAL_TYPES: { id: MealType; label: string; icon: React.ReactNode; time: string; colorKey: string }[] = [
+    { id: 'breakfast', label: 'Café da manhã', icon: <Flame size={18} />, time: '07:00', colorKey: 'primary' },
+    { id: 'lunch', label: 'Almoço', icon: <Activity size={18} />, time: '12:00', colorKey: 'primary' },
+    { id: 'snack', label: 'Lanche', icon: <Zap size={18} />, time: '15:30', colorKey: 'accent' },
+    { id: 'dinner', label: 'Jantar', icon: <TrendingUp size={18} />, time: '19:00', colorKey: 'proteina' },
 ];
 
 function today(): string {
@@ -680,7 +680,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     type="button"
                     onClick={() => setSelectedDate(prevDay(selectedDate))}
                     className="w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text-main transition-colors"
-                    style={{ backgroundColor: 'var(--card-bg)' }}
+                    style={{ backgroundColor: 'var(--bg-card)' }}
                 >
                     <ChevronLeft size={18} />
                 </button>
@@ -700,14 +700,14 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     onClick={() => setSelectedDate(nextDay(selectedDate))}
                     disabled={selectedDate >= today()}
                     className="w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text-main transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: 'var(--card-bg)' }}
+                    style={{ backgroundColor: 'var(--bg-card)' }}
                 >
                     <ChevronRight size={18} />
                 </button>
             </div>
 
             {/* Daily Summary Card (Premium) */}
-            <div className="relative overflow-hidden rounded-[32px] p-6 bg-card border border-white/5 shadow-2xl flex flex-col gap-6 w-full">
+            <div className="relative overflow-hidden rounded-[32px] p-6 bg-card border shadow-2xl flex flex-col gap-6 w-full" style={{ borderColor: 'var(--border-main)' }}>
                 {/* Decorative glow */}
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 blur-[80px] rounded-full pointer-events-none" />
                 <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/10 blur-[80px] rounded-full pointer-events-none" />
@@ -717,7 +717,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     <div className="relative w-40 h-40 flex-shrink-0">
                         <svg width="160" height="160" viewBox="0 0 160 160" className="transform -rotate-90">
                             {/* Background Track */}
-                            <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="12" />
+                            <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(var(--text-main-rgb), 0.05)" strokeWidth="12" />
 
                             {totals.calories > goal ? (
                                 /* Over goal - show failure gradient */
@@ -807,7 +807,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 </div>
 
                 {/* Footer Summary */}
-                <div className="pt-5 flex items-center justify-between border-t border-white/5 relative z-10">
+                <div className="pt-5 flex items-center justify-between border-t relative z-10" style={{ borderColor: 'var(--border-main)' }}>
                     <div className="flex flex-col">
                         <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Consumido</span>
                         <span className="text-lg font-black text-text-main">{totals.calories} <span className="text-xs text-text-muted font-normal">kcal</span></span>
@@ -839,7 +839,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     </div>
                 </div>
 
-                <div className="h-2 rounded-full overflow-hidden bg-blue-500/5 border border-blue-500/10">
+                <div className="h-2 rounded-full overflow-hidden bg-blue-500/5 border" style={{ borderColor: 'rgba(var(--text-main-rgb), 0.1)' }}>
                     <motion.div
                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                         animate={{ width: `${Math.min((waterCups / Math.max(goalCups, 1)) * 100, 100)}%` }}
@@ -858,8 +858,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                 className={`relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 overflow-hidden ${isSelected
                                     ? 'border-blue-500/40 text-blue-400 shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
                                     : isNext
-                                        ? 'bg-white/5 border-white/10 text-text-muted hover:border-blue-500/30'
-                                        : 'bg-white/[0.02] border-white/5 text-gray-800'
+                                        ? 'bg-card border-primary/20 text-text-muted hover:border-blue-500/30'
+                                        : 'bg-card border-primary/5 text-text-muted/40'
                                     } border`}
                             >
                                 {/* Animated Liquid Fill */}
@@ -880,7 +880,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
                                         transition={{ delay: 0.3 }}
-                                        className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border-2 border-[#12121A] z-20"
+                                        className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border-2 z-20"
+                                        style={{ borderColor: 'var(--bg-main)' }}
                                     />
                                 )}
                             </button>
@@ -896,12 +897,19 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     const mealCals = mealItems.reduce((sum, m) => sum + m.calories, 0);
 
                     return (
-                        <div key={mt.id} className="rounded-[20px] p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm transition-colors hover:bg-white/[0.03]">
+                        <div key={mt.id} className="rounded-[20px] p-5 bg-card border backdrop-blur-sm transition-colors hover:bg-card-rgb/10" style={{ borderColor: 'var(--border-main)' }}>
 
                             {/* Premium Card Header */}
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" style={{ backgroundColor: `${mt.color}15`, border: `1px solid ${mt.color}30`, color: mt.color }}>
+                                    <div
+                                        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
+                                        style={{
+                                            backgroundColor: `rgba(var(--${mt.colorKey}-rgb), 0.15)`,
+                                            border: `1px solid rgba(var(--${mt.colorKey}-rgb), 0.3)`,
+                                            color: `var(--${mt.colorKey})`
+                                        }}
+                                    >
                                         {mt.icon}
                                     </div>
                                     <div className="flex flex-col">
@@ -914,7 +922,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => openModal(mt.id)}
-                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all"
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-card border text-text-muted hover:text-text-main transition-all"
+                                    style={{ borderColor: 'var(--border-main)' }}
                                 >
                                     <Plus size={20} strokeWidth={2.5} className="text-text-muted hover:text-text-main" />
                                 </motion.button>
@@ -927,7 +936,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         <button
                                             key={meal.id}
                                             onClick={() => openMealDetail(meal)}
-                                            className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 text-left group hover:bg-white/10 transition-colors"
+                                            className="flex items-center justify-between p-3 rounded-xl bg-card border text-left group transition-colors"
+                                            style={{ borderColor: 'var(--border-main)' }}
                                         >
                                             <div className="flex flex-col flex-1 min-w-0 pr-3">
                                                 <span className="text-text-main text-sm font-medium truncate">{meal.description}</span>
@@ -942,7 +952,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             ) : (
                                 <button
                                     onClick={() => openModal(mt.id)}
-                                    className="w-full mt-2 py-3 border border-dashed border-white/10 rounded-xl text-xs font-semibold text-gray-400 uppercase tracking-widest hover:bg-white/5 transition-colors"
+                                    className="w-full mt-2 py-3 border border-dashed rounded-xl text-xs font-semibold text-text-muted uppercase tracking-widest hover:bg-card transition-colors"
+                                    style={{ borderColor: 'var(--border-main)' }}
                                 >
                                     Adicionar Alimento
                                 </button>
@@ -954,8 +965,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
             {/* 7-day history */}
             {history.length > 0 && (
-                <div className="rounded-2xl p-5 flex flex-col gap-4 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
-                    <p className="text-white font-semibold text-sm">Últimos 7 dias</p>
+                <div className="rounded-2xl p-5 flex flex-col gap-4 bg-card border backdrop-blur-sm shadow-sm transition-colors hover:opacity-90" style={{ borderColor: 'var(--border-main)' }}>
+                    <p className="text-text-main font-semibold text-sm">Últimos 7 dias</p>
                     <div className="flex items-end gap-2 h-20">
                         {history.map((h) => {
                             const pct = (h.calories / maxHistCal) * 100;
@@ -969,10 +980,10 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             animate={{ height: `${pct}%` }}
                                             transition={{ duration: 0.5 }}
                                             className="w-full rounded-t-md"
-                                            style={{ backgroundColor: h.calories >= goal ? '#10B981' : '#7C3AED', opacity: 0.7 }}
+                                            style={{ backgroundColor: h.calories >= goal ? 'var(--proteina)' : 'var(--primary)', opacity: 0.7 }}
                                         />
                                     </div>
-                                    <span className="text-gray-500 text-xs capitalize">{label}</span>
+                                    <span className="text-text-muted text-xs capitalize">{label}</span>
                                 </div>
                             );
                         })}
@@ -1018,10 +1029,10 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         type="button"
                                         onClick={openInAppCamera}
                                         className="flex items-center gap-4 px-4 py-4 rounded-xl text-left w-full"
-                                        style={{ backgroundColor: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)' }}
+                                        style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', border: '1px solid rgba(var(--primary-rgb), 0.3)' }}
                                     >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(124,58,237,0.2)' }}>
-                                            <Camera size={20} style={{ color: '#7C3AED' }} />
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.2)' }}>
+                                            <Camera size={20} className="text-primary" />
                                         </div>
                                         <div>
                                             <p className="text-text-main font-semibold text-sm">Câmera</p>
@@ -1058,8 +1069,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
                                         style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
                                     >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(16,185,129,0.2)' }}>
-                                            <PenLine size={20} style={{ color: '#10B981' }} />
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--proteina-rgb), 0.2)' }}>
+                                            <PenLine size={20} className="text-proteina" />
                                         </div>
                                         <div>
                                             <p className="text-text-main font-semibold text-sm">Manual</p>
@@ -1086,7 +1097,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             <div
                                                 key={idx}
                                                 className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                                                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                                                style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.04)', border: '1px solid var(--border-main)' }}
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-text-main text-sm font-medium truncate">{item.description}</p>
@@ -1115,7 +1126,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             type="button"
                                             onClick={() => setModalMode('manual')}
                                             className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400"
-                                            style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                                            style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.06)' }}
                                         >
                                             Manual
                                         </button>
@@ -1126,7 +1137,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             onClick={() => saveAllPhotoItems(photoItems)}
                                             disabled={saving || photoItems.length === 0}
                                             className="flex-[2] py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
-                                            style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)', opacity: (saving || photoItems.length === 0) ? 0.5 : 1 }}
+                                            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', opacity: (saving || photoItems.length === 0) ? 0.5 : 1 }}
                                         >
                                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                                             {saving ? 'Salvando...' : `Salvar ${photoItems.length} ${photoItems.length === 1 ? 'item' : 'itens'}`}
@@ -1147,7 +1158,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             className="w-full h-full object-cover"
                                         />
                                         {/* Overlay corners for frame effect */}
-                                        <div className="absolute inset-0 pointer-events-none" style={{ border: '2px solid rgba(124,58,237,0.4)', borderRadius: '16px' }} />
+                                        <div className="absolute inset-0 pointer-events-none" style={{ border: '2px solid rgba(var(--primary-rgb), 0.4)', borderRadius: '16px' }} />
                                     </div>
                                     <canvas ref={canvasRef} className="hidden" />
                                     <p className="text-center text-gray-500 text-xs">Enquadre o prato e pressione Capturar</p>
@@ -1156,7 +1167,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             type="button"
                                             onClick={() => { stopCamera(); setModalMode('choose'); }}
                                             className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400"
-                                            style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                                            style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.06)' }}
                                         >
                                             Cancelar
                                         </button>
@@ -1165,7 +1176,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             type="button"
                                             onClick={captureFromCamera}
                                             className="flex-[2] py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2"
-                                            style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                                         >
                                             <Camera size={18} />
                                             Capturar
@@ -1191,13 +1202,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     if (e.key === 'Enter') onAddDirectly();
                                                 }}
                                                 className="w-full px-3 py-3 pr-10 rounded-xl text-text-main text-sm outline-none"
-                                                style={{ backgroundColor: 'var(--card-bg)', border: '1px solid rgba(var(--primary-rgb), 0.1)' }}
+                                                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
                                             />
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                                 {(analyzeLoading || suggestLoading)
-                                                    ? <Loader2 size={16} className="animate-spin" style={{ color: '#7C3AED' }} />
+                                                    ? <Loader2 size={16} className="animate-spin" style={{ color: 'var(--primary)' }} />
                                                     : analyzed
-                                                        ? <Sparkles size={16} style={{ color: '#10B981' }} />
+                                                        ? <Sparkles size={16} className="text-emerald-500" />
                                                         : null}
                                             </div>
 
@@ -1210,7 +1221,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                         exit={{ opacity: 0, y: -4 }}
                                                         transition={{ duration: 0.15 }}
                                                         className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-20"
-                                                        style={{ backgroundColor: '#12122A', border: '1px solid rgba(124,58,237,0.3)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+                                                        style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
                                                     >
                                                         {suggestions.map((item, i) => (
                                                             <button
@@ -1283,9 +1294,9 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                                 onClick={() => handleUnitChange(u)}
                                                                 className="px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap"
                                                                 style={{
-                                                                    backgroundColor: formUnit === u ? 'rgba(124,58,237,0.25)' : 'rgba(255,255,255,0.06)',
-                                                                    border: `1px solid ${formUnit === u ? '#7C3AED' : 'rgba(255,255,255,0.1)'}`,
-                                                                    color: formUnit === u ? '#a78bfa' : '#9ca3af',
+                                                                    backgroundColor: formUnit === u ? 'rgba(var(--primary-rgb), 0.25)' : 'rgba(var(--text-main-rgb), 0.06)',
+                                                                    border: `1px solid ${formUnit === u ? 'var(--primary)' : 'var(--border-main)'}`,
+                                                                    color: formUnit === u ? 'var(--primary)' : 'var(--text-muted)',
                                                                 }}
                                                             >
                                                                 {u}
@@ -1329,7 +1340,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         onClick={saveMeal}
                                         disabled={saving || !formDesc.trim()}
                                         className="w-full py-4 rounded-xl font-bold text-white"
-                                        style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)', opacity: (saving || !formDesc.trim()) ? 0.5 : 1 }}
+                                        style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', opacity: (saving || !formDesc.trim()) ? 0.5 : 1 }}
                                     >
                                         {saving ? 'Salvando...' : 'Salvar Refeição'}
                                     </motion.button>
@@ -1356,7 +1367,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 pb-24 sm:pb-6 flex flex-col gap-4 bg-card border border-white/5"
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 pb-24 sm:pb-6 flex flex-col gap-4 bg-card border" style={{ borderColor: 'var(--border-main)' }}
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between">
@@ -1398,7 +1409,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         <button
                                             onClick={startEditMeal}
                                             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white"
-                                            style={{ backgroundColor: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)' }}
+                                            style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.2)', border: '1px solid rgba(var(--primary-rgb), 0.4)' }}
                                         >
                                             <Pencil size={15} />
                                             Editar
@@ -1408,7 +1419,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                 <button
                                                     onClick={() => setConfirmDelete(false)}
                                                     className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-muted"
-                                                    style={{ backgroundColor: 'var(--card-bg)' }}
+                                                    style={{ backgroundColor: 'var(--bg-card)' }}
                                                 >
                                                     Cancelar
                                                 </button>
@@ -1416,7 +1427,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     onClick={handleDeleteMeal}
                                                     disabled={deleting}
                                                     className="flex-1 py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-1"
-                                                    style={{ backgroundColor: '#EF4444' }}
+                                                    style={{ backgroundColor: 'var(--proteina)' }}
                                                 >
                                                     {deleting ? <Loader2 size={14} className="animate-spin" /> : 'Confirmar'}
                                                 </button>
@@ -1445,7 +1456,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             value={editDesc}
                                             onChange={(e) => setEditDesc(e.target.value)}
                                             className="w-full px-3 py-3 rounded-xl text-text-main text-sm outline-none"
-                                            style={{ backgroundColor: 'var(--card-bg)', border: '1px solid rgba(255,255,255,0.1)' }}
+                                            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
                                         />
                                     </div>
 
@@ -1485,7 +1496,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             onClick={saveEditMeal}
                                             disabled={editSaving || !editDesc.trim()}
                                             className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
-                                            style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)', opacity: (editSaving || !editDesc.trim()) ? 0.5 : 1 }}
+                                            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', opacity: (editSaving || !editDesc.trim()) ? 0.5 : 1 }}
                                         >
                                             {editSaving ? <Loader2 size={14} className="animate-spin" /> : null}
                                             {editSaving ? 'Salvando...' : 'Salvar'}
@@ -1513,7 +1524,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 60, opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="w-full max-w-sm rounded-3xl p-5 pb-8 bg-card border border-white/10"
+                            className="w-full max-w-sm rounded-3xl p-5 pb-8 bg-card border" style={{ borderColor: 'var(--border-main)' }}
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Month header */}
@@ -1607,7 +1618,7 @@ function MacroProgress({ label, current, target, color, icon }: { label: string;
                 </div>
                 <span className="text-xs font-bold text-text-main">{current} <span className="text-[10px] text-text-muted font-normal">/ {target}g</span></span>
             </div>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}

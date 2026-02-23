@@ -518,9 +518,10 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             className={`flex-1 min-w-[3rem] py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${selectedDayIndex === i
                                 ? 'bg-primary text-white'
                                 : isRest
-                                    ? 'bg-white/[0.02] text-text-muted opacity-50 hover:bg-white/[0.05]'
-                                    : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                    ? 'bg-card text-text-muted opacity-50 hover:bg-card/80'
+                                    : 'bg-card border text-text-muted hover:bg-card/80'
                                 }`}
+                            style={{ borderColor: selectedDayIndex === i ? 'transparent' : 'var(--border-main)' }}
                         >
                             {d}
                         </button>
@@ -545,16 +546,16 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                     <button
                         onClick={() => setSelectedWeekIndex(prev => Math.min(weeksList.length - 1, prev + 1))}
                         disabled={selectedWeekIndex >= weeksList.length - 1}
-                        className="p-2 text-gray-500 hover:text-white disabled:opacity-20"
+                        className="p-2 text-text-muted hover:text-text-main disabled:opacity-20"
                     >
                         <ChevronUp size={24} className="rotate-90" />
                     </button>
                 </div>
 
-                <div className="flex items-center justify-between bg-card p-1.5 rounded-2xl border border-white/5 shadow-inner">
+                <div className="flex items-center justify-between bg-card p-1.5 rounded-2xl border shadow-inner" style={{ borderColor: 'var(--border-main)' }}>
                     <p className="text-primary text-xs font-bold uppercase tracking-wider pl-1 max-w-[40%] truncate">{localPlan.name}</p>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setShowCalendar(true)} className="flex items-center justify-center text-text-muted bg-white/5 w-8 h-8 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                        <button onClick={() => setShowCalendar(true)} className="flex items-center justify-center text-text-muted bg-card w-8 h-8 rounded-lg border hover:opacity-80 transition-colors" style={{ borderColor: 'var(--border-main)' }}>
                             <Calendar size={14} />
                         </button>
                         <button onClick={() => setShowWeekConfig(true)} className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 h-8 rounded-lg border border-primary/20 hover:bg-primary/20 transition-colors">
@@ -580,13 +581,13 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                         </div>
                     </div>
                     {/* Stats row */}
-                    <div className="grid grid-cols-3 gap-px bg-white/5 border-t border-emerald-500/20">
+                    <div className="grid grid-cols-3 gap-px bg-card border-t" style={{ borderColor: 'var(--border-main)' }}>
                         {[
                             { label: 'Duração', value: `${summaryDuration}min`, icon: <Timer size={14} /> },
                             { label: 'Calorias', value: `~${summaryCalories}kcal`, icon: <Activity size={14} /> },
                             { label: 'Volume', value: summaryLoadKg > 0 ? `${summaryLoadKg}kg` : '—', icon: <Target size={14} /> },
                         ].map((stat) => (
-                            <div key={stat.label} className="flex flex-col items-center gap-1 py-3 bg-black/20">
+                            <div key={stat.label} className="flex flex-col items-center gap-1 py-3" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
                                 <div className="text-proteina/80">{stat.icon}</div>
                                 <span className="text-text-main font-bold text-sm">{stat.value}</span>
                                 <span className="text-text-muted text-[10px] uppercase tracking-wide">{stat.label}</span>
@@ -648,7 +649,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                             <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
                                             {/* Active progress ring fake */}
                                             <svg className="absolute inset-0 w-full h-full -rotate-90">
-                                                <circle cx="128" cy="128" r="124" stroke="url(#gradient)" strokeWidth="8" fill="none" strokeDasharray="780" strokeDashoffset="0" className="opacity-80 drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]" />
+                                                <circle cx="128" cy="128" r="124" stroke="url(#gradient)" strokeWidth="8" fill="none" strokeDasharray="780" strokeDashoffset="0" className="opacity-80 drop-shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
                                                 <defs>
                                                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                                         <stop offset="0%" stopColor="var(--primary)" />
@@ -715,14 +716,14 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             <span>Séries Concluídas</span>
                             <span>{Math.round(progressPct)}%</span>
                         </div>
-                        <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.1)' }}>
+                        <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
                             <motion.div className="h-full rounded-full" style={{ backgroundColor: 'var(--proteina)' }} animate={{ width: `${progressPct}%` }} transition={{ duration: 0.4 }} />
                         </div>
                     </div>
 
                     <AnimatePresence>
                         {restTimer && !activeSetModal && (
-                            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="flex items-center justify-between px-6 py-4 rounded-2xl sticky top-4 z-10 shadow-2xl backdrop-blur-md" style={{ backgroundColor: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="flex items-center justify-between px-6 py-4 rounded-2xl sticky top-4 z-10 shadow-2xl backdrop-blur-md" style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.15)', border: '1px solid rgba(var(--primary-rgb), 0.3)' }}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/20 text-primary">
                                         <Timer size={20} />
@@ -748,7 +749,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                             return (
                                 <motion.div key={i} layout className="rounded-2xl overflow-hidden transition-all duration-300 relative group" style={{ backgroundColor: 'var(--bg-card)', border: `1px solid ${done ? 'rgba(var(--proteina-rgb),0.4)' : expanded ? 'rgba(var(--primary-rgb),0.4)' : 'rgba(var(--text-main-rgb),0.06)'}`, boxShadow: expanded ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : 'none' }}>
                                     <div className="flex items-center gap-3 p-4 cursor-pointer relative z-10" onClick={() => setExpandedIndex(expanded ? null : i)}>
-                                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90 border border-white/10 shadow-inner" style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)' }}>
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90 border shadow-inner" style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)', borderColor: 'var(--border-main)' }}>
                                             {media?.type === 'video'
                                                 ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                                                 : media?.url
@@ -779,7 +780,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                 </button>
                                             )}
                                             {done && <div className="w-6 h-6 flex items-center justify-center rounded-full bg-proteina/20 text-proteina"><Check size={14} /></div>}
-                                            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main" style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.06)' }}>
+                                            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main border" style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.05)', borderColor: 'var(--border-main)' }}>
                                                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                             </button>
                                         </div>
@@ -787,10 +788,10 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                     <AnimatePresence>
                                         {expanded && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                <div className="px-4 pb-4 flex flex-col gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                                <div className="px-4 pb-4 flex flex-col gap-4 border-t" style={{ borderColor: 'var(--border-main)' }}>
                                                     <div className="mt-4 flex flex-col gap-2">
                                                         {sets.map((setInfo, setIdx) => (
-                                                            <div key={setIdx} className={`flex flex-col gap-2 py-3 px-3 rounded-xl transition-colors ${setInfo.status === 'done' ? 'bg-green-500/10 border border-green-500/30' : 'bg-white/5 border border-white/5'}`}>
+                                                            <div key={setIdx} className={`flex flex-col gap-2 py-3 px-3 rounded-xl transition-colors ${setInfo.status === 'done' ? 'bg-proteina/10 border-proteina/30' : 'bg-card border-card-rgb/10'} border`}>
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-6 text-center text-xs font-bold text-text-muted">S{setIdx + 1}</div>
 
@@ -803,15 +804,16 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                                                 onChange={(e) => handleWeightChange(i, setIdx, e.target.value)}
                                                                                 onBlur={() => { if (!setInfo.weight) toggleWeightInput(i, setIdx, false); }}
                                                                                 disabled={setInfo.status === 'done'}
-                                                                                className="w-16 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-sm text-center text-text-main placeholder-text-muted/40 focus:outline-none focus:border-primary disabled:opacity-50"
+                                                                                className="w-16 rounded-lg px-2 py-1 text-sm text-center text-text-main placeholder-text-muted/40 focus:outline-none focus:border-primary disabled:opacity-50 border"
+                                                                                style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.1)', borderColor: 'var(--border-main)' }}
                                                                             />
                                                                             {setInfo.status !== 'done' && (
                                                                                 <div className="flex gap-1 ml-1">
-                                                                                    <button onClick={() => saveWeight(i, setIdx, exercise.exercise_id)} title="Salvar Peso" className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/5 transition-colors">
+                                                                                    <button onClick={() => saveWeight(i, setIdx, exercise.exercise_id)} title="Salvar Peso" className="p-1.5 rounded-lg text-text-muted hover:text-primary transition-colors hover:opacity-80">
                                                                                         <Save size={14} />
                                                                                     </button>
                                                                                     {setIdx < sets.length - 1 && (
-                                                                                        <button onClick={() => saveAndReplicateWeight(i, setIdx, exercise.exercise_id)} title="Salvar e Replicar para as próximas" className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-white/5 transition-colors">
+                                                                                        <button onClick={() => saveAndReplicateWeight(i, setIdx, exercise.exercise_id)} title="Salvar e Replicar para as próximas" className="p-1.5 rounded-lg text-text-muted hover:text-primary transition-colors hover:opacity-80">
                                                                                             <Copy size={14} />
                                                                                         </button>
                                                                                     )}
@@ -822,7 +824,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                                         <button
                                                                             onClick={() => toggleWeightInput(i, setIdx, true)}
                                                                             disabled={setInfo.status === 'done'}
-                                                                            className="text-xs px-2 py-1.5 rounded bg-white/5 border border-white/10 text-text-muted hover:text-text-main hover:bg-white/10 transition text-center disabled:opacity-50"
+                                                                            className="text-xs px-2 py-1.5 rounded border text-text-muted hover:text-text-main transition text-center disabled:opacity-50"
+                                                                            style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}
                                                                         >
                                                                             Configurar Peso KG
                                                                         </button>
@@ -871,14 +874,14 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         </div>
                                                     )}
                                                     {!isLoadingMedia && media && (
-                                                        <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 mt-3 shadow-lg relative aspect-video">
+                                                        <div className="rounded-xl overflow-hidden border mt-3 shadow-lg relative aspect-video" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}>
                                                             {media.type === 'video'
                                                                 ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded-xl" />
                                                                 : <img src={media.url} alt={exercise.name} className="w-full h-full object-cover rounded-xl" />}
                                                         </div>
                                                     )}
                                                     {!isLoadingMedia && !media && (
-                                                        <div className="rounded-xl mt-3 flex items-center justify-center relative bg-gradient-to-r from-gray-800 to-gray-900 border border-white/10 aspect-video overflow-hidden">
+                                                        <div className="rounded-xl mt-3 flex items-center justify-center relative bg-gradient-to-r from-gray-800 to-gray-900 border aspect-video overflow-hidden" style={{ borderColor: 'var(--border-main)' }}>
                                                             <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" alt="Gym" className="absolute inset-0 w-full h-full object-cover opacity-20" />
                                                             <div className="relative z-10 flex flex-col items-center opacity-70">
                                                                 <Activity size={32} className="text-text-muted mb-2" />
@@ -906,8 +909,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
             {/* Config Regenerate Modal */}
             <AnimatePresence>
                 {showConfig && (
-                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-dark border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 -mb-6 sm:mb-0 pb-12 sm:pb-6">
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(var(--bg-main-rgb), 0.8)', backdropFilter: 'blur(4px)' }}>
+                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-dark border p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 -mb-6 sm:mb-0 pb-12 sm:pb-6" style={{ borderColor: 'var(--border-main)' }}>
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-bold text-text-main tracking-tight">Regerar Dia</h3>
                                 <button onClick={() => setShowConfig(false)} disabled={isGenerating} className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2">
@@ -927,7 +930,7 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                 <div className="flex flex-col gap-2">
                                     <label className="text-text-muted text-xs font-semibold uppercase tracking-wider text-center">Tempo Disponível</label>
                                     <div className="text-center font-bold text-4xl text-primary my-2">{regenMin} <span className="text-sm font-semibold uppercase">min</span></div>
-                                    <input type="range" min="15" max="120" step="5" value={regenMin} onChange={(e) => setRegenMin(Number(e.target.value))} disabled={isGenerating} className="w-full accent-primary h-2 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="15" max="120" step="5" value={regenMin} onChange={(e) => setRegenMin(Number(e.target.value))} disabled={isGenerating} className="w-full accent-primary h-2 rounded-lg appearance-none cursor-pointer" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.1)' }} />
                                     <div className="flex justify-between text-xs text-text-muted font-medium px-1"><span>15m</span><span>Curto</span><span>120m</span></div>
                                 </div>
                             </div>
@@ -940,8 +943,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                 )}
 
                 {showWeekConfig && (
-                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-dark border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-5 -mb-6 sm:mb-0 pb-12 sm:pb-6">
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(var(--bg-main-rgb), 0.8)', backdropFilter: 'blur(4px)' }}>
+                        <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="bg-dark border p-6 rounded-3xl w-full max-w-sm flex flex-col gap-5 -mb-6 sm:mb-0 pb-12 sm:pb-6" style={{ borderColor: 'var(--border-main)' }}>
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-bold text-text-main tracking-tight flex items-center gap-2"><CalendarClock size={20} className="text-primary" /> Reajustar Semana</h3>
                                 <button onClick={() => setShowWeekConfig(false)} disabled={isRebuildingWeek} className="text-text-muted hover:text-text-main p-2 -mr-2">
@@ -959,7 +962,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                 <button
                                                     key={i}
                                                     onClick={() => { const n = [...weekDaysActive]; n[realIdx] = !n[realIdx]; setWeekDaysActive(n); }}
-                                                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${weekDaysActive[realIdx] ? 'bg-primary text-white shadow-lg' : 'bg-white/5 text-text-muted hover:bg-white/10'}`}
+                                                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${weekDaysActive[realIdx] ? 'bg-primary text-white shadow-lg' : 'text-text-muted hover:opacity-80 border'}`}
+                                                    style={{ backgroundColor: weekDaysActive[realIdx] ? 'var(--primary)' : 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}
                                                 >
                                                     {day}
                                                 </button>
@@ -996,9 +1000,9 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                 )}
 
                 {showCalendar && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-card border border-white/10 p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 text-center shadow-2xl">
-                            <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 mx-auto flex items-center justify-center">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(var(--bg-main-rgb), 0.8)', backdropFilter: 'blur(4px)' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-card border p-6 rounded-3xl w-full max-w-sm flex flex-col gap-6 text-center shadow-2xl" style={{ borderColor: 'var(--border-main)' }}>
+                            <div className="w-16 h-16 rounded-full border mx-auto flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}>
                                 <CalendarClock size={32} className="text-primary" />
                             </div>
                             <div>
@@ -1013,8 +1017,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                 )}
 
                 {quickFinishModal && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-card border border-white/10 p-7 rounded-[32px] w-full max-w-sm flex flex-col gap-6 shadow-2xl relative overflow-hidden">
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6" style={{ backgroundColor: 'rgba(var(--bg-main-rgb), 0.8)', backdropFilter: 'blur(8px)' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-card border p-7 rounded-[32px] w-full max-w-sm flex flex-col gap-6 shadow-2xl relative overflow-hidden" style={{ borderColor: 'var(--border-main)' }}>
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-proteina/50 via-proteina/80 to-proteina/50" />
                             <button onClick={() => setQuickFinishModal(null)} className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors"><X size={20} /></button>
 
@@ -1046,7 +1050,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                         handleConfirmQuickFinish('0');
                                                     }
                                                 }}
-                                                className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold transition-all flex items-center justify-center gap-2"
+                                                className="w-full h-14 rounded-2xl border text-white font-bold transition-all flex items-center justify-center gap-2"
+                                                style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}
                                             >
                                                 {quickFinishModal.type === 'time' ? 'Inserir Tempo' : 'Não usei pesos'}
                                             </button>
@@ -1074,7 +1079,8 @@ export default function WorkoutDayView({ plan, profile, onComplete }: Props) {
                                                     placeholder={quickFinishModal.type === 'time' ? 'Ex: 20' : 'Ex: 45'}
                                                     value={quickFinishWeight}
                                                     onChange={(e) => setQuickFinishWeight(e.target.value)}
-                                                    className="w-full h-16 bg-black/40 border border-white/10 rounded-2xl px-6 text-2xl font-bold text-text-main placeholder-text-muted/30 focus:outline-none focus:border-proteina transition-all text-center"
+                                                    className="w-full h-16 border rounded-2xl px-6 text-2xl font-bold text-text-main placeholder-text-muted/30 focus:outline-none focus:border-proteina transition-all text-center"
+                                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.1)', borderColor: 'var(--border-main)' }}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter' && quickFinishWeight) {
                                                             handleConfirmQuickFinish(quickFinishWeight);

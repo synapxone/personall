@@ -358,17 +358,16 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                         className="fixed bottom-36 right-4 z-40 w-64"
                     >
                         <div
-                            className="relative rounded-2xl p-4 flex flex-col gap-3"
+                            className="relative rounded-2xl p-4 flex flex-col gap-3 shadow-2xl"
                             style={{
-                                backgroundColor: '#1A1A2E',
-                                border: '1px solid rgba(124,58,237,0.45)',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.55)',
+                                backgroundColor: 'var(--bg-card)',
+                                border: '1px solid var(--border-main)',
                             }}
                         >
                             {/* Dismiss */}
                             <button
                                 onClick={() => setAlertDismissed(true)}
-                                className="absolute top-2.5 right-2.5 text-gray-500 hover:text-white transition-colors"
+                                className="absolute top-2.5 right-2.5 text-text-muted hover:text-text-main transition-colors"
                             >
                                 <X size={13} />
                             </button>
@@ -377,21 +376,21 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                             <div className="flex items-center gap-2 pr-4">
                                 <div
                                     className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                                 >
                                     💪
                                 </div>
-                                <span className="text-xs font-bold" style={{ color: '#a78bfa' }}>Pers</span>
+                                <span className="text-xs font-bold" style={{ color: 'var(--primary)' }}>Pers</span>
                             </div>
 
                             {/* Message */}
-                            <p className="text-gray-200 text-xs leading-relaxed">{nutritionAlert.message}</p>
+                            <p className="text-text-main text-xs leading-relaxed">{nutritionAlert.message}</p>
 
                             {/* CTA */}
                             <button
                                 onClick={() => handleOpenWithAutoMessage(nutritionAlert.autoPrompt)}
                                 className="w-full py-2 rounded-xl text-xs font-semibold text-white"
-                                style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                             >
                                 Ver sugestão 💬
                             </button>
@@ -400,9 +399,9 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                             <div
                                 className="absolute -bottom-2 right-7 w-4 h-4 rotate-45"
                                 style={{
-                                    backgroundColor: '#1A1A2E',
-                                    borderRight: '1px solid rgba(124,58,237,0.45)',
-                                    borderBottom: '1px solid rgba(124,58,237,0.45)',
+                                    backgroundColor: 'var(--bg-card)',
+                                    borderRight: '1px solid var(--border-main)',
+                                    borderBottom: '1px solid var(--border-main)',
                                 }}
                             />
                         </div>
@@ -422,10 +421,10 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                         onClick={handleOpen}
                         className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg text-2xl"
                         style={{
-                            background: 'linear-gradient(135deg, #7C3AED, #6d28d9)',
+                            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
                             boxShadow: showBubble
-                                ? '0 4px 20px rgba(124,58,237,0.6), 0 0 0 3px rgba(124,58,237,0.3)'
-                                : '0 4px 20px rgba(124,58,237,0.4)',
+                                ? '0 4px 20px rgba(var(--primary-rgb), 0.6), 0 0 0 3px rgba(var(--primary-rgb), 0.3)'
+                                : '0 4px 20px rgba(var(--primary-rgb), 0.4)',
                         }}
                     >
                         💪
@@ -441,29 +440,28 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                        className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col rounded-t-3xl"
+                        className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col rounded-t-3xl border-t shadow-2xl"
                         style={{
-                            backgroundColor: '#0F0F1A',
-                            border: '1px solid rgba(124,58,237,0.25)',
+                            backgroundColor: 'var(--bg-main)',
+                            borderColor: 'var(--border-main)',
                             maxHeight: '70vh',
-                            boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
                         }}
                     >
                         {/* Header */}
                         <div
-                            className="flex items-center justify-between px-5 py-4 rounded-t-3xl flex-shrink-0"
-                            style={{ backgroundColor: '#1A1A2E', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+                            className="flex items-center justify-between px-5 py-4 rounded-t-3xl flex-shrink-0 border-b"
+                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)' }}
                         >
                             <div className="flex items-center gap-3">
                                 <div
                                     className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                                 >
                                     💪
                                 </div>
                                 <div>
-                                    <p className="text-white font-bold text-sm">Pers</p>
-                                    <p className="text-gray-400 text-xs">Personal Trainer IA</p>
+                                    <p className="text-text-main font-bold text-sm">Pers</p>
+                                    <p className="text-text-muted text-xs">Personal Trainer IA</p>
                                 </div>
                                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
                             </div>
@@ -471,15 +469,15 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 <button
                                     onClick={handleClearConversation}
                                     title="Limpar conversa"
-                                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 transition-colors"
-                                    style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-red-400 transition-colors"
+                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.08)' }}
                                 >
                                     <Trash2 size={14} />
                                 </button>
                                 <button
                                     onClick={() => setOpen(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white transition-colors"
-                                    style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text-main transition-colors"
+                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.08)' }}
                                 >
                                     <X size={16} />
                                 </button>
@@ -498,7 +496,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                     {msg.role === 'assistant' && (
                                         <div
                                             className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0 mr-2 mt-0.5"
-                                            style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                                         >
                                             💪
                                         </div>
@@ -506,13 +504,13 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                     <div
                                         className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
                                         style={{
-                                            backgroundColor: msg.role === 'user' ? '#7C3AED' : '#1A1A2E',
-                                            color: '#fff',
+                                            backgroundColor: msg.role === 'user' ? 'var(--primary)' : 'var(--bg-card)',
+                                            color: msg.role === 'user' ? '#fff' : 'var(--text-main)',
                                             borderRadius: msg.role === 'user'
                                                 ? '18px 18px 4px 18px'
                                                 : '18px 18px 18px 4px',
                                             border: msg.role === 'assistant'
-                                                ? '1px solid rgba(255,255,255,0.07)'
+                                                ? '1px solid var(--border-main)'
                                                 : 'none',
                                         }}
                                     >
@@ -525,16 +523,16 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 <div className="flex justify-start">
                                     <div
                                         className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0 mr-2"
-                                        style={{ background: 'linear-gradient(135deg, #7C3AED, #6d28d9)' }}
+                                        style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
                                     >
                                         💪
                                     </div>
                                     <div
-                                        className="px-4 py-3 rounded-2xl flex items-center gap-2"
-                                        style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '18px 18px 18px 4px' }}
+                                        className="px-4 py-3 rounded-2xl flex items-center gap-2 border"
+                                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)', borderRadius: '18px 18px 18px 4px' }}
                                     >
-                                        <Loader2 size={14} className="animate-spin" style={{ color: '#7C3AED' }} />
-                                        <span className="text-gray-400 text-sm">Pers está pensando...</span>
+                                        <Loader2 size={14} className="animate-spin text-primary" />
+                                        <span className="text-text-muted text-sm">Pers está pensando...</span>
                                     </div>
                                 </div>
                             )}
@@ -544,8 +542,8 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
 
                         {/* Input */}
                         <div
-                            className="flex items-center gap-3 px-4 pt-3 pb-24 sm:pb-3 flex-shrink-0"
-                            style={{ borderTop: '1px solid rgba(255,255,255,0.07)', backgroundColor: '#1A1A2E' }}
+                            className="flex items-center gap-3 px-4 pt-3 pb-24 sm:pb-3 flex-shrink-0 border-t"
+                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)' }}
                         >
                             <input
                                 ref={inputRef}
@@ -555,10 +553,10 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 disabled={loading}
-                                className="flex-1 px-4 py-3 rounded-xl text-white text-sm outline-none"
+                                className="flex-1 px-4 py-3 rounded-xl text-text-main text-sm outline-none border"
                                 style={{
-                                    backgroundColor: 'rgba(255,255,255,0.06)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    backgroundColor: 'rgba(var(--text-main-rgb), 0.05)',
+                                    borderColor: 'var(--border-main)',
                                 }}
                             />
                             <motion.button
@@ -568,7 +566,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 disabled={!input.trim() || loading}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
                                 style={{
-                                    background: input.trim() ? 'linear-gradient(135deg, #7C3AED, #6d28d9)' : 'rgba(124,58,237,0.2)',
+                                    background: input.trim() ? 'linear-gradient(135deg, var(--primary), var(--primary-hover))' : 'rgba(var(--primary-rgb), 0.2)',
                                     cursor: input.trim() ? 'pointer' : 'not-allowed',
                                 }}
                             >

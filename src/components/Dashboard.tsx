@@ -114,7 +114,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
     return (
         <div className="min-h-screen flex flex-col font-sans bg-dark text-text-main">
             {/* Top header */}
-            <header className="flex items-center justify-between px-5 pt-20 pb-8 safe-top border-b bg-dark border-white/5" style={{ borderColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
+            <header className="flex items-center justify-between px-5 pt-20 pb-8 safe-top border-b bg-dark" style={{ borderColor: 'var(--border-main)' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20">
                         <Activity size={18} className="text-primary" />
@@ -165,15 +165,21 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
 
 
                                 {/* Results Analysis Overview */}
-                                <div className="p-5 rounded-2xl bg-card border border-white/5 shadow-2xl backdrop-blur-sm">
+                                <div className="p-5 rounded-2xl bg-card border shadow-2xl backdrop-blur-sm" style={{ borderColor: 'var(--border-main)' }}>
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-sm font-semibold text-text-main flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Análise de Desempenho</h3>
                                     </div>
                                     <div className="flex flex-col gap-4">
                                         <div>
                                             <div className="flex justify-between text-xs text-text-muted mb-1.5 font-medium"><span>Evolução da Dedicação</span><span className="text-primary">{dedication.toFixed(0)}%</span></div>
-                                            <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
-                                                <motion.div initial={{ width: 0 }} animate={{ width: `${dedication}%` }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full" />
+                                            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.1)' }}>
+                                                <motion.div
+                                                    initial={{ opacity: 0, width: 0 }}
+                                                    animate={{ opacity: 1, width: `${dedication}%` }}
+                                                    transition={{ duration: 1 }}
+                                                    className="h-full rounded-full"
+                                                    style={{ background: 'linear-gradient(to right, var(--primary), rgba(var(--primary-rgb), 0.6))' }}
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -218,12 +224,13 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                                     <p className="text-[10px] text-accent font-bold uppercase tracking-widest">Meta Calórica</p>
                                                     <span className="text-xs text-accent/80 font-bold tabular-nums">{nutritionTotals?.calories || 0} / {profile.daily_calorie_goal} kcal</span>
                                                 </div>
-                                                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden mb-1.5 relative">
+                                                <div className="h-2 w-full rounded-full overflow-hidden mb-1.5 relative" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.1)' }}>
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${Math.min(100, ((nutritionTotals?.calories || 0) / profile.daily_calorie_goal) * 100)}%` }}
                                                         transition={{ duration: 1 }}
-                                                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-accent/60 rounded-full"
+                                                        className="absolute left-0 top-0 h-full rounded-full"
+                                                        style={{ background: 'linear-gradient(to right, var(--accent), rgba(var(--accent-rgb), 0.6))' }}
                                                     />
                                                 </div>
                                                 <p className="text-text-muted text-xs font-medium truncate">
@@ -262,7 +269,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
                                                     <CheckCircle2 size={18} className="text-primary" />
                                                 </div>
-                                                <div className="flex items-center gap-1 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md">
+                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}>
                                                     <ChevronUp size={12} className="text-proteina" />
                                                     <span className="text-[10px] font-bold text-proteina">12%</span>
                                                 </div>
@@ -279,7 +286,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                     </div>
                                 </div>
                                 {todayWorkout && todayWorkout.type !== 'rest' && (
-                                    <div className="rounded-2xl p-5 bg-card border border-white/5 hover:border-primary/30 transition-colors">
+                                    <div className="rounded-2xl p-5 bg-card border hover:border-primary/30 transition-colors" style={{ borderColor: 'var(--border-main)' }}>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">PROGRAMA DE HOJE</p>
@@ -300,7 +307,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                 )}
 
                                 {todayWorkout?.type === 'rest' && (
-                                    <div className="rounded-2xl p-6 text-center bg-card border border-white/5">
+                                    <div className="rounded-2xl p-6 text-center bg-card border" style={{ borderColor: 'var(--border-main)' }}>
                                         <BedDouble size={36} className="mx-auto text-primary opacity-80 mb-3" />
                                         <p className="text-text-main font-semibold text-sm">Dia de Descanso</p>
                                         <p className="text-text-muted text-xs mt-1.5 leading-relaxed">Aproveite para recuperar os músculos. O descanso também faz parte do treino!</p>

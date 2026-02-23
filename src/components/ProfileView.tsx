@@ -28,8 +28,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
     very_active: 'Muito Ativo',
 };
 
-const inputStyle = { backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' };
-const inputClass = 'w-full px-3 py-3 rounded-xl text-white text-sm outline-none';
+const inputStyle = { backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', border: '1px solid var(--border-main)' };
+const inputClass = 'w-full px-3 py-3 rounded-xl text-text-main text-sm outline-none placeholder:text-text-muted/50';
 
 export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
     const [entries, setEntries] = useState<ProgressEntry[]>([]);
@@ -265,18 +265,18 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                     </div>
                 )}
                 <div className="text-center">
-                    <h2 className="text-lg font-bold text-white tracking-tight">{profile.name}</h2>
-                    <p className="text-indigo-400 text-[11px] uppercase tracking-wider font-medium mt-0.5">{GOAL_LABELS[profile.goal] || profile.goal}</p>
+                    <h2 className="text-lg font-bold text-text-main tracking-tight">{profile.name}</h2>
+                    <p className="text-primary text-[11px] uppercase tracking-wider font-medium mt-0.5">{GOAL_LABELS[profile.goal] || profile.goal}</p>
                 </div>
             </div>
 
             {/* Stats + edit button */}
-            <div className="rounded-2xl p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm shadow-sm transition-colors hover:bg-white/[0.04]">
+            <div className="rounded-2xl p-5 bg-card border shadow-sm transition-colors hover:bg-card/80" style={{ borderColor: 'var(--border-main)' }}>
                 <div className="flex items-center justify-between mb-4">
-                    <span className="text-gray-500 text-[11px] font-medium uppercase tracking-widest">Dados Pessoais</span>
+                    <span className="text-text-muted text-[11px] font-medium uppercase tracking-widest">Dados Pessoais</span>
                     <button
                         onClick={openEdit}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
                     >
                         <Pencil size={12} />
                         Editar
@@ -294,12 +294,12 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
             {/* Body Analysis Display */}
             {profile.body_analysis && (
-                <div className="rounded-2xl p-5 bg-indigo-500/5 border border-indigo-500/20 backdrop-blur-sm">
+                <div className="rounded-2xl p-5 bg-primary/5 border border-primary/20">
                     <div className="flex items-center gap-2 mb-3">
-                        <Sparkles size={16} className="text-indigo-400" />
-                        <span className="text-xs font-semibold uppercase tracking-widest text-indigo-300">Análise Física por IA</span>
+                        <Sparkles size={16} className="text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-widest text-primary/80">Análise Física por IA</span>
                     </div>
-                    <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-text-main/80 leading-relaxed whitespace-pre-wrap">
                         {profile.body_analysis}
                     </div>
                 </div>
@@ -318,15 +318,15 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
             {/* Progress timeline */}
             <div>
-                <h3 className="text-white font-bold mb-3">Histórico de Evolução</h3>
+                <h3 className="text-text-main font-bold mb-3">Histórico de Evolução</h3>
                 {loading ? (
                     <div className="flex justify-center py-8">
                         <Loader2 size={24} className="animate-spin" style={{ color: '#7C3AED' }} />
                     </div>
                 ) : entries.length === 0 ? (
-                    <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="rounded-2xl p-6 text-center bg-card border" style={{ borderColor: 'var(--border-main)' }}>
                         <span className="text-3xl">📊</span>
-                        <p className="text-gray-400 text-sm mt-2">Nenhum registro ainda. Clique em "Registrar Evolução" para começar!</p>
+                        <p className="text-text-muted text-sm mt-2">Nenhum registro ainda. Clique em "Registrar Evolução" para começar!</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
@@ -339,8 +339,8 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                             return (
                                 <div
                                     key={entry.id}
-                                    className="rounded-2xl p-4 flex items-center gap-4"
-                                    style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(255,255,255,0.06)' }}
+                                    className="rounded-2xl p-4 flex items-center gap-4 bg-card border"
+                                    style={{ borderColor: 'var(--border-main)' }}
                                 >
                                     {/* Photo thumbnail */}
                                     {hasPhoto ? (
@@ -359,12 +359,12 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-400 text-xs">
+                                        <p className="text-text-muted text-xs">
                                             {new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </p>
                                         {entry.weight != null && (
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-white font-bold">{entry.weight} kg</span>
+                                                <span className="text-text-main font-bold">{entry.weight} kg</span>
                                                 {diff !== null && (
                                                     <span className={`text-xs font-semibold flex items-center gap-0.5 ${diff < 0 ? 'text-green-400' : diff > 0 ? 'text-red-400' : 'text-gray-400'}`}>
                                                         {diff < 0 ? <TrendingDown size={12} /> : diff > 0 ? <TrendingUp size={12} /> : <Minus size={12} />}
@@ -389,19 +389,19 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
             </div>
 
             {/* Theme Toggle */}
-            <div className="rounded-2xl p-5 bg-white/[0.02] border border-white/5 backdrop-blur-sm mt-2 flex items-center justify-between">
+            <div className="rounded-2xl p-5 bg-card border shadow-sm mt-2 flex items-center justify-between" style={{ borderColor: 'var(--border-main)' }}>
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center">
-                        <Moon size={18} className="text-gray-400" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center">
+                        <Moon size={18} className="text-primary" />
                     </div>
                     <div>
-                        <p className="text-white font-semibold text-sm">Aparência do App</p>
-                        <p className="text-gray-500 text-[11px]">Alternar modo claro e escuro</p>
+                        <p className="text-text-main font-semibold text-sm">Aparência do App</p>
+                        <p className="text-text-muted text-[11px]">Alternar modo claro e escuro</p>
                     </div>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-primary/10 hover:bg-primary/20 text-primary transition-colors border border-primary/20"
                 >
                     {isLightMode ? 'Ativar Escuro' : 'Ativar Claro'}
                 </button>
@@ -421,7 +421,7 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
             <div className="flex justify-center mt-6">
                 <button
                     onClick={handleResetAccount}
-                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-400 font-medium transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-text-muted hover:text-red-400 font-medium transition-colors"
                 >
                     <AlertTriangle size={14} />
                     Reiniciar Conta (Apagar Tudo)
@@ -444,12 +444,12 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 overflow-y-auto"
-                            style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)', maxHeight: '92vh' }}
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 overflow-y-auto bg-dark border"
+                            style={{ borderColor: 'var(--border-main)', maxHeight: '92vh' }}
                         >
                             <div className="flex items-center justify-between">
-                                <h3 className="text-white font-bold text-lg">Editar Perfil</h3>
-                                <button onClick={() => setShowEdit(false)} className="text-gray-400 hover:text-white">
+                                <h3 className="text-text-main font-bold text-lg">Editar Perfil</h3>
+                                <button onClick={() => setShowEdit(false)} className="text-text-muted hover:text-text-main">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -544,7 +544,7 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                                 <button
                                     onClick={() => setShowEdit(false)}
                                     className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400"
-                                    style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.06)' }}
                                 >
                                     Cancelar
                                 </button>
@@ -581,17 +581,17 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4"
-                            style={{ backgroundColor: '#1A1A2E', border: '1px solid rgba(124,58,237,0.2)' }}
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 bg-dark border"
+                            style={{ borderColor: 'var(--border-main)' }}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-white font-bold text-lg">Registrar Evolução</h3>
-                                    <p className="text-gray-500 text-xs mt-0.5">
+                                    <h3 className="text-text-main font-bold text-lg">Registrar Evolução</h3>
+                                    <p className="text-text-muted text-xs mt-0.5">
                                         {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                                     </p>
                                 </div>
-                                <button onClick={() => { resetAddProgress(); setShowAddProgress(false); }} className="text-gray-400 hover:text-white">
+                                <button onClick={() => { resetAddProgress(); setShowAddProgress(false); }} className="text-text-muted hover:text-text-main">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -611,7 +611,7 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
                             {/* Photo picker */}
                             <div>
-                                <label className="text-gray-400 text-xs font-medium mb-2 block">Foto de progresso — opcional</label>
+                                <label className="text-text-muted text-xs font-medium mb-2 block">Foto de progresso — opcional</label>
                                 <input
                                     ref={photoRef}
                                     type="file"
@@ -637,11 +637,11 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                                 ) : (
                                     <button
                                         onClick={() => photoRef.current?.click()}
-                                        className="w-full py-7 rounded-xl flex flex-col items-center gap-2 transition-colors hover:opacity-80"
-                                        style={{ backgroundColor: 'rgba(124,58,237,0.08)', border: '2px dashed rgba(124,58,237,0.3)' }}
+                                        className="w-full py-7 rounded-xl flex flex-col items-center gap-2 transition-colors hover:opacity-80 border-2 border-dashed"
+                                        style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.08)', borderColor: 'rgba(var(--primary-rgb), 0.3)' }}
                                     >
-                                        <Camera size={26} style={{ color: '#7C3AED' }} />
-                                        <span className="text-gray-400 text-sm">Tirar foto ou escolher da galeria</span>
+                                        <Camera size={26} className="text-primary" />
+                                        <span className="text-text-muted text-sm">Tirar foto ou escolher da galeria</span>
                                     </button>
                                 )}
                             </div>
@@ -661,8 +661,8 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => { resetAddProgress(); setShowAddProgress(false); }}
-                                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400"
-                                    style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-muted"
+                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.06)' }}
                                 >
                                     Cancelar
                                 </button>
@@ -718,14 +718,14 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
                                 <X size={16} className="text-white" />
                             </button>
                             <div className="mt-3 text-center">
-                                <p className="text-white font-semibold">
+                                <p className="text-text-main font-semibold">
                                     {new Date(viewEntry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
                                 {viewEntry.weight != null && (
-                                    <p className="text-gray-400 text-sm">{viewEntry.weight} kg</p>
+                                    <p className="text-text-muted text-sm">{viewEntry.weight} kg</p>
                                 )}
                                 {viewEntry.notes && (
-                                    <p className="text-gray-400 text-sm mt-1 italic">"{viewEntry.notes}"</p>
+                                    <p className="text-text-muted text-sm mt-1 italic">"{viewEntry.notes}"</p>
                                 )}
                             </div>
                         </motion.div>
@@ -738,10 +738,10 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
 
 function StatItem({ label, value, trend }: { label: string; value: string; trend?: number | null }) {
     return (
-        <div className="rounded-xl p-3 bg-white/5 border border-white/5">
-            <p className="text-gray-500 text-[10px] uppercase font-medium tracking-wider mb-0.5">{label}</p>
+        <div className="rounded-xl p-3 bg-card border" style={{ borderColor: 'var(--border-main)' }}>
+            <p className="text-text-muted text-[10px] uppercase font-medium tracking-wider mb-0.5">{label}</p>
             <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-white font-semibold text-sm">{value}</p>
+                <p className="text-text-main font-semibold text-sm">{value}</p>
                 {trend !== undefined && trend !== null && (
                     <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${trend < 0 ? 'text-emerald-400 bg-emerald-400/10' : trend > 0 ? 'text-rose-400 bg-rose-400/10' : 'text-gray-400 bg-gray-400/10'}`}>
                         {trend < 0 ? <TrendingDown size={10} /> : trend > 0 ? <TrendingUp size={10} /> : <Minus size={10} />}
@@ -756,7 +756,7 @@ function StatItem({ label, value, trend }: { label: string; value: string; trend
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-gray-400 text-xs font-medium">{label}</label>
+            <label className="text-text-muted text-xs font-medium">{label}</label>
             {children}
         </div>
     );

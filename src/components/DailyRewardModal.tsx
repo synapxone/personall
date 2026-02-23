@@ -113,7 +113,8 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="bg-[#12121A] border border-indigo-500/30 w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative overflow-hidden flex flex-col items-center flex-start text-center"
+                    className="bg-card border w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative overflow-hidden flex flex-col items-center flex-start text-center"
+                    style={{ borderColor: 'rgba(var(--primary-rgb), 0.3)' }}
                 >
                     {/* Glow effect */}
                     <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
@@ -124,8 +125,8 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
                             <Trophy size={40} className="text-white" />
                         </div>
 
-                        <h2 className="text-2xl font-black text-white mb-1">Incrível!</h2>
-                        <p className="text-gray-400 text-sm mb-6">Veja o que você conquistou ontem:</p>
+                        <h2 className="text-2xl font-black text-text-main mb-1">Incrível!</h2>
+                        <p className="text-text-muted text-sm mb-6">Veja o que você conquistou ontem:</p>
 
                         <div className="w-full flex flex-col gap-3 mb-6">
                             {achievements.calories && (
@@ -134,7 +135,7 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
                                         <Flame className="text-orange-400" size={20} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-white font-bold text-sm">Meta Calórica</p>
+                                        <p className="text-text-main font-bold text-sm">Meta Calórica</p>
                                         <p className="text-orange-400/80 text-[10px] font-black uppercase tracking-widest">+20 Pontos</p>
                                     </div>
                                 </div>
@@ -145,7 +146,7 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
                                         <Droplets className="text-blue-400" size={20} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-white font-bold text-sm">Hidratação</p>
+                                        <p className="text-text-main font-bold text-sm">Hidratação</p>
                                         <p className="text-blue-400/80 text-[10px] font-black uppercase tracking-widest">+10 Pontos</p>
                                     </div>
                                 </div>
@@ -156,23 +157,23 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
                                         <Dumbbell className="text-emerald-400" size={20} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-white font-bold text-sm">Treino Concluído</p>
+                                        <p className="text-text-main font-bold text-sm">Treino Concluído</p>
                                         <p className="text-emerald-400/80 text-[10px] font-black uppercase tracking-widest">+50 Pontos</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 mb-6">
-                            <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Próximo Prêmio</p>
+                        <div className="w-full rounded-2xl border bg-text-main/5 p-4 mb-6" style={{ borderColor: 'var(--border-main)' }}>
+                            <p className="text-xs text-text-muted font-medium mb-2 uppercase tracking-wide">Próximo Prêmio</p>
                             <div className="flex items-center gap-3">
-                                <span className="text-3xl bg-white/5 w-12 h-12 flex justify-center items-center rounded-xl">{nextReward.emoji}</span>
+                                <span className="text-3xl bg-text-main/5 w-12 h-12 flex justify-center items-center rounded-xl">{nextReward.emoji}</span>
                                 <div className="text-left flex-1">
-                                    <p className="text-white font-bold text-sm">{nextReward.name}</p>
+                                    <p className="text-text-main font-bold text-sm">{nextReward.name}</p>
                                     {nextReward.cost > currentPoints ? (
-                                        <p className="text-indigo-400 text-[11px] font-bold mt-0.5">Faltam {nextReward.cost - currentPoints} pontos!</p>
+                                        <p className="text-primary text-[11px] font-bold mt-0.5">Faltam {nextReward.cost - currentPoints} pontos!</p>
                                     ) : (
-                                        <p className="text-emerald-400 text-[11px] font-bold mt-0.5">Disponível para resgate!</p>
+                                        <p className="text-proteina text-[11px] font-bold mt-0.5">Disponível para resgate!</p>
                                     )}
                                 </div>
                             </div>
@@ -180,7 +181,7 @@ export default function DailyRewardModal({ profile, gamification, onClose }: Pro
 
                         <button
                             onClick={onClose}
-                            className="w-full py-3.5 rounded-xl font-bold border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-colors"
+                            className="w-full py-3.5 rounded-xl font-bold border border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
                         >
                             Continuar
                         </button>

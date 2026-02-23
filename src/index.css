@@ -16,30 +16,39 @@
   --text-main: #FAFAFA;
   --text-main-rgb: 250, 250, 250;
   --text-muted: #A1A1AA;
+  --text-muted-rgb: 161, 161, 170;
   --primary: #6366F1;
   --primary-rgb: 99, 102, 241;
   --primary-hover: #4F46E5;
   --accent: #F59E0B;
+  --accent-rgb: 245, 158, 11;
   --proteina: #10B981;
+  --proteina-rgb: 16, 185, 129;
   --carbos: #F59E0B;
+  --carbos-rgb: 245, 158, 11;
   --gordura: #EF4444;
+  --gordura-rgb: 239, 68, 68;
+  --border-main: rgba(255, 255, 255, 0.05);
 }
 
 html.light {
   --bg-main: #FAFAF8;
   --bg-main-rgb: 250, 250, 248;
-  --bg-card: #F2F0EB;
-  --bg-card-rgb: 242, 240, 235;
+  --bg-card: #FFFFFF;
+  --bg-card-rgb: 255, 255, 255;
   --text-main: #1C1C1E;
   --text-main-rgb: 28, 28, 30;
-  --text-muted: #6B6B6B;
+  --text-muted: #6B6B7B;
+  --text-muted-rgb: 107, 107, 123;
   --primary: #52B788;
   --primary-rgb: 82, 183, 136;
   --primary-hover: #2D6A4F;
   --accent: #F4C542;
+  --accent-rgb: 244, 197, 66;
   --proteina: #52B788;
   --carbos: #F4845F;
-  --gordura: #F4C542;
+  --gordura: #EF4444;
+  --border-main: rgba(28, 28, 30, 0.08);
 }
 
 html,
