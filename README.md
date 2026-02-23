@@ -324,7 +324,7 @@ npx tsc --noEmit  # type check
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.1.0
+**Status e Versão Atual:** v1.1.1
 
 ### Últimas Atualizações e Correções (Fev/2026):
 - **Design Dashboard Stats:** Os cartões na `Dashboard.tsx` receberam uma reformulação completa para exibir pequenos gráficos SVG/Backgrounds renderizados atrás dos números.
