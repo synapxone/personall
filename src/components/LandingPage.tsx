@@ -89,8 +89,8 @@ export default function LandingPage({ onAuthSuccess }: Props) {
             {/* Header */}
             <header className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-2">
-                    <img src="/niume/assets/brand/icon.png" alt="niume icon" className="h-8 w-auto object-contain" />
-                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-5 w-auto object-contain" />
+                    <img src="/niume/assets/brand/icon.png" alt="icon" className="h-8 w-8 object-contain rounded-lg" />
+                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-6 w-auto object-contain" />
                 </div>
                 <button
                     onClick={() => { setIsLogin(true); setShowAuth(true); }}
@@ -104,13 +104,13 @@ export default function LandingPage({ onAuthSuccess }: Props) {
             <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 relative overflow-hidden">
                 {/* Branding Hero */}
                 <motion.div
-                    className="mb-6 select-none"
+                    className="mb-6 select-none flex flex-col items-center gap-4"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.8 }}
                 >
-                    <img src="/niume/assets/brand/icon.png" alt="icon" className="w-24 h-24 object-contain mx-auto mb-4 drop-shadow-2xl" />
-                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-10 w-auto mx-auto drop-shadow-lg" />
+                    <img src="/niume/assets/brand/icon.png" alt="icon" className="h-24 w-24 object-contain drop-shadow-2xl rounded-2xl" />
+                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-12 w-auto drop-shadow-lg" />
                 </motion.div>
 
                 <div className="flex items-center justify-center mb-8">

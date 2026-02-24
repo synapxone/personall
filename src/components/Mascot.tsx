@@ -16,10 +16,10 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
     const viewBox = bust ? "1600 700 1600 1600" : "0 0 4877 3599";
     const eyeVariants = {
         neutral: { scaleY: 1, y: 0 },
-        happy: { scaleY: 0.8, y: 2, scaleX: 1.1 },
-        thinking: { y: -2, rotate: -5 },
-        waiting: { scaleY: 1, opacity: [1, 0, 1], transition: { repeat: Infinity, duration: 3, times: [0, 0.1, 0.2] } },
-        workout: { scaleY: 0.9, y: 1 }
+        happy: { scaleY: 0.8, y: 5 },
+        thinking: { y: -5, rotate: -5 },
+        waiting: { scaleY: [1, 0.1, 1], transition: { repeat: Infinity, duration: 3, times: [0, 0.1, 0.2] } },
+        workout: { scaleY: 1.1, y: 2 }
     };
 
     const mouthVariants = {
@@ -91,9 +91,20 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
                     <path className="mascot-cls-5" d="M7180,1177s-20.53-1.5-30,20-36.12,51.24-55,169c0,0-13.73,23.94,29,25,0,0,350.72,14.95,688-4,0,0,17.5,2.62,18-30,0,0-4.4-96.7-68-176,0,0-5.14-7.29-24-4,0,0-258.91,28.18-539,1h-10Z" transform="translate(-4977)" />
                     <path className="mascot-cls-6" d="M7141,1212s-35.49,57.27-42,138c0,0,489.32,22.13,730-1,0,0,.76-53.88-45-139C7784,1210,7499.34,1230.82,7141,1212Z" transform="translate(-4977)" />
 
-                    {/* Eyes */}
-                    <motion.text variants={eyeVariants} className="mascot-cls-7" transform="translate(2238.712 1933.289) scale(3.403)">u</motion.text>
-                    <motion.text variants={eyeVariants} className="mascot-cls-7" transform="translate(2566.714 1933.289) scale(3.403)">u</motion.text>
+                    {/* Eyes - Left */}
+                    <motion.path
+                        variants={eyeVariants}
+                        className="mascot-cls-8"
+                        d="M2180,1950 q50,-60 100,0"
+                        style={{ strokeWidth: 45 }}
+                    />
+                    {/* Eyes - Right */}
+                    <motion.path
+                        variants={eyeVariants}
+                        className="mascot-cls-8"
+                        d="M2500,1950 q50,-60 100,0"
+                        style={{ strokeWidth: 45 }}
+                    />
 
                     {/* Arms */}
                     <motion.path variants={armLeftVariants} className="mascot-cls-8" d="M6811,2110s-326.01,54.44-190-298" transform="translate(-4977)" style={{ originX: '7100px', originY: '2100px' }} />
@@ -104,7 +115,13 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
                     <path className="mascot-cls-8" d="M7674,2722l-11,196" transform="translate(-4977)" />
 
                     {/* Mouth / Smile */}
-                    <motion.path variants={mouthVariants} className="mascot-cls-8" d="M7460,2275s192.15,86.76,285-83" transform="translate(-4977)" />
+                    <motion.path
+                        variants={mouthVariants}
+                        className="mascot-cls-8"
+                        d="M7400,2275 q150,120 300,0"
+                        transform="translate(-4977)"
+                        style={{ strokeWidth: 40 }}
+                    />
                 </motion.g>
             </svg>
         </motion.div>

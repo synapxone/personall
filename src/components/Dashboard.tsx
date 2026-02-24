@@ -116,8 +116,8 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
             {/* Top header */}
             <header className="flex items-center justify-between px-5 pt-20 pb-8 safe-top border-b bg-dark" style={{ borderColor: 'var(--border-main)' }}>
                 <div className="flex items-center gap-2">
-                    <img src="/niume/assets/brand/icon.png" alt="niume icon" className="h-8 w-8 object-contain" />
-                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-5 w-auto object-contain" />
+                    <img src="/niume/assets/brand/icon.png" alt="icon" className="h-8 w-8 object-contain rounded-lg" />
+                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-6 w-auto object-contain" />
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-text-muted text-xs font-medium">{profile.name.split(' ')[0]}</span>

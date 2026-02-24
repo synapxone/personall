@@ -238,15 +238,9 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {/* ===== WELCOME ===== */}
                         {step === 'welcome' && (
                             <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
-                                <motion.div
-                                    initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="mb-4"
-                                >
-                                    <img src="/niume/assets/brand/icon.png" alt="icon" className="w-24 h-24 object-contain mx-auto" />
-                                </motion.div>
-                                <div className="mb-6">
-                                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-10 w-auto mx-auto mb-4" />
+                                <div className="mb-6 flex flex-col items-center gap-4">
+                                    <img src="/niume/assets/brand/icon.png" alt="icon" className="h-20 w-20 object-contain rounded-xl shadow-lg" />
+                                    <img src="/niume/assets/brand/logo.png" alt="niume logo" className="h-10 w-auto mb-2" />
                                     <p className="text-text-muted text-base">Seu Personal Trainer com IA</p>
                                 </div>
                                 <p className="text-text-muted/80 text-sm max-w-xs">
