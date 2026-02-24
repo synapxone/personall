@@ -9,6 +9,8 @@ Aplicativo de fitness pessoal com IA — treinos, nutrição, gamificação e ac
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19 + TypeScript + Vite |
+| Mobile | Capacitor 8 (iOS & Android) |
+| OTA (Updates) | Capgo (Ninja Mode / Self-Hosted) |
 | Estilo | Tailwind CSS + Framer Motion |
 | Backend / Auth / DB | Supabase (PostgreSQL + Row Level Security) |
 | Storage | Supabase Storage |
@@ -300,11 +302,29 @@ src/
 
 ```bash
 npm install
-npm run dev       # http://localhost:5173
-npm run build     # build de produção
-npm run lint      # ESLint
-npx tsc --noEmit  # type check
+npm run dev           # Rodar versão Web
+npm run app:build     # Build Web + Sync Capacitor
+npm run app:open:ios  # Abrir Xcode
+npm run app:open:android # Abrir Android Studio
+npm run app:bundle:ota # Gerar .zip para atualização em tempo real
 ```
+
+---
+
+## Publicação Mobile & OTA Ninja
+
+O Personall utiliza **Capacitor** para rodar nativamente em iOS e Android. Para manter o custo R$ 0,00 e permitir atualizações em tempo real, implementamos o **OTA Ninja Mode**:
+
+### Como atualizar o App sem as Lojas (OTA):
+1. **Gere o Bundle**: `npm run app:bundle:ota`.
+2. **Suba o Zip**: Pegue o arquivo em `updates/ota_bundle.zip` e suba no seu servidor/bucket.
+3. **Atualize o Manifesto**: Edite `updates/manifest.json` com a nova versão e a URL direta do zip.
+4. **Pronto**: O app buscará essa informação automaticamente ao iniciar e se atualizará sozinho.
+
+**Configuração Técnica:**
+- Lógica manual implementada no `App.tsx` usando `@capgo/capacitor-updater`.
+- `autoUpdate: false` no `capacitor.config.ts` para controle total via código.
+- URL do Manifesto: `https://synapx.cloud/personall/manifest.json`.
 
 ---
 
@@ -359,6 +379,9 @@ npx tsc --noEmit  # type check
 - **Navegação de Datas (Dieta):** `NutritionLog.tsx` ganhou seletor de data com setas prev/next e calendário mensal. `loadData(date)` agora aceita parâmetro; `saveMeal`, `updateDailyNutrition` e water handler usam `selectedDate`. Calendário destaca dias com refeições via `fetchMealDates()`.
 - **Câmera Multi-Item (Dieta):** Botão "Câmera" agora usa `capture="environment"` (abre câmera nativa em mobile). IA analisa todos os alimentos do prato individualmente (`geminiService.analyzeFoodPhotoItems`). Tela de revisão exibe cada item com macros; usuário pode remover itens antes de salvar todos de uma vez. Galeria mantém fluxo de item único.
 - **Rastreador de Água (Premium):** Removido scroll horizontal. Copos em `flex-wrap`. Exibe litros consumidos vs. meta (L) e quanto falta. Barra de progresso animada. Layout de cartão vertical com header/stats/grid.
-- **Câmera In-App (Fix crítico):** `capture="environment"` causava reload do WebView em dispositivos com pouca RAM (foto nunca chegava ao `onChange`). Substituído por câmera in-app via `navigator.mediaDevices.getUserMedia`. Preview de vídeo dentro do modal, botão "Capturar" congela o frame, canvas converte para blob e envia para a IA — sem sair do app, sem reload.
-- **Imagens de Exercícios (Fix + Fonte Nova):** Todos os exercícios mostravam a mesma imagem de fallback (Unsplash) pois o pipeline ExerciseDB/corsproxy falhava. `exerciseMediaService.ts` foi reescrito: pipeline passa a usar `yuhonas/free-exercise-db` (800+ exercícios, GitHub CDN direto, sem API key) como fonte primária com fuzzy matching por nome. Supabase Storage removido do pipeline (URLs diretas armazenadas no DB cache). ExerciseDB free API mantido como último fallback. Limpar tabela `exercise_media` no Supabase remove entradas inválidas do cache antigo.
-- **Gemini JSON Truncado (Fix):** `parseSafeJSON` agora rastreia estado de string para fechar literais de string não terminadas antes de fechar colchetes/chaves abertas (corrige erro `Unterminated string in JSON`). `generateWorkoutPlan` usa `maxOutputTokens: 16384` (plano de 4 semanas precisava de mais espaço). `callGemini` e `generateWithFallback` aceitam `maxOutputTokens` como parâmetro.
+- **Câmera In-App (Fix crítico):** `capture="environment"` causava reload do WebView. Substituído por câmera in-app via `navigator.mediaDevices.getUserMedia`.
+- **Imagens de Exercícios (Fix + Fonte Nova):** Pipeline passa a usar `yuhonas/free-exercise-db` (800+ exercícios, GitHub CDN direto) como fonte primária com fuzzy matching.
+- **Gemini JSON Truncado (Fix):** `parseSafeJSON` agora corrige literais de string não terminadas.
+- **Temas Light/Dark:** Implementação de variáveis CSS semânticas em todos os componentes (`NutritionLog`, `Dashboard`, `AIAssistant`, `WorkoutDay`).
+- **Mobile Capacitor:** Adição de suporte nativo para Android e iOS com geração de ícones e splash screens personalizados.
+- **OTA Ninja Mode:** Sistema de atualização Over-the-Air self-hosted integrado, permitindo atualizações de código instantâneas e gratuitas via servidor customizado (`synapx.cloud`).
