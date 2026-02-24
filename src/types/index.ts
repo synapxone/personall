@@ -77,6 +77,7 @@ export type WorkoutSession = {
   day_index: number;
   exercises_completed: string[];  // exercise names completed
   duration_minutes: number;
+  total_load_kg?: number;
   points_earned: number;
   completed: boolean;
   created_at: string;

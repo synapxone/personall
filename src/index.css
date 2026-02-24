@@ -140,3 +140,7 @@ body,
 .achievement-glow:hover {
   box-shadow: 0 0 20px 0px rgba(var(--accent-rgb), 0.5);
 }
+
+.pb-8 {
+  padding-bottom: 1rem;
+}

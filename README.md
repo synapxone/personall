@@ -385,3 +385,6 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 - **Temas Light/Dark:** Implementação de variáveis CSS semânticas em todos os componentes (`NutritionLog`, `Dashboard`, `AIAssistant`, `WorkoutDay`).
 - **Mobile Capacitor:** Adição de suporte nativo para Android e iOS com geração de ícones e splash screens personalizados.
 - **OTA Ninja Mode:** Sistema de atualização Over-the-Air self-hosted integrado, permitindo atualizações de código instantâneas e gratuitas via servidor customizado (`synapx.cloud`).
+- **Ajuste de Estilo:** Sobresrita da classe `.pb-8` para `padding-bottom: 1rem` no `index.css`.
+- **Persistência de Treinos (Fix):** Implementado utilitário de data local (`src/lib/dateUtils.ts`) para evitar dessincronização de fuso horário. Adicionada coluna `total_load_kg` no Supabase e carregamento de estatísticas corrigido no `WorkoutDay`.
+

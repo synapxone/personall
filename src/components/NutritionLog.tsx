@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import { geminiService } from '../services/geminiService';
 import type { Profile, Meal, MealType, FoodAnalysis } from '../types';
 
@@ -27,12 +28,11 @@ const MEAL_TYPES: { id: MealType; label: string; icon: React.ReactNode; time: st
 ];
 
 function today(): string {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return getLocalYYYYMMDD();
 }
 
 function localDateStr(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return getLocalYYYYMMDD(d);
 }
 
 function prevDay(date: string): string {

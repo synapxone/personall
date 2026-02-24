@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Dumbbell, Apple, Trophy, User, Flame, Zap, BarChart3, TrendingUp, ChevronRight, CheckCircle2, BedDouble, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import type { Profile, WorkoutPlan, Gamification } from '../types';
 import WorkoutDayView from './WorkoutDay';
 import NutritionLog from './NutritionLog';
@@ -66,7 +67,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
     const [showDailyReward, setShowDailyReward] = useState(false);
 
     useEffect(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalYYYYMMDD();
         const lastCheck = localStorage.getItem('lastDailyRewardCheck');
         if (lastCheck !== todayStr) {
             setShowDailyReward(true);
@@ -79,8 +80,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
         window.scrollTo({ top: 0, behavior: 'auto' });
 
         if (activeTab === 'home' && !nutritionTotals) {
-            const d = new Date();
-            const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const ymd = getLocalYYYYMMDD();
             supabase.from('meals')
                 .select('calories, protein, carbs, fat')
                 .eq('user_id', profile.id)

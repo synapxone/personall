@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import Mascot from './Mascot';
 import { geminiService } from '../services/geminiService';
 import type { Profile, Message } from '../types';
@@ -119,7 +120,7 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
     }
 
     // General proactive tips based on time, hydration and calories remaining
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalYYYYMMDD();
     const waterStr = localStorage.getItem(`water_${profile.id}_${todayStr}`);
     const waterCups = waterStr ? parseInt(waterStr) : 0;
     const goalCups = Math.ceil((profile.weight * 35) / 250);
@@ -179,7 +180,7 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
 
         const alert = computeAlert(nutritionData, profile);
         if (alert) {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalYYYYMMDD();
             const alertKey = `ai_alert_${profile.id}_${alert.type}_${todayStr}`;
 
             // Check if this type of alert was already shown today
@@ -213,17 +214,17 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
             supabase.from('workout_sessions')
                 .select('*')
                 .eq('user_id', profile.id)
-                .gte('session_date', new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+                .gte('session_date', getLocalYYYYMMDD(new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)))
                 .order('session_date', { ascending: false }),
             supabase.from('meals')
                 .select('*')
                 .eq('user_id', profile.id)
-                .gte('meal_date', new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+                .gte('meal_date', getLocalYYYYMMDD(new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)))
                 .order('logged_at', { ascending: false }),
             supabase.from('daily_nutrition')
                 .select('*')
                 .eq('user_id', profile.id)
-                .gte('date', new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+                .gte('date', getLocalYYYYMMDD(new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)))
                 .order('date', { ascending: false }),
             supabase.from('gamification').select('*').eq('user_id', profile.id).single(),
         ]);

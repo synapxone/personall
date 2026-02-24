@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Flame, Dumbbell, UtensilsCrossed, Gift, Lock, CheckCircle, TrendingUp, Settings2, X, Loader2, Save, Camera, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import { calculateEvolutionXP } from '../lib/xpHelpers';
 import { REWARDS_CATALOG, xpForLevel } from '../types';
 import type { Gamification as GamificationType, Profile, Reward } from '../types';
@@ -158,7 +159,7 @@ export default function GamificationView({ gamification, profile, onUpdate }: Pr
             // Add a progress entry
             await supabase.from('progress_entries').insert({
                 user_id: profile.id,
-                date: new Date().toISOString().split('T')[0],
+                date: getLocalYYYYMMDD(),
                 weight: evoWeight,
             });
 
