@@ -17,9 +17,23 @@ const BodyMesh: React.FC<Props> = ({ metrics, gender }) => {
     const meshRef = useRef<THREE.Group>(null);
     const isMale = gender === 'male' || gender === 'other';
 
-    // Log nodes to help identify which mesh to show
+    // Log nodes to help identify which mesh to show and check for morph targets
     useEffect(() => {
-        console.log('3D Model Nodes:', Object.keys(nodes));
+        console.log('--- 3D Model Technical Inspection ---');
+        Object.entries(nodes).forEach(([name, node]: [string, any]) => {
+            if (node.isMesh) {
+                console.log(`Mesh: ${name}`);
+                if (node.morphTargetDictionary) {
+                    console.log(`  Morph Targets identified for ${name}:`, Object.keys(node.morphTargetDictionary));
+                } else {
+                    console.log(`  No Morph Targets found for ${name}`);
+                }
+                if (node.skeleton) {
+                    console.log(`  Skeleton found for ${name} with ${node.skeleton.bones.length} bones`);
+                }
+            }
+        });
+        console.log('------------------------------------');
     }, [nodes]);
 
     // Scales for morphing
