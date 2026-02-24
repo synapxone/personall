@@ -7,10 +7,13 @@ interface MascotProps {
     pose?: MascotPose;
     size?: number | string;
     className?: string;
+    bust?: boolean;
 }
 
-const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className = "" }) => {
-    // Definimos animações baseadas na pose
+const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className = "", bust = false }) => {
+    // Ajuste do viewBox para o modo busto (foca na cabeça/olhos)
+    // O mascote está centralizado em x=2438, olhos em y=1933
+    const viewBox = bust ? "1600 700 1600 1600" : "0 0 4877 3599";
     const eyeVariants = {
         neutral: { scaleY: 1, y: 0 },
         happy: { scaleY: 0.8, y: 2, scaleX: 1.1 },
@@ -53,7 +56,7 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
             animate={pose}
         >
             <svg
-                viewBox="0 0 4877 3599"
+                viewBox={viewBox}
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-full h-full drop-shadow-xl"
             >

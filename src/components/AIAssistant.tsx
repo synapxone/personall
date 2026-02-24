@@ -419,15 +419,15 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                         exit={{ scale: 0, opacity: 0 }}
                         whileHover={{ scale: 1.1 }}
                         onClick={handleOpen}
-                        className="fixed bottom-20 right-4 z-40 w-16 h-16 rounded-full flex items-center justify-center transition-transform"
-                        style={{
-                            background: 'transparent',
-                        }}
+                        className="fixed bottom-20 right-4 z-40 w-16 h-16 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary/40 shadow-xl bg-[#FAFAF8] dark:bg-[#1A1A2E]"
                     >
-                        <Mascot
-                            size={70}
-                            pose={loading ? 'thinking' : showBubble ? 'happy' : 'neutral'}
-                        />
+                        <div className="relative w-full h-full flex items-center justify-center p-2">
+                            <Mascot
+                                size={120}
+                                bust={true}
+                                pose={loading ? 'thinking' : showBubble ? 'happy' : 'neutral'}
+                            />
+                        </div>
                     </motion.button>
                 )}
             </AnimatePresence>

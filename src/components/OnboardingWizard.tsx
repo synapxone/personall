@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Camera, SkipForward, Check, Loader2, LogOut } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import { supabase } from '../lib/supabase';
-import Mascot from './Mascot';
 import type { OnboardingData, Gender, ActivityLevel, Goal, TrainingLocation } from '../types';
 
 interface Props {
@@ -240,15 +239,15 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'welcome' && (
                             <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
                                 <motion.div
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                                    className="mb-8"
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="mb-4"
                                 >
-                                    <Mascot size={220} pose="happy" />
+                                    <img src="/assets/brand/icon.png" alt="icon" className="w-24 h-24 object-contain mx-auto" />
                                 </motion.div>
-                                <div>
-                                    <h1 className="text-3xl font-extrabold text-text-main mb-2">Bem-vindo ao niume</h1>
-                                    <p className="text-text-muted text-base">Vamos criar seu plano personalizado!</p>
+                                <div className="mb-6">
+                                    <img src="/assets/brand/logo.png" alt="niume logo" className="h-10 w-auto mx-auto mb-4" />
+                                    <p className="text-text-muted text-base">Seu Personal Trainer com IA</p>
                                 </div>
                                 <p className="text-text-muted/80 text-sm max-w-xs">
                                     Em poucos passos, nossa IA vai montar o treino e a dieta ideal para o seu objetivo.

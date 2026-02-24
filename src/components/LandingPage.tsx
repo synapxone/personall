@@ -88,9 +88,9 @@ export default function LandingPage({ onAuthSuccess }: Props) {
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0F0F1A' }}>
             {/* Header */}
             <header className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-3">
-                    <img src="/assets/brand/logo.png" alt="niume logo" className="h-8 w-auto" />
-                    <span className="text-xl font-bold text-white">niume</span>
+                <div className="flex items-center gap-2">
+                    <img src="/assets/brand/icon.png" alt="niume icon" className="h-8 w-auto object-contain" />
+                    <img src="/assets/brand/logo.png" alt="niume logo" className="h-5 w-auto object-contain" />
                 </div>
                 <button
                     onClick={() => { setIsLogin(true); setShowAuth(true); }}
@@ -103,22 +103,20 @@ export default function LandingPage({ onAuthSuccess }: Props) {
 
             {/* Hero */}
             <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 relative overflow-hidden">
-                {/* Background glow */}
-                <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                        background: 'radial-gradient(ellipse at 50% 30%, rgba(124,58,237,0.18) 0%, transparent 70%)',
-                    }}
-                />
-
+                {/* Branding Hero */}
                 <motion.div
-                    className="mb-8 select-none"
-                    initial={{ scale: 0.8, opacity: 0 }}
+                    className="mb-6 select-none"
+                    initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ duration: 0.8 }}
                 >
-                    <Mascot size={200} pose="happy" />
+                    <img src="/assets/brand/icon.png" alt="icon" className="w-24 h-24 object-contain mx-auto mb-4 drop-shadow-2xl" />
+                    <img src="/assets/brand/logo.png" alt="niume logo" className="h-10 w-auto mx-auto drop-shadow-lg" />
                 </motion.div>
+
+                <div className="flex items-center justify-center mb-8">
+                    <Mascot size={120} pose="waiting" className="opacity-80" />
+                </div>
 
                 <motion.h1
                     initial={{ opacity: 0, y: 24 }}
