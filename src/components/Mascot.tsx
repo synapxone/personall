@@ -26,7 +26,8 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
         neutral: { scaleX: 1, scaleY: 1, d: "M7460,2275s192.15,86.76,285-83" },
         happy: { scaleX: 1.1, scaleY: 1.2, d: "M7460,2275s192.15,120.76,285-83" },
         thinking: { scaleX: 0.8, d: "M7460,2275s100,0,200,0" },
-        workout: { scaleX: 1.05, d: "M7460,2275s192.15,100.76,285-83" }
+        workout: { scaleX: 1.05, d: "M7460,2275s192.15,100.76,285-83" },
+        waiting: { scaleX: 1, scaleY: 0.95, d: "M7460,2275s192.15,90.76,285-83" }
     };
 
     const bodyVariants = {

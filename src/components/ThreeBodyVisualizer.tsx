@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useEffect } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stage, Float, Environment, useGLTF } from '@react-three/drei';
 import type { BodyMetrics } from '../lib/bodyComposition';
@@ -13,45 +13,41 @@ interface Props {
 const MODEL_PATH = '/niume/assets/male__female_base_mesh_pack.glb';
 
 const BodyMesh: React.FC<Props> = ({ metrics, gender }) => {
-    const { nodes, materials } = useGLTF(MODEL_PATH) as any;
+    const { nodes } = useGLTF(MODEL_PATH) as any;
     const meshRef = useRef<THREE.Group>(null);
     const isMale = gender === 'male' || gender === 'other';
 
-    // Log nodes to help identify which mesh to show and check for morph targets
-    useEffect(() => {
-        console.log('--- 3D Model Technical Inspection ---');
-        Object.entries(nodes).forEach(([name, node]: [string, any]) => {
-            if (node.isMesh) {
-                console.log(`Mesh: ${name}`);
-                if (node.morphTargetDictionary) {
-                    console.log(`  Morph Targets identified for ${name}:`, Object.keys(node.morphTargetDictionary));
-                } else {
-                    console.log(`  No Morph Targets found for ${name}`);
-                }
-                if (node.skeleton) {
-                    console.log(`  Skeleton found for ${name} with ${node.skeleton.bones.length} bones`);
-                }
-            }
-        });
-        console.log('------------------------------------');
-    }, [nodes]);
-
     // Scales for morphing
-    const s = metrics.shoulderScale;
-    const w = metrics.waistScale;
-    const m = metrics.muscularity;
+    const s = metrics.shoulderScale; // width of top
+    const w = metrics.waistScale;    // width of center
+    const m = metrics.muscularity;   // muscularity (0 to 1)
+
+    // ANATOMICAL SCALING LOGIC
+    // X = Width, Y = Height, Z = Depth (Belly)
+
+    // Width (X): 
+    // - Male: Shoulder width dominates if muscular. Waist width dominates if fat.
+    // - Female: Hips are generally wider (w scale).
+    const scaleX = isMale
+        ? Math.max(s * (1.1 + m * 0.1), w * 1.05)
+        : w * 1.35; // Broadens hips significantly for female representation
+
+    // Depth (Z - "Belly/Mass"): 
+    // - High waist scale + Low muscularity = Large Belly (Depth)
+    const bellyFactor = (w > 1.15 && m < 0.5) ? (w - 1.15) * 2.0 : 0;
+    const baseDepth = isMale ? 1.05 : 0.95;
+    const scaleZ = (baseDepth * w) + bellyFactor;
+    const scaleY = 1.0;
 
     // Animation loop for subtle breathing/movement
     useFrame((state) => {
         if (!meshRef.current) return;
-        meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+        meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.4) * 0.15;
     });
 
-    // Strategy: Try to find meshes that contain 'male' or 'female' in their names
     const maleNodes = Object.values(nodes).filter((n: any) => n.isMesh && n.name.toLowerCase().includes('male') && !n.name.toLowerCase().includes('female'));
     const femaleNodes = Object.values(nodes).filter((n: any) => n.isMesh && n.name.toLowerCase().includes('female'));
 
-    // Fallback if naming is different: just show the first mesh found
     const activeNodes = isMale
         ? (maleNodes.length > 0 ? maleNodes : Object.values(nodes).filter((n: any) => n.isMesh).slice(0, 1))
         : (femaleNodes.length > 0 ? femaleNodes : Object.values(nodes).filter((n: any) => n.isMesh).slice(1, 2));
@@ -62,19 +58,14 @@ const BodyMesh: React.FC<Props> = ({ metrics, gender }) => {
                 <mesh
                     key={node.name}
                     geometry={node.geometry}
-                    material={materials[Object.keys(materials)[0]] || new THREE.MeshStandardMaterial({ color: 'var(--primary)' })}
-                    scale={[
-                        isMale ? s * (1.1 + m * 0.1) : s * 0.9,
-                        1,
-                        w * (0.8 + (1 - m) * 0.1)
-                    ]}
+                    scale={[scaleX, scaleY, scaleZ]}
                 >
                     <meshStandardMaterial
-                        color="var(--primary)"
-                        roughness={0.3}
-                        metalness={0.4}
-                        emissive="var(--primary)"
-                        emissiveIntensity={0.05 + m * 0.15}
+                        color="#00ed64"
+                        roughness={0.4}
+                        metalness={0.25}
+                        emissive="#00ed64"
+                        emissiveIntensity={0.05 + m * 0.25}
                     />
                 </mesh>
             ))}
@@ -87,7 +78,7 @@ export const ThreeBodyVisualizer: React.FC<Props> = (props) => {
         <div className="w-full h-[350px] relative rounded-3xl overflow-hidden bg-gradient-to-b from-card to-bg-main border border-white/5 shadow-2xl">
             <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
                 <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} intensity={1} />
+                <pointLight position={[10, 10, 10]} intensity={1} castShadow />
 
                 <Suspense fallback={null}>
                     <Stage environment="city" intensity={0.5}>

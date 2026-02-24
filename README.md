@@ -356,13 +356,15 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.2
+**Status e Versão Atual:** v1.2.3
 
 ### Últimas Atualizações e Correções (Fev/2026):
+- **Aprimoramento Visual e Correção de Mascot (v1.2.3):**
+  - Corrigido erro de path SVG `undefined` no mascote durante o estado de espera.
+  - Melhorado o algoritmo de deformação do Visualizador 3D: agora ele representa de forma muito mais expressiva variações de gordura (barriga/volume), músculos e quadril (foco feminino).
+  - Otimizado sombreamento e materiais do modelo 3D para um visual mais premium.
+  - Limpeza de logs e lints no código de visualização.
 - **Refatoração do Sistema de Contingência (v1.2.2):**
-  - Corrigido "Silent Failure" no Gemini que impedia a ativação do fallback da OpenAI.
-  - Implementada propagação de erros real: agora, se o Gemini falhar internamente, o `aiService` detecta e chaveia para o GPT-4o-mini sem que o usuário perceba.
-  - Melhorado tratamento de erros e logs no `openaiService` para facilitar diagnósticos.
 - **Integração de Fallback OpenAI (v1.2.1):**
   - Implementado sistema de contingência com **GPT-4o-mini**.
   - Fallback automático resiliente: o sistema chaveia para a OpenAI em qualquer erro do Gemini (403, 404, 429).
