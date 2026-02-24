@@ -356,9 +356,13 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.0
+**Status e Versão Atual:** v1.2.1
 
 ### Últimas Atualizações e Correções (Fev/2026):
+- **Integração de Fallback OpenAI (v1.2.1):**
+  - Implementado sistema de contingência com **GPT-4o-mini**.
+  - Fallback automático resiliente: o sistema chaveia para a OpenAI em qualquer erro do Gemini (403, 404, 429).
+  - Unificação de serviços no `aiService.ts` para maior estabilidade.
 - **Visualizador Corporal 3D Real (v1.2.0):** 
   - Upgrade total do motor de visualização de silhuetas SVG para **Three.js**.
   - Suporte nativo para modelos humanos reais em formato `.glb` (`public/assets/`).
