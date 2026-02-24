@@ -239,7 +239,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         {step === 'welcome' && (
                             <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
                                 <div className="mb-6 flex flex-col items-center gap-2">
-                                    <span className="font-['Quicksand'] font-bold text-5xl lowercase text-black dark:text-white">niume</span>
+                                    <span className="font-['Quicksand'] font-bold text-5xl lowercase text-text-main">niume</span>
                                     <p className="text-text-muted text-base mt-2">Seu Personal Trainer com IA</p>
                                 </div>
                                 <p className="text-text-muted/80 text-sm max-w-xs">

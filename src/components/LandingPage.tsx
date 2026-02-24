@@ -88,7 +88,7 @@ export default function LandingPage({ onAuthSuccess }: Props) {
             {/* Header */}
             <header className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-2">
-                    <span className="font-['Quicksand'] font-bold text-2xl lowercase text-black dark:text-white">niume</span>
+                    <span className="font-['Quicksand'] font-bold text-2xl lowercase text-text-main">niume</span>
                 </div>
                 <button
                     onClick={() => { setIsLogin(true); setShowAuth(true); }}
@@ -107,7 +107,7 @@ export default function LandingPage({ onAuthSuccess }: Props) {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.8 }}
                 >
-                    <span className="font-['Quicksand'] font-bold text-7xl lowercase text-black dark:text-white tracking-tight">niume</span>
+                    <span className="font-['Quicksand'] font-bold text-7xl lowercase text-text-main tracking-tight">niume</span>
                 </motion.div>
 
                 {/* Removed Mascot decoration */}

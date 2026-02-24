@@ -116,7 +116,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
             {/* Top header */}
             <header className="flex items-center justify-between px-5 pt-20 pb-8 safe-top border-b bg-dark" style={{ borderColor: 'var(--border-main)' }}>
                 <div className="flex items-center gap-2">
-                    <span className="font-['Quicksand'] font-bold text-2xl lowercase text-black dark:text-white">niume</span>
+                    <span className="font-['Quicksand'] font-bold text-2xl lowercase text-text-main">niume</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-text-muted text-xs font-medium">{profile.name.split(' ')[0]}</span>
