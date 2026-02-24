@@ -356,9 +356,13 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.6
+**Status e Versão Atual:** v1.2.7
 
 ### Últimas Atualizações e Correções (Fev/2026):
+- **Busca em Tempo Real no Banco Local (v1.2.7):**
+  - Implementado sistema de sugestões instantâneas (Autocomplete) que consulta o banco de dados TACO conforme o usuário digita.
+  - Otimização de busca: O sistema agora prioriza o banco de dados local em tempo de digitação, minimizando significativamente a necessidade de ativação da IA para alimentos comuns.
+  - Adicionado suporte a debouncing inteligente para evitar sobrecarga de consultas ao banco.
 - **Banco de Dados Local e Scanner (v1.2.6):**
   - Implementado banco de dados local com dados da **TACO** (Tabela Brasileira de Composição de Alimentos).
   - Integrado **Leitor de Código de Barras** (Scanner) via `html5-qrcode` com consulta à API mundial **Open Food Facts**.

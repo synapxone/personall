@@ -297,6 +297,15 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         if (query.trim().length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
         setSuggestLoading(true);
         try {
+            // 1. Prioritize local database (TACO)
+            const dbResults = await aiService.searchFoodDatabase(query);
+            if (dbResults.length > 0) {
+                setSuggestions(dbResults.map(r => r.description));
+                setShowSuggestions(true);
+                return;
+            }
+
+            // 2. Fallback to AI if database has no matches
             const list = await aiService.suggestFoods(query.trim());
             setSuggestions(list);
             setShowSuggestions(list.length > 0);
@@ -310,8 +319,15 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     function handleDescChange(value: string) {
         setFormDesc(value);
         setAnalyzed(false);
-        setShowSuggestions(false);
         setUnitOptions([]); setFormUnit('');
+
+        if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
+        if (value.trim().length >= 2) {
+            suggestDebounceRef.current = setTimeout(() => fetchSuggestions(value), 400);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
     }
 
 
