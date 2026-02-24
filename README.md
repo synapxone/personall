@@ -356,9 +356,14 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.5
+**Status e Versão Atual:** v1.2.6
 
 ### Últimas Atualizações e Correções (Fev/2026):
+- **Banco de Dados Local e Scanner (v1.2.6):**
+  - Implementado banco de dados local com dados da **TACO** (Tabela Brasileira de Composição de Alimentos).
+  - Integrado **Leitor de Código de Barras** (Scanner) via `html5-qrcode` com consulta à API mundial **Open Food Facts**.
+  - Sistema de busca inteligante: Prioriza resultados locais e baseados em código de barras, usando a IA apenas como *fallback* para novos alimentos ou análise de fotos.
+  - Otimização de custos e performance: Busca instantânea para alimentos básicos brasileiros.
 - **Correção da Análise Nutricional (v1.2.5):**
   - Resolvido o problema onde os nutrientes (calorias, macros) retornavam como **zero** após a análise de fotos de comida.
   - Otimização dos *prompts* de IA (Gemini e OpenAI) para forçar estimativas realistas fundamentadas em tabelas nutricionais.

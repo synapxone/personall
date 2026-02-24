@@ -1,5 +1,6 @@
 import { geminiService } from './geminiService';
 import { openaiService } from './openaiService';
+import { supabase } from '../lib/supabase';
 import type { OnboardingData, FoodAnalysis, Profile } from '../types';
 
 // Helper to check OpenAI dynamically
@@ -140,6 +141,50 @@ export const aiService = {
                 return await openaiService.getAssistantResponse(userMessage, context);
             }
             throw e;
+        }
+    },
+
+    async searchFoodDatabase(query: string): Promise<FoodAnalysis[]> {
+        try {
+            const { data, error } = await supabase
+                .from('food_database')
+                .select('*')
+                .ilike('name', `%${query}%`)
+                .limit(10);
+
+            if (error || !data) return [];
+            return data.map(item => ({
+                description: item.name,
+                calories: item.calories,
+                protein: item.protein,
+                carbs: item.carbs,
+                fat: item.fat
+            }));
+        } catch (e) {
+            console.error('Database search error', e);
+            return [];
+        }
+    },
+
+    async fetchFromOpenFoodFacts(barcode: string): Promise<FoodAnalysis | null> {
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+            const data = await res.json();
+            if (data.status === 1 && data.product) {
+                const p = data.product;
+                const nutrients = p.nutriments;
+                return {
+                    description: p.product_name || 'Produto desconhecido',
+                    calories: Math.round(nutrients['energy-kcal_100g'] || nutrients['energy_100g'] / 4.184 || 0),
+                    protein: Math.round(nutrients.proteins_100g || 0),
+                    carbs: Math.round(nutrients.carbohydrates_100g || 0),
+                    fat: Math.round(nutrients.fat_100g || 0)
+                };
+            }
+            return null;
+        } catch (e) {
+            console.error('OpenFoodFacts error', e);
+            return null;
         }
     }
 };

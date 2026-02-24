@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp } from 'lucide-react';
+import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp, Barcode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import { aiService } from '../services/aiService';
+import BarcodeScanner from './BarcodeScanner';
 import type { Profile, Meal, MealType, FoodAnalysis } from '../types';
 
 interface Props {
@@ -137,7 +138,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [waterCups, setWaterCups] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [modalMealType, setModalMealType] = useState<MealType>('breakfast');
-    const [modalMode, setModalMode] = useState<'choose' | 'photo' | 'manual' | 'photoItems' | 'camera'>('choose');
+    const [modalMode, setModalMode] = useState<'choose' | 'photo' | 'manual' | 'photoItems' | 'camera' | 'barcode'>('choose');
     const [photoItems, setPhotoItems] = useState<FoodAnalysis[]>([]);
     const [analyzeLoading, setAnalyzeLoading] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -251,12 +252,34 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         if (qtyDebounceRef.current) clearTimeout(qtyDebounceRef.current);
     }
 
+    function onAddDirectly() {
+        if (formDesc.trim().length < 2) return;
+        setFormQty(1);
+        loadUnitsAndAnalyze(formDesc, 1, '');
+    }
+
     const analyzeText = useCallback(async (food: string, qty: number, unit: string) => {
+        if (!food.trim()) return;
         const numQty = typeof qty === 'number' ? qty : 1;
         const fullDesc = unit ? `${numQty} ${unit} de ${food}` : food;
         setAnalyzeLoading(true);
         setAnalyzed(false);
         try {
+            // Prefer local database for exact matches (TACO)
+            if (!unit || unit === 'porção' || unit === 'unidade') {
+                const dbResults = await aiService.searchFoodDatabase(food);
+                const exact = dbResults.find(r => r.description.toLowerCase() === food.toLowerCase());
+                if (exact) {
+                    setFormCal(Math.round(exact.calories * numQty));
+                    setFormProt(Math.round(exact.protein * numQty));
+                    setFormCarbs(Math.round(exact.carbs * numQty));
+                    setFormFat(Math.round(exact.fat * numQty));
+                    setAnalyzed(true);
+                    setAnalyzeLoading(false);
+                    return;
+                }
+            }
+
             const result = await aiService.analyzeFoodText(fullDesc);
             setFormCal(result.calories);
             setFormProt(result.protein);
@@ -291,15 +314,65 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setUnitOptions([]); setFormUnit('');
     }
 
-    function onSearch() {
+
+    async function onSearch() {
         if (formDesc.trim().length < 2) return;
-        fetchSuggestions(formDesc);
+        setSuggestLoading(true);
+        setShowSuggestions(false);
+        try {
+            // 1. First search in local food_database (TACO)
+            const dbResults = await aiService.searchFoodDatabase(formDesc);
+
+            if (dbResults.length > 0) {
+                setSuggestions(dbResults.map(r => r.description));
+                setShowSuggestions(true);
+
+                // If it's an exact match (case insensitive), fill the data
+                const exact = dbResults.find(r => r.description.toLowerCase() === formDesc.toLowerCase());
+                if (exact) {
+                    setFormCal(exact.calories);
+                    setFormProt(exact.protein);
+                    setFormCarbs(exact.carbs);
+                    setFormFat(exact.fat);
+                    setAnalyzed(true);
+                    setUnitOptions(['unidade', 'gramas', 'porção']);
+                    setFormUnit('porção');
+                }
+            } else {
+                // 2. Fallback to AI for suggestions
+                await fetchSuggestions(formDesc);
+            }
+        } catch (e) {
+            console.error('Search failed', e);
+        } finally {
+            setSuggestLoading(false);
+        }
     }
 
-    function onAddDirectly() {
-        if (formDesc.trim().length < 2) return;
-        setFormQty(1);
-        loadUnitsAndAnalyze(formDesc, 1, '');
+    async function onBarcodeScan(barcode: string) {
+        setAnalyzeLoading(true);
+        setModalMode('manual');
+        const toastId = toast.loading('Buscando produto no Open Food Facts...');
+        try {
+            const result = await aiService.fetchFromOpenFoodFacts(barcode);
+            if (result) {
+                setFormDesc(result.description);
+                setFormCal(result.calories);
+                setFormProt(result.protein);
+                setFormCarbs(result.carbs);
+                setFormFat(result.fat);
+                setAnalyzed(true);
+                setUnitOptions(['unidade', 'gramas', 'embalagem']);
+                setFormUnit('gramas');
+                toast.success('Produto encontrado!', { id: toastId });
+            } else {
+                toast.error('Produto não encontrado ou sem dados nutricionais.', { id: toastId });
+            }
+        } catch (e) {
+            toast.error('Erro ao acessar banco de dados de produtos.', { id: toastId });
+        } finally {
+            setAnalyzeLoading(false);
+        }
     }
 
     async function loadUnitsAndAnalyze(food: string, qty: number, unit: string) {
@@ -1035,48 +1108,64 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             <Camera size={20} className="text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-text-main font-semibold text-sm">Câmera</p>
-                                            <p className="text-text-muted text-xs">Tire uma foto — IA detecta cada item do prato</p>
+                                            <p className="text-text-main font-semibold text-sm">Câmera IA</p>
+                                            <p className="text-text-muted text-xs">Tire uma foto — IA detecta os itens do prato</p>
                                         </div>
                                     </button>
-                                    <label
-                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left cursor-pointer"
-                                        style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}
-                                    >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(59,130,246,0.2)' }}>
-                                            <Images size={20} style={{ color: '#3B82F6' }} />
-                                        </div>
-                                        <div>
-                                            <p className="text-text-main font-semibold text-sm">Galeria</p>
-                                            <p className="text-text-muted text-xs">Escolha uma foto existente</p>
-                                        </div>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const f = e.target.files?.[0];
-                                                if (f) {
-                                                    setTimeout(() => handlePhotoAnalysis(f), 500);
-                                                }
-                                                e.target.value = '';
-                                            }}
-                                        />
-                                    </label>
+
                                     <button
                                         type="button"
-                                        onClick={() => setModalMode('manual')}
-                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left"
-                                        style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
+                                        onClick={() => setModalMode('barcode')}
+                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left w-full"
+                                        style={{ backgroundColor: 'rgba(var(--accent-rgb), 0.1)', border: '1px solid rgba(var(--accent-rgb), 0.3)' }}
                                     >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--proteina-rgb), 0.2)' }}>
-                                            <PenLine size={20} className="text-proteina" />
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--accent-rgb), 0.2)' }}>
+                                            <Barcode size={20} className="text-accent" />
                                         </div>
                                         <div>
-                                            <p className="text-text-main font-semibold text-sm">Manual</p>
-                                            <p className="text-text-muted text-xs">Preencha os dados da refeição</p>
+                                            <p className="text-text-main font-semibold text-sm">Código de Barras</p>
+                                            <p className="text-text-muted text-xs">Escaneie um produto industrializado</p>
                                         </div>
                                     </button>
+
+                                    <div className="grid grid-cols-2 gap-3 mt-1">
+                                        <label
+                                            className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center cursor-pointer"
+                                            style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}
+                                        >
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(59,130,246,0.2)' }}>
+                                                <Images size={20} style={{ color: '#3B82F6' }} />
+                                            </div>
+                                            <div>
+                                                <p className="text-text-main font-semibold text-xs">Galeria</p>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const f = e.target.files?.[0];
+                                                    if (f) {
+                                                        setTimeout(() => handlePhotoAnalysis(f), 500);
+                                                    }
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setModalMode('manual')}
+                                            className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl text-center"
+                                            style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
+                                        >
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--proteina-rgb), 0.2)' }}>
+                                                <PenLine size={20} className="text-proteina" />
+                                            </div>
+                                            <div>
+                                                <p className="text-text-main font-semibold text-xs">Manual</p>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -1346,6 +1435,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                     </motion.button>
                                 </div>
                             )}
+
+                            {modalMode === 'barcode' && (
+                                <BarcodeScanner
+                                    onScan={onBarcodeScan}
+                                    onClose={() => setModalMode('choose')}
+                                />
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
@@ -1601,7 +1697,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }
 
