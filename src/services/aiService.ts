@@ -13,8 +13,8 @@ export const aiService = {
         try {
             return await geminiService.generateWorkoutPlan(data);
         } catch (e: any) {
-            if (e.message === 'QUOTA_EXCEEDED' && hasOpenAI) {
-                console.log('Gemini quota exceeded, falling back to OpenAI...');
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
                 return await openaiService.generateWorkoutPlan(data);
             }
             throw e;
@@ -25,7 +25,8 @@ export const aiService = {
         try {
             return await geminiService.generateWorkoutSingleDay(profile, dayName, availableMinutes, location, avoidExercises);
         } catch (e: any) {
-            if (e.message === 'QUOTA_EXCEEDED' && hasOpenAI) {
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
                 return await openaiService.generateWorkoutSingleDay(profile, dayName, availableMinutes, location, avoidExercises);
             }
             throw e;
@@ -36,7 +37,8 @@ export const aiService = {
         try {
             return await geminiService.generateDietPlan(data);
         } catch (e: any) {
-            if (e.message === 'QUOTA_EXCEEDED' && hasOpenAI) {
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
                 return await openaiService.generateDietPlan(data);
             }
             throw e;
@@ -47,7 +49,10 @@ export const aiService = {
         try {
             return await geminiService.analyzeBodyPhoto(base64, mimeType);
         } catch (e: any) {
-            if (hasOpenAI) return await openaiService.analyzeBodyPhoto(base64, mimeType);
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
+                return await openaiService.analyzeBodyPhoto(base64, mimeType);
+            }
             throw e;
         }
     },
@@ -56,7 +61,10 @@ export const aiService = {
         try {
             return await geminiService.suggestUnits(food);
         } catch (e: any) {
-            if (hasOpenAI) return await openaiService.suggestUnits(food);
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
+                return await openaiService.suggestUnits(food);
+            }
             throw e;
         }
     },
@@ -65,7 +73,10 @@ export const aiService = {
         try {
             return await geminiService.suggestFoods(query);
         } catch (e: any) {
-            if (hasOpenAI) return await openaiService.suggestFoods(query);
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
+                return await openaiService.suggestFoods(query);
+            }
             throw e;
         }
     },
@@ -74,7 +85,10 @@ export const aiService = {
         try {
             return await geminiService.analyzeFoodText(description);
         } catch (e: any) {
-            if (hasOpenAI) return await openaiService.analyzeFoodText(description);
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
+                return await openaiService.analyzeFoodText(description);
+            }
             throw e;
         }
     },
@@ -83,7 +97,10 @@ export const aiService = {
         try {
             return await geminiService.analyzeFoodPhoto(base64, mimeType);
         } catch (e: any) {
-            if (hasOpenAI) return await openaiService.analyzeFoodPhoto(base64, mimeType);
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
+                return await openaiService.analyzeFoodPhoto(base64, mimeType);
+            }
             throw e;
         }
     },
@@ -92,9 +109,8 @@ export const aiService = {
         try {
             return await geminiService.analyzeFoodPhotoItems(base64, mimeType);
         } catch (e: any) {
-            // Special fallback for multi-item analysis
             if (hasOpenAI) {
-                console.log('Gemini failed, trying OpenAI for multi-item analysis...');
+                console.warn('Gemini failed, trying OpenAI for multi-item analysis...', e);
                 return await openaiService.analyzeFoodPhotoItems(base64, mimeType);
             }
             throw e;
@@ -105,7 +121,8 @@ export const aiService = {
         try {
             return await geminiService.getAssistantResponse(userMessage, context);
         } catch (e: any) {
-            if (e.message === 'QUOTA_EXCEEDED' && hasOpenAI) {
+            if (hasOpenAI) {
+                console.warn('Gemini failed, falling back to OpenAI...', e);
                 return await openaiService.getAssistantResponse(userMessage, context);
             }
             throw e;
