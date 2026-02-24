@@ -356,13 +356,19 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.8
+**Status e Versão Atual:** v1.3.1
 
 ### Últimas Atualizações e Correções (Fev/2026):
+### v1.3.1
+- Correção: Caixa de login na Landing Page não é mais transparente.
+- Funcionalidade: Expansão do banco de dados nutricional brasileiro (TACO) para maior precisão e performance.
+- Interface: Diferenciação visual entre dados vindos do Banco de Dados (ícone azul) e da IA (ícone verde) no Log Nutricional.
+- Estabilidade: Otimização do visualizador 3D para dispositivos móveis e correção de inicialização da câmera no scanner.
+
 ### v1.2.9
-- Modo Claro definido como padrão do sistema.
-- Persistência de tema (Claro/Escuro) sincronizada com o perfil do usuário no Supabase.
-- Melhoria na inicialização do app para evitar "flash" de tema escuro.
+- Estética: Modo Claro definido como padrão do sistema.
+- Tema: Persistência de tema (Claro/Escuro) sincronizada com o perfil do usuário no Supabase.
+- Performance: Melhoria na inicialização do app para evitar "flash" de tema escuro.
 
 ### v1.2.8
 - Otimização de busca local: Resultados do banco de dados (TACO) agora priorizados na busca manual.

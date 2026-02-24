@@ -180,7 +180,7 @@ export default function LandingPage({ onAuthSuccess }: Props) {
 
             {/* Footer */}
             <footer className="text-center text-gray-600 text-xs pb-8">
-                <p>niume &copy; {new Date().getFullYear()} — Personal Trainer com IA</p>
+                <p>niume v1.3.1 &copy; {new Date().getFullYear()} — Personal Trainer com IA</p>
             </footer>
 
             {/* Auth Modal */}
@@ -201,7 +201,7 @@ export default function LandingPage({ onAuthSuccess }: Props) {
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 bg-bg-card border border-border-main"
+                            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 bg-card border border-[var(--border-main)] shadow-2xl"
                         >
                             {/* Modal header */}
                             <div className="flex items-center justify-between mb-6">

@@ -373,7 +373,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
 
                 {/* VERSION INDICATOR */}
                 <div className="flex justify-center mt-8 mb-4">
-                    <span className="text-[10px] text-text-muted/40 font-semibold tracking-widest uppercase">Versão 1.2.9</span>
+                    <span className="text-[10px] text-text-muted/40 font-semibold tracking-widest uppercase">Versão 1.3.1</span>
                 </div>
             </main>
 

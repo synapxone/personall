@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp, Barcode } from 'lucide-react';
+import { Plus, Camera, PenLine, X, Loader2, Sparkles, Pencil, Trash2, Images, ChevronLeft, ChevronRight, CalendarDays, GlassWater, Flame, Zap, Activity, TrendingUp, Barcode, Database } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
@@ -152,6 +152,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [formCarbs, setFormCarbs] = useState(0);
     const [formFat, setFormFat] = useState(0);
     const [analyzed, setAnalyzed] = useState(false);
+    const [isFromDb, setIsFromDb] = useState(false);
     const [saving, setSaving] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [suggestLoading, setSuggestLoading] = useState(false);
@@ -246,7 +247,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     function resetForm() {
         setFormDesc(''); setFormCal(0); setFormProt(0); setFormCarbs(0); setFormFat(0);
         setFormQty(''); setFormUnit(''); setUnitOptions([]);
-        setAnalyzed(false); setSuggestions([]); setShowSuggestions(false);
+        setAnalyzed(false); setIsFromDb(false); setSuggestions([]); setShowSuggestions(false);
         if (debounceRef.current) clearTimeout(debounceRef.current);
         if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
         if (qtyDebounceRef.current) clearTimeout(qtyDebounceRef.current);
@@ -278,10 +279,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     setFormCarbs(Math.round(match.carbs * numQty));
                     setFormFat(Math.round(match.fat * numQty));
                     setAnalyzed(true);
+                    setIsFromDb(true);
                     setAnalyzeLoading(false);
                     return;
                 }
             }
+
+            setIsFromDb(false);
 
             const result = await aiService.analyzeFoodText(fullDesc);
             setFormCal(result.calories);
@@ -320,6 +324,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     function handleDescChange(value: string) {
         setFormDesc(value);
         setAnalyzed(false);
+        setIsFromDb(false);
         setUnitOptions([]); setFormUnit('');
 
         if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
@@ -352,10 +357,12 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     setFormCarbs(exact.carbs);
                     setFormFat(exact.fat);
                     setAnalyzed(true);
+                    setIsFromDb(true);
                     setUnitOptions(['unidade', 'gramas', 'porção']);
                     setFormUnit('porção');
                 }
             } else {
+                setIsFromDb(false);
                 // 2. Fallback to AI for suggestions
                 await fetchSuggestions(formDesc);
             }
@@ -1314,7 +1321,9 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                 {(analyzeLoading || suggestLoading)
                                                     ? <Loader2 size={16} className="animate-spin" style={{ color: 'var(--primary)' }} />
                                                     : analyzed
-                                                        ? <Sparkles size={16} className="text-emerald-500" />
+                                                        ? isFromDb
+                                                            ? <Database size={16} className="text-blue-500" />
+                                                            : <Sparkles size={16} className="text-emerald-500" />
                                                         : null}
                                             </div>
 
