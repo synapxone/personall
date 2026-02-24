@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { Barcode } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -9,43 +9,42 @@ interface Props {
 }
 
 export default function BarcodeScanner({ onScan, onClose }: Props) {
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
     useEffect(() => {
-        // We use a shorter timeout to ensure the element is in the DOM
-        const timer = setTimeout(() => {
-            try {
-                scannerRef.current = new Html5QrcodeScanner(
-                    "barcode-reader",
-                    {
-                        fps: 20,
-                        qrbox: { width: 280, height: 180 },
-                        aspectRatio: 1.333334
-                    },
-                    /* verbose= */ false
-                );
+        const scannerId = "barcode-reader";
+        const html5QrCode = new Html5Qrcode(scannerId);
+        scannerRef.current = html5QrCode;
 
-                scannerRef.current.render((decodedText) => {
-                    if (scannerRef.current) {
-                        scannerRef.current.clear().then(() => {
+        const startScanner = async () => {
+            try {
+                const config = {
+                    fps: 20,
+                    qrbox: { width: 280, height: 180 },
+                    aspectRatio: 1.333334
+                };
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText) => {
+                        html5QrCode.stop().then(() => {
                             onScan(decodedText);
-                        }).catch(err => {
-                            console.error("Failed to clear scanner", err);
-                            onScan(decodedText);
-                        });
-                    }
-                }, (_errorMessage) => {
-                    // Ignore errors
-                });
-            } catch (e) {
-                console.error("Scanner initialization failed", e);
+                        }).catch(() => onScan(decodedText));
+                    },
+                    undefined // ignore errors
+                );
+            } catch (err) {
+                console.error("Erro ao iniciar câmera:", err);
             }
-        }, 300);
+        };
+
+        const timer = setTimeout(startScanner, 300);
 
         return () => {
             clearTimeout(timer);
-            if (scannerRef.current) {
-                scannerRef.current.clear().catch(err => console.error("Scanner cleanup failed", err));
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop().catch(e => console.error("Erro ao parar scanner", e));
             }
         };
     }, [onScan]);

@@ -265,15 +265,18 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setAnalyzeLoading(true);
         setAnalyzed(false);
         try {
-            // Prefer local database for exact matches (TACO)
+            // Prefer local database for exact or close matches (TACO)
             if (!unit || unit === 'porção' || unit === 'unidade') {
                 const dbResults = await aiService.searchFoodDatabase(food);
-                const exact = dbResults.find(r => r.description.toLowerCase() === food.toLowerCase());
-                if (exact) {
-                    setFormCal(Math.round(exact.calories * numQty));
-                    setFormProt(Math.round(exact.protein * numQty));
-                    setFormCarbs(Math.round(exact.carbs * numQty));
-                    setFormFat(Math.round(exact.fat * numQty));
+                // Try exact match or if there is only one result that starts with the query
+                const match = dbResults.find(r => r.description.toLowerCase() === food.toLowerCase()) ||
+                    (dbResults.length > 0 ? dbResults[0] : null);
+
+                if (match) {
+                    setFormCal(Math.round(match.calories * numQty));
+                    setFormProt(Math.round(match.protein * numQty));
+                    setFormCarbs(Math.round(match.carbs * numQty));
+                    setFormFat(Math.round(match.fat * numQty));
                     setAnalyzed(true);
                     setAnalyzeLoading(false);
                     return;
@@ -1323,8 +1326,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                         animate={{ opacity: 1, y: 0 }}
                                                         exit={{ opacity: 0, y: -4 }}
                                                         transition={{ duration: 0.15 }}
-                                                        className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-20"
-                                                        style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
+                                                        className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-y-auto z-[100] max-h-[220px]"
+                                                        style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}
                                                     >
                                                         {suggestions.map((item, i) => (
                                                             <button

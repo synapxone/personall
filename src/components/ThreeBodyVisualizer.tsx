@@ -10,12 +10,19 @@ interface Props {
     gender: Gender;
 }
 
-const MODEL_URL = `${import.meta.env.BASE_URL}assets/male__female_base_mesh_pack.glb`.replace(/\/+/g, '/');
+const MODEL_URL = './assets/male__female_base_mesh_pack.glb';
 
 const BodyMesh: React.FC<Props> = ({ metrics, gender }) => {
-    const { nodes } = useGLTF(MODEL_URL) as any;
+    const { nodes, error } = useGLTF(MODEL_URL) as any;
     const meshRef = useRef<THREE.Group>(null);
     const isMale = gender === 'male' || gender === 'other';
+
+    if (error) {
+        console.error('Error loading 3D model:', error);
+        return null;
+    }
+
+    if (!nodes) return null;
 
     // Scales for morphing
     const s = metrics.shoulderScale; // width of top
@@ -42,15 +49,14 @@ const BodyMesh: React.FC<Props> = ({ metrics, gender }) => {
         meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.4) * 0.15;
     });
 
-    const maleNodes = Object.values(nodes).filter((n: any) => n.isMesh && (n.name.toLowerCase().includes('male') && !n.name.toLowerCase().includes('female')));
-    const femaleNodes = Object.values(nodes).filter((n: any) => n.isMesh && n.name.toLowerCase().includes('female'));
+    const maleNodes = Object.values(nodes).filter((n: any) => n && n.isMesh && (n.name.toLowerCase().includes('male') && !n.name.toLowerCase().includes('female')));
+    const femaleNodes = Object.values(nodes).filter((n: any) => n && n.isMesh && n.name.toLowerCase().includes('female'));
 
     const activeNodes = isMale
-        ? (maleNodes.length > 0 ? maleNodes : Object.values(nodes).filter((n: any) => n.isMesh).slice(0, 1))
-        : (femaleNodes.length > 0 ? femaleNodes : Object.values(nodes).filter((n: any) => n.isMesh).slice(1, 2));
+        ? (maleNodes.length > 0 ? maleNodes : Object.values(nodes).filter((n: any) => n && n.isMesh).slice(0, 1))
+        : (femaleNodes.length > 0 ? femaleNodes : Object.values(nodes).filter((n: any) => n && n.isMesh).slice(1, 2));
 
     if (activeNodes.length === 0) {
-        console.warn('No meshes found in model for gender:', gender);
         return null;
     }
 
@@ -81,7 +87,13 @@ export const ThreeBodyVisualizer: React.FC<Props> = (props) => {
             <Canvas
                 shadows={{ type: THREE.PCFShadowMap }}
                 camera={{ position: [0, 0, 5], fov: 40 }}
-                gl={{ antialias: true, alpha: true }}
+                gl={{
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: "high-performance",
+                    preserveDrawingBuffer: true
+                }}
+                dpr={[1, 2]} // Limit pixel ratio for performance
             >
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} intensity={1} castShadow />
