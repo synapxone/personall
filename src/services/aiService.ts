@@ -146,6 +146,7 @@ export const aiService = {
 
     async searchFoodDatabase(query: string): Promise<FoodAnalysis[]> {
         try {
+            // Searched by name, which often includes brands like 'Nestlé', 'Sadia', etc.
             const { data, error } = await supabase
                 .from('food_database')
                 .select('*')
@@ -165,6 +166,7 @@ export const aiService = {
             return [];
         }
     },
+
 
     async fetchFromOpenFoodFacts(barcode: string): Promise<FoodAnalysis | null> {
         try {

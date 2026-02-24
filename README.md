@@ -356,13 +356,20 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
-**Status e Versão Atual:** v1.2.7
+**Status e Versão Atual:** v1.2.8
 
 ### Últimas Atualizações e Correções (Fev/2026):
-- **Busca em Tempo Real no Banco Local (v1.2.7):**
-  - Implementado sistema de sugestões instantâneas (Autocomplete) que consulta o banco de dados TACO conforme o usuário digita.
-  - Otimização de busca: O sistema agora prioriza o banco de dados local em tempo de digitação, minimizando significativamente a necessidade de ativação da IA para alimentos comuns.
-  - Adicionado suporte a debouncing inteligente para evitar sobrecarga de consultas ao banco.
+### Versão 1.2.8
+- **Busca Otimizada**: Desativado o auto-complete por IA para priorizar 100% o banco de dados local (TACO), economizando recursos e aumentando a velocidade.
+- **Correção Visual (Mascote)**: Corrigido o erro de renderização SVG (`attribute d: undefined`) nas animações do Pers.
+- **Estabilidade de IA**: Atualizado o endpoint e a lista de modelos do Google Gemini para evitar erros 404 e garantir fallback robusto.
+- **Base de Dados**: Adicionadas variações comuns como "bolacha", "biscoito", "cerveja" e "vinho" ao banco de dados local.
+
+### Versão 1.2.7
+- **Auto-complete com TACO**: Implementada sugestão em tempo real vinda diretamente do banco de dados local.
+- **Priorização de Dados Estruturados**: O app agora tenta encontrar o alimento no banco local antes de consultar a IA.
+- **Ajustes PWA**: Aumentado o limite de cache do Service Worker para suportar assets maiores.
+- Adicionado suporte a debouncing inteligente para evitar sobrecarga de consultas ao banco.
 - **Banco de Dados Local e Scanner (v1.2.6):**
   - Implementado banco de dados local com dados da **TACO** (Tabela Brasileira de Composição de Alimentos).
   - Integrado **Leitor de Código de Barras** (Scanner) via `html5-qrcode` com consulta à API mundial **Open Food Facts**.

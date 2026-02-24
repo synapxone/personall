@@ -14,40 +14,52 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
     // Ajuste do viewBox para o modo busto (foca na cabeça/olhos)
     // O mascote está centralizado em x=2438, olhos em y=1933
     const viewBox = bust ? "1600 700 1600 1600" : "0 0 4877 3599";
-    const eyeVariants = {
-        neutral: { scaleY: 1, y: 0 },
-        happy: { scaleY: 0.8, y: 5 },
-        thinking: { y: -5, rotate: -5 },
-        waiting: { scaleY: [1, 0.1, 1], transition: { repeat: Infinity, duration: 3, times: [0, 0.1, 0.2] } },
-        workout: { scaleY: 1.1, y: 2 }
+    const eyeVariantsLeft = {
+        neutral: { scaleY: 1, y: 0, d: "M2180,1950 q50,-60 100,0" },
+        happy: { scaleY: 0.8, y: 5, d: "M2180,1950 q50,-60 100,0" },
+        thinking: { y: -5, rotate: -5, d: "M2180,1950 q50,-60 100,0" },
+        waiting: { scaleY: [1, 0.1, 1], d: "M2180,1950 q50,-60 100,0", transition: { repeat: Infinity, duration: 3, times: [0, 0.1, 0.2] } },
+        workout: { scaleY: 1.1, y: 2, d: "M2180,1950 q50,-60 100,0" }
+    };
+
+    const eyeVariantsRight = {
+        neutral: { scaleY: 1, y: 0, d: "M2500,1950 q50,-60 100,0" },
+        happy: { scaleY: 0.8, y: 5, d: "M2500,1950 q50,-60 100,0" },
+        thinking: { y: -5, rotate: 5, d: "M2500,1950 q50,-60 100,0" },
+        waiting: { scaleY: [1, 0.1, 1], d: "M2500,1950 q50,-60 100,0", transition: { repeat: Infinity, duration: 3, times: [0, 0.1, 0.2] } },
+        workout: { scaleY: 1.1, y: 2, d: "M2500,1950 q50,-60 100,0" }
     };
 
     const mouthVariants = {
-        neutral: { scaleX: 1, scaleY: 1, d: "M7460,2275s192.15,86.76,285-83" },
-        happy: { scaleX: 1.1, scaleY: 1.2, d: "M7460,2275s192.15,120.76,285-83" },
-        thinking: { scaleX: 0.8, d: "M7460,2275s100,0,200,0" },
-        workout: { scaleX: 1.05, d: "M7460,2275s192.15,100.76,285-83" },
-        waiting: { scaleX: 1, scaleY: 0.95, d: "M7460,2275s192.15,90.76,285-83" }
+        neutral: { scaleX: 1, scaleY: 1, d: "M7400,2275 q150,120 300,0" },
+        happy: { scaleX: 1.1, scaleY: 1.2, d: "M7400,2275 q150,160 300,0" },
+        thinking: { scaleX: 0.8, d: "M7400,2275 q150,20 300,0" },
+        workout: { scaleX: 1.05, d: "M7400,2275 q150,140 300,0" },
+        waiting: { scaleX: 1, scaleY: 0.95, d: "M7400,2275 q150,110 300,0" }
     };
 
     const bodyVariants = {
-        neutral: { scale: 1, rotate: 0 },
+        neutral: { scale: 1, rotate: 0, y: 0 },
         happy: { scale: 1.05, y: -5, rotate: [0, -2, 2, 0], transition: { repeat: Infinity, duration: 2 } },
-        thinking: { rotate: -3 },
-        waiting: { scale: [1, 1.02, 1], transition: { repeat: Infinity, duration: 4 } },
-        workout: { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 0.8 } }
+        thinking: { scale: 1, y: 0, rotate: -3 },
+        waiting: { scale: [1, 1.02, 1], rotate: 0, y: 0, transition: { repeat: Infinity, duration: 4 } },
+        workout: { scale: [1, 1.05, 1], rotate: 0, y: 0, transition: { repeat: Infinity, duration: 0.8 } }
     };
 
     const armLeftVariants = {
-        neutral: { rotate: 0 },
-        happy: { rotate: [-10, 10, -10], transition: { repeat: Infinity, duration: 1 } },
-        workout: { rotate: [-20, 20, -20], transition: { repeat: Infinity, duration: 0.5 } }
+        neutral: { rotate: 0, d: "M6811,2110s-326.01,54.44-190-298" },
+        happy: { rotate: [-10, 10, -10], d: "M6811,2110s-326.01,54.44-190-298", transition: { repeat: Infinity, duration: 1 } },
+        thinking: { rotate: -15, d: "M6811,2110s-326.01,54.44-190-298" },
+        waiting: { rotate: 0, d: "M6811,2110s-326.01,54.44-190-298" },
+        workout: { rotate: [-20, 20, -20], d: "M6811,2110s-326.01,54.44-190-298", transition: { repeat: Infinity, duration: 0.5 } }
     };
 
     const armRightVariants = {
-        neutral: { rotate: 0 },
-        happy: { rotate: [10, -10, 10], transition: { repeat: Infinity, duration: 1 } },
-        workout: { rotate: [20, -20, 20], transition: { repeat: Infinity, duration: 0.5 } }
+        neutral: { rotate: 0, d: "M8092,2067s201.2,15.5,125-277" },
+        happy: { rotate: [10, -10, 10], d: "M8092,2067s201.2,15.5,125-277", transition: { repeat: Infinity, duration: 1 } },
+        thinking: { rotate: 0, d: "M8092,2067s201.2,15.5,125-277" },
+        waiting: { rotate: 5, d: "M8092,2067s201.2,15.5,125-277" },
+        workout: { rotate: [20, -20, 20], d: "M8092,2067s201.2,15.5,125-277", transition: { repeat: Infinity, duration: 0.5 } }
     };
 
     return (
@@ -94,14 +106,14 @@ const Mascot: React.FC<MascotProps> = ({ pose = 'neutral', size = 150, className
 
                     {/* Eyes - Left */}
                     <motion.path
-                        variants={eyeVariants}
+                        variants={eyeVariantsLeft}
                         className="mascot-cls-8"
                         d="M2180,1950 q50,-60 100,0"
                         style={{ strokeWidth: 45 }}
                     />
                     {/* Eyes - Right */}
                     <motion.path
-                        variants={eyeVariants}
+                        variants={eyeVariantsRight}
                         className="mascot-cls-8"
                         d="M2500,1950 q50,-60 100,0"
                         style={{ strokeWidth: 45 }}

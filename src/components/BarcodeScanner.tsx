@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { X } from 'lucide-react';
+import { Barcode } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Props {
     onScan: (barcode: string) => void;
@@ -11,47 +12,81 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
     useEffect(() => {
-        scannerRef.current = new Html5QrcodeScanner(
-            "barcode-reader",
-            { fps: 10, qrbox: { width: 250, height: 150 } },
-            /* verbose= */ false
-        );
+        // We use a shorter timeout to ensure the element is in the DOM
+        const timer = setTimeout(() => {
+            try {
+                scannerRef.current = new Html5QrcodeScanner(
+                    "barcode-reader",
+                    {
+                        fps: 20,
+                        qrbox: { width: 280, height: 180 },
+                        aspectRatio: 1.333334
+                    },
+                    /* verbose= */ false
+                );
 
-        scannerRef.current.render((decodedText) => {
-            // Success
-            if (scannerRef.current) {
-                scannerRef.current.clear().then(() => {
-                    onScan(decodedText);
-                }).catch(err => {
-                    console.error("Failed to clear scanner", err);
-                    onScan(decodedText);
+                scannerRef.current.render((decodedText) => {
+                    if (scannerRef.current) {
+                        scannerRef.current.clear().then(() => {
+                            onScan(decodedText);
+                        }).catch(err => {
+                            console.error("Failed to clear scanner", err);
+                            onScan(decodedText);
+                        });
+                    }
+                }, (_errorMessage) => {
+                    // Ignore errors
                 });
+            } catch (e) {
+                console.error("Scanner initialization failed", e);
             }
-        }, (_errorMessage) => {
-            // Error is usually just "No barcode detected" every 100ms, so we ignore it
-        });
+        }, 300);
 
         return () => {
+            clearTimeout(timer);
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(err => console.error("Scanner cleanup failed", err));
             }
         };
-    }, []);
+    }, [onScan]);
 
     return (
-        <div className="flex flex-col gap-4 relative">
-            <div className="flex items-center justify-between">
-                <h3 className="text-text-main font-bold">Escanear Código de Barras</h3>
-                <button onClick={onClose} className="text-text-muted hover:text-text-main">
-                    <X size={20} />
-                </button>
+        <div className="flex flex-col gap-4">
+            {/* Live scanner container */}
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-[4/3]">
+                <div id="barcode-reader" className="w-full h-full" />
+
+                {/* Visual Overlay for frame effect matching camera mode */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                    <div className="w-3/4 h-1/2 border-2 border-dashed border-primary/60 rounded-xl" />
+                    <motion.div
+                        animate={{ opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10"
+                    >
+                        <Barcode size={14} className="text-primary" />
+                        <span className="text-[10px] text-white font-bold uppercase tracking-wider">Scanner Ativo</span>
+                    </motion.div>
+                </div>
             </div>
 
-            <div id="barcode-reader" className="w-full rounded-2xl overflow-hidden border border-border-main bg-black min-h-[300px]" />
-
-            <p className="text-center text-text-muted text-xs">
-                Aponte a câmera para o código de barras do produto.
+            <p className="text-center text-gray-500 text-xs text-balance px-4">
+                Enquadre o código de barras no centro para identificação automática
             </p>
+
+            <div className="flex gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400"
+                    style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.06)' }}
+                >
+                    Cancelar
+                </button>
+                <div className="flex-[2] flex items-center justify-center p-4 rounded-xl border border-dashed border-border-main opacity-50">
+                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-tighter">Aguardando Leitura...</p>
+                </div>
+            </div>
         </div>
     );
 }

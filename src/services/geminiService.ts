@@ -1,8 +1,8 @@
 import type { OnboardingData, FoodAnalysis, Profile } from '../types';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+const BASE_URL = 'https://generativelanguage.googleapis.com/v1/models';
+const MODELS = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-pro-latest'];
 
 async function callGemini(model: string, prompt: string, timeoutMs = 60000, maxOutputTokens = 8192): Promise<string> {
     const controller = new AbortController();

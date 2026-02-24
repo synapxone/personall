@@ -302,15 +302,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             if (dbResults.length > 0) {
                 setSuggestions(dbResults.map(r => r.description));
                 setShowSuggestions(true);
-                return;
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
             }
-
-            // 2. Fallback to AI if database has no matches
-            const list = await aiService.suggestFoods(query.trim());
-            setSuggestions(list);
-            setShowSuggestions(list.length > 0);
         } catch {
             setSuggestions([]);
+            setShowSuggestions(false);
         } finally {
             setSuggestLoading(false);
         }
