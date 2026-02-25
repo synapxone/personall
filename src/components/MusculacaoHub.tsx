@@ -470,7 +470,7 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
 
             {/* ── Bottom action button ── */}
             {view !== 'menu' && view !== 'plan' && (
-                <div className="fixed bottom-0 left-0 right-0 p-4" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-[60]" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
                     <button
                         onClick={view === 'template' ? handleGenerateTemplate : view === 'custom' ? handleSaveCustom : handleGenerateAI}
                         disabled={loading}

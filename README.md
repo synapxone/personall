@@ -2,7 +2,7 @@
 
 Aplicativo de fitness pessoal com IA — treinos, nutrição, gamificação e acompanhamento de evolução. (Antigo Personall)
 
-> **v1.4.0** — Reestruturação completa da seção de treino: 3 categorias (Musculação / Cardio / Modalidade), banco de exercícios comunitário, moderação de conteúdo em 2 camadas, e plano semanal navegável com gráficos de progresso.
+> **v1.5.1** — Experiência de Onboarding VIP: Refatoração visual completa, modo claro forçado para legibilidade e estética premium com IA.
 
 ---
 
@@ -396,7 +396,28 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 
 **Arquivos criados/modificados**: `WorkoutHub.tsx`, `MusculacaoHub.tsx`, `CardioHub.tsx`, `ModalidadeHub.tsx`, `WeeklyPlanView.tsx`, `CardioSessionTracker.tsx`, `ExercisePicker.tsx`, `moderationService.ts`, `NutritionLog.tsx`
 
-**Status e Versão Atual:** v1.4.0
+**Status e Versão Atual:** v1.5.0
+
+---
+
+### v1.5.1 — Onboarding Wizard VIP
+- **Estética Premium**: Interface do Onboarding Wizard redesenhada com ícones modernos, layouts espaçosos e elementos de design "high-end".
+- **Modo Claro Forçado**: O onboarding agora força o tema claro para garantir legibilidade máxima e uma primeira impressão vibrante e profissional.
+- **Engenharia de Elite**: Nova seção de geração de plano com feedback visual detalhado sobre os passos da IA (bioestática, periodização, nutrição).
+- **Componentes Refinados**: Sliders, botões e seletores customizados para uma experiência de usuário mais suave e "touch-friendly".
+
+**Arquivos modificados**: `OnboardingWizard.tsx`, `index.css`, `App.tsx`, `README.md`
+
+### v1.5.0 — Refatoração de Nutrição & Barcode Scanner
+- **Nova Interface Tabulada**: Modal de adição redesenhado com abas dedicadas para **Buscar** (IA/DB), **Histórico** (Itens frequentes), **Direto** (Registro manual), **Barras** (Scanner) e **Foto**.
+- **Barcode Scanner Nativo**: Integração com `html5-qrcode` para escaneamento instantâneo.
+- **Open Food Facts**: Consumo da API global de produtos para preenchimento automático via código de barras.
+- **Aba Histórico**: Exibe os 10 itens mais consumidos nos últimos 30 dias para registro rápido com 1 clique.
+- **Registro Direto (Quick Entry)**: Formulário simplificado para inserção rápida de nome e calorias/macros sem necessidade de busca ou IA.
+- **Prioridade de Dados**: Fluxo de busca prioriza o banco de dados local (TACO) antes de recorrer à IA Generativa, garantindo maior precisão.
+- **Melhorias de Estabilidade**: Correção no encerramento da câmera ao trocar de aba, reset de formulário consistente e melhor feedback visual ("via Open Food Facts").
+
+**Arquivos modificados**: `NutritionLog.tsx`, `aiService.ts`, `BarcodeScanner.tsx`, `README.md`
 
 ### v1.2.9
 - Estética: Modo Claro definido como padrão do sistema.

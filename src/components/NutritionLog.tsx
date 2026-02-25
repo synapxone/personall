@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Camera, X, Loader2, ChevronLeft, ChevronRight, Sparkles, Activity, Database, TrendingUp, Barcode, Flame, Zap, CalendarDays, GlassWater, Pencil } from 'lucide-react';
+import { Trash2, Plus, Camera, X, Loader2, ChevronLeft, ChevronRight, Sparkles, Activity, Database, TrendingUp, Barcode, Flame, Zap, CalendarDays, GlassWater, Pencil, Search, PlusCircle, History, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
@@ -138,9 +138,11 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [waterCups, setWaterCups] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [modalMealType, setModalMealType] = useState<MealType>('breakfast');
-    const [modalMode, setModalMode] = useState<'choose' | 'photo' | 'manual' | 'photoItems' | 'camera' | 'barcode'>('choose');
+    const [modalMode, setModalMode] = useState<'choose' | 'photo' | 'manual' | 'photoItems' | 'camera' | 'barcode' | 'frequent' | 'quick'>('choose');
     const [photoItems, setPhotoItems] = useState<(FoodAnalysis & { quantity?: number; unit?: string })[]>([]);
     const [analyzeLoading, setAnalyzeLoading] = useState(false);
+    const [frequentFoods, setFrequentFoods] = useState<(FoodAnalysis & { quantity?: number; unit?: string })[]>([]);
+    const [loadingFrequent, setLoadingFrequent] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,6 +165,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [formUnit, setFormUnit] = useState('gramas');
     const [unitOptions, setUnitOptions] = useState<string[]>([]);
     const [baseNutrients, setBaseNutrients] = useState<FoodAnalysis | null>(null);
+    const [dataSource, setDataSource] = useState<'ai' | 'db' | 'off' | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const qtyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -232,6 +235,43 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         if (data) setMealDates(new Set(data.map((r: any) => r.meal_date)));
     }
 
+    async function fetchFrequentFoods() {
+        setLoadingFrequent(true);
+        try {
+            // Get most frequent items from the last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const { data, error } = await supabase
+                .from('meals')
+                .select('description, calories, protein, carbs, fat, quantity, unit')
+                .eq('user_id', profile.id)
+                .gte('logged_at', thirtyDaysAgo.toISOString())
+                .limit(50);
+
+            if (data && !error) {
+                // Count frequencies
+                const counts: Record<string, { count: number; item: any }> = {};
+                data.forEach(m => {
+                    const key = m.description.toLowerCase();
+                    if (!counts[key]) counts[key] = { count: 0, item: m };
+                    counts[key].count++;
+                });
+
+                const sorted = Object.values(counts)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10)
+                    .map(it => it.item);
+
+                setFrequentFoods(sorted);
+            }
+        } catch (e) {
+            console.warn('Error fetching frequent foods:', e);
+        } finally {
+            setLoadingFrequent(false);
+        }
+    }
+
     function getTodayTotals(): MacroTotals {
         return meals.reduce((acc, m) => ({
             calories: acc.calories + (m.calories || 0),
@@ -243,16 +283,17 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
     function openModal(type: MealType) {
         setModalMealType(type);
-        setModalMode('choose');
+        setModalMode('manual'); // Default to Search mode
         resetForm();
         setShowModal(true);
+        fetchFrequentFoods();
     }
 
     function resetForm() {
         setFormDesc(''); setFormCal(0); setFormProt(0); setFormCarbs(0); setFormFat(0);
         setFormQty(''); setFormUnit(''); setUnitOptions([]);
         setAnalyzed(false); setIsFromDb(false); setSuggestions([]); setShowSuggestions(false);
-        setBaseNutrients(null);
+        setBaseNutrients(null); setDataSource(null);
         if (debounceRef.current) clearTimeout(debounceRef.current);
         if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
         if (qtyDebounceRef.current) clearTimeout(qtyDebounceRef.current);
@@ -359,6 +400,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 setBaseNutrients(match);
                 setFormDesc(match.description);
                 setIsFromDb(true);
+                setDataSource('db');
                 setAnalyzed(true);
                 setAnalyzeLoading(false);
                 return localCalculate(match, numQty, unit || 'porção');
@@ -370,6 +412,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 const result = results[0];
                 setBaseNutrients(result);
                 setFormDesc(result.description);
+                setDataSource('ai');
                 setAnalyzed(true);
                 return localCalculate(result, numQty, unit || 'unidade');
             } else if (results.length > 1) {
@@ -409,6 +452,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setFormDesc(value);
         setAnalyzed(false);
         setIsFromDb(false);
+        setBaseNutrients(null);
 
         if (value.trim().length >= 2) {
             if (unitOptions.length === 0) {
@@ -475,6 +519,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 setFormProt(result.protein);
                 setFormCarbs(result.carbs);
                 setFormFat(result.fat);
+                setBaseNutrients(result); // SET THIS to prevent AI recalculation
+                setDataSource('off');
                 setAnalyzed(true);
                 setUnitOptions(['unidade', 'gramas', 'embalagem']);
                 setFormUnit('gramas');
@@ -1267,63 +1313,71 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             className="w-full h-full max-w-lg mx-auto p-6 flex flex-col gap-4 overflow-y-auto"
                             style={{ backgroundColor: 'var(--bg-main)' }}
                         >
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-text-main font-bold">
-                                    Adicionar a {MEAL_TYPES.find((m) => m.id === modalMealType)?.label}
-                                </h3>
-                                <button onClick={() => { stopCamera(); setShowModal(false); }} className="text-text-muted hover:text-text-main">
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            {modalMode === 'choose' && (
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={openInAppCamera}
-                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left w-full"
-                                        style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', border: '1px solid rgba(var(--primary-rgb), 0.3)' }}
-                                    >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.2)' }}>
-                                            <Camera size={20} className="text-primary" />
+                            {/* Header consistent with image */}
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+                                            {/* Icon placeholder or representative image */}
+                                            <GlassWater size={24} className="text-primary" />
                                         </div>
-                                        <div>
-                                            <p className="text-text-main font-semibold text-sm">Câmera IA</p>
-                                            <p className="text-text-muted text-xs">Tire uma foto — IA detecta os itens do prato</p>
+                                        <div className="flex flex-col">
+                                            <h3 className="text-text-main font-bold text-lg leading-tight">
+                                                {MEAL_TYPES.find((m) => m.id === modalMealType)?.label || 'Refeição'}
+                                            </h3>
+                                            <p className="text-text-muted text-xs font-medium">
+                                                {getTodayTotals().calories} / {goal} kcal
+                                            </p>
                                         </div>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setModalMode('barcode')}
-                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left w-full"
-                                        style={{ backgroundColor: 'rgba(var(--accent-rgb), 0.1)', border: '1px solid rgba(var(--accent-rgb), 0.3)' }}
-                                    >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--accent-rgb), 0.2)' }}>
-                                            <Barcode size={20} className="text-accent" />
-                                        </div>
-                                        <div>
-                                            <p className="text-text-main font-semibold text-sm">Código de Barras</p>
-                                            <p className="text-text-muted text-xs">Escaneie o código da embalagem</p>
-                                        </div>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setModalMode('manual')}
-                                        className="flex items-center gap-4 px-4 py-4 rounded-xl text-left w-full"
-                                        style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.04)', border: '1px solid var(--border-main)' }}
-                                    >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
-                                            <Activity size={20} className="text-text-muted" />
-                                        </div>
-                                        <div>
-                                            <p className="text-text-main font-semibold text-sm">Lançamento por Texto</p>
-                                            <p className="text-text-muted text-xs">Digite o que você comeu e a IA calcula</p>
-                                        </div>
+                                    </div>
+                                    <button onClick={() => { stopCamera(); setShowModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-text-muted hover:text-text-main">
+                                        <X size={20} />
                                     </button>
                                 </div>
-                            )}
+
+                                {/* Calorie Progress Bar in Header */}
+                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.min((getTodayTotals().calories / goal) * 100, 100)}%` }}
+                                        className="h-full bg-primary"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Horizontal Tabs per image */}
+                            <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-none no-scrollbar">
+                                {[
+                                    { id: 'barcode', label: 'Barras', icon: <Barcode size={18} /> },
+                                    { id: 'frequent', label: 'Histórico', icon: <History size={18} /> },
+                                    { id: 'manual', label: 'Buscar', icon: <Search size={18} /> },
+                                    { id: 'camera', label: 'Foto', icon: <Camera size={18} /> },
+                                    { id: 'quick', label: 'Direto', icon: <PlusCircle size={18} /> },
+                                ].map((tab) => {
+                                    const isActive = modalMode === tab.id ||
+                                        (tab.id === 'manual' && (modalMode === 'manual' || modalMode === 'photoItems' || modalMode === 'photo'));
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => {
+                                                stopCamera();
+                                                if (tab.id === 'barcode') setModalMode('barcode');
+                                                else if (tab.id === 'camera') openInAppCamera();
+                                                else if (tab.id === 'manual') setModalMode('manual');
+                                                else if (tab.id === 'frequent') setModalMode('frequent');
+                                                else if (tab.id === 'quick') setModalMode('quick');
+                                            }}
+                                            className={`flex flex-col items-center gap-1.5 min-w-[72px] p-2 transition-all rounded-2xl ${isActive ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-white/5'}`}
+                                        >
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isActive ? 'border-primary/30 bg-primary/10' : 'border-white/10'}`}>
+                                                {tab.icon}
+                                            </div>
+                                            <span className="text-[10px] font-bold whitespace-nowrap">{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
 
                             {modalMode === 'photo' && (
                                 <div className="flex flex-col gap-4">
@@ -1494,26 +1548,38 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
                             {modalMode === 'manual' && (
                                 <div className="flex flex-col gap-4">
-                                    {/* Food description input */}
+                                    {/* Data Source Badge */}
+                                    {analyzed && dataSource && (
+                                        <div className="flex justify-end">
+                                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${dataSource === 'db' ? 'bg-blue-500/10 border-blue-500/30 text-blue-500' : dataSource === 'off' ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'}`}>
+                                                {dataSource === 'ai' && <Sparkles size={10} />}
+                                                {dataSource === 'db' && <Database size={10} />}
+                                                {dataSource === 'off' && <Barcode size={10} />}
+                                                <span>{dataSource === 'ai' ? 'IA' : dataSource === 'db' ? 'Banco Local' : 'Open Food Facts'}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Food description input as a search box per image */}
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-text-muted text-xs font-medium">O que você comeu?</label>
-                                        <div className="relative">
+                                        <div className="relative group">
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                placeholder="Ex: pão, arroz com frango, banana..."
+                                                placeholder="Buscar alimento..."
                                                 value={formDesc}
                                                 onChange={(e) => handleDescChange(e.target.value)}
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Escape') setShowSuggestions(false);
                                                     if (e.key === 'Enter') calculateAndSaveMeal();
                                                 }}
-                                                className="w-full px-3 py-3 pr-10 rounded-xl text-text-main text-sm outline-none"
-                                                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
+                                                className="w-full pl-11 pr-10 py-4 rounded-3xl text-text-main text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
+                                                style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-main)' }}
                                             />
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                                 {(analyzeLoading || suggestLoading)
-                                                    ? <Loader2 size={16} className="animate-spin" style={{ color: 'var(--primary)' }} />
+                                                    ? <Loader2 size={16} className="animate-spin text-primary" />
                                                     : analyzed
                                                         ? isFromDb
                                                             ? <Database size={16} className="text-blue-500" />
@@ -1537,17 +1603,15 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                         animate={{ opacity: 1, y: 0 }}
                                                         exit={{ opacity: 0, y: -4 }}
                                                         transition={{ duration: 0.15 }}
-                                                        className="relative w-full mt-1 rounded-xl overflow-y-auto z-[100] max-h-[220px]"
-                                                        style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}
+                                                        className="absolute w-full mt-2 rounded-2xl overflow-y-auto z-[100] max-h-[220px] shadow-2xl"
+                                                        style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
                                                     >
                                                         {suggestions.map((item, i) => (
                                                             <button
                                                                 key={i}
                                                                 onMouseDown={(e) => { e.preventDefault(); selectSuggestion(item); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-text-main hover:text-white transition-colors"
-                                                                style={{ borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
-                                                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.15)')}
-                                                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                                                className="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-primary/10 transition-colors"
+                                                                style={{ borderBottom: i < suggestions.length - 1 ? '1px solid var(--border-main)' : 'none' }}
                                                             >
                                                                 {item}
                                                             </button>
@@ -1558,47 +1622,42 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         </div>
                                     </div>
 
-                                    {/* Quantity + Unit selector */}
-                                    {unitOptions.length > 0 && (
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-text-muted text-xs font-medium">Quantidade e Unidade</label>
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center gap-3">
-                                                    <input
-                                                        type="number"
-                                                        min={0.1}
-                                                        step={0.1}
-                                                        value={formQty}
-                                                        placeholder="100"
-                                                        onFocus={(e) => {
-                                                            e.target.select();
-                                                            setFormQty('');
-                                                        }}
-                                                        onBlur={() => {
-                                                            if (formQty === '') setFormQty(100);
-                                                        }}
-                                                        onChange={(e) => handleQtyChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                        className="w-24 px-4 py-3 rounded-xl text-text-main text-lg font-black text-center outline-none"
-                                                        style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.15)', border: '1px solid rgba(var(--primary-rgb), 0.4)' }}
-                                                    />
-                                                    <span className="text-text-muted font-bold text-sm uppercase tracking-widest">{formUnit}</span>
-                                                </div>
+                                    {/* No longer showing frequent foods directly in manual mode to avoid clutter */}
 
-                                                <div className="flex flex-wrap gap-2">
-                                                    {unitOptions.map((u) => (
+                                    {/* Quantity + Unit selector (Visible when an item is selected/analyzed) */}
+                                    {(analyzed || formDesc.length > 2) && (
+                                        <div className="flex flex-col gap-2 p-1">
+                                            <label className="text-text-muted text-xs font-semibold uppercase tracking-wider">Ajustar Quantidade</label>
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/5">
                                                         <button
-                                                            key={u}
-                                                            onClick={() => handleUnitChange(u)}
-                                                            className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap"
-                                                            style={{
-                                                                backgroundColor: formUnit === u ? 'rgba(var(--primary-rgb), 0.25)' : 'rgba(var(--text-main-rgb), 0.04)',
-                                                                border: `1px solid ${formUnit === u ? 'var(--primary)' : 'var(--border-main)'} `,
-                                                                color: formUnit === u ? 'var(--primary)' : 'var(--text-muted)',
-                                                            }}
+                                                            onClick={() => handleQtyChange(Math.max(0.1, (typeof formQty === 'number' ? formQty : 100) - 10))}
+                                                            className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-text-main hover:bg-primary/20"
                                                         >
-                                                            {u}
+                                                            -
                                                         </button>
-                                                    ))}
+                                                        <input
+                                                            type="number"
+                                                            value={formQty}
+                                                            onChange={(e) => handleQtyChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                            className="flex-1 min-w-0 bg-transparent text-center text-xl font-black text-text-main outline-none"
+                                                            placeholder="100"
+                                                        />
+                                                        <button
+                                                            onClick={() => handleQtyChange((typeof formQty === 'number' ? formQty : 100) + 10)}
+                                                            className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-text-main hover:bg-primary/20"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                    <select
+                                                        value={formUnit}
+                                                        onChange={(e) => handleUnitChange(e.target.value)}
+                                                        className="w-28 h-12 rounded-2xl bg-white/5 border border-white/5 text-text-main font-bold text-sm px-2 outline-none appearance-none text-center"
+                                                    >
+                                                        {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
@@ -1617,20 +1676,19 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     key={m.label}
                                                     initial={{ opacity: 0, y: 8 }}
                                                     animate={{ opacity: analyzeLoading ? 0.4 : 1, y: 0 }}
-                                                    className="flex flex-col items-center gap-1 py-3 rounded-xl"
-                                                    style={{ backgroundColor: `${m.color} 15`, border: `1px solid ${m.color} 30` }}
+                                                    className="flex flex-col items-center gap-1 py-3 rounded-2xl"
+                                                    style={{ backgroundColor: `${m.color}15`, border: `1px solid ${m.color}30` }}
                                                 >
                                                     {analyzeLoading
-                                                        ? <div className="w-8 h-4 rounded animate-pulse" style={{ backgroundColor: `${m.color} 30` }} />
-                                                        : <span className="text-lg font-bold text-text-main">{m.value}</span>}
-                                                    <span className="text-xs" style={{ color: m.color }}>{m.unit}</span>
-                                                    <span className="text-text-muted text-xs">{m.label}</span>
+                                                        ? <div className="w-8 h-4 rounded animate-pulse" style={{ backgroundColor: `${m.color}30` }} />
+                                                        : <span className="text-lg font-black text-text-main">{m.value}</span>}
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60" style={{ color: m.color }}>{m.label}</span>
                                                 </motion.div>
                                             ))}
                                         </div>
                                     )}
 
-                                    <div className="flex flex-col gap-3 mt-2">
+                                    <div className="flex flex-col gap-3 mt-4">
                                         <div className="flex gap-3">
                                             <motion.button
                                                 whileHover={{ scale: 1.02 }}
@@ -1675,8 +1733,149 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             {modalMode === 'barcode' && (
                                 <BarcodeScanner
                                     onScan={onBarcodeScan}
-                                    onClose={() => setModalMode('choose')}
+                                    onClose={() => setModalMode('manual')}
                                 />
+                            )}
+
+                            {modalMode === 'frequent' && (
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center justify-between pl-1">
+                                        <h4 className="text-text-main font-bold">Mais Consumidos</h4>
+                                        {loadingFrequent && <Loader2 size={16} className="animate-spin text-primary" />}
+                                    </div>
+                                    <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {frequentFoods.length === 0 && !loadingFrequent && (
+                                            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-40">
+                                                <History size={48} />
+                                                <p className="text-sm font-medium">Nenhum alimento frequente ainda.</p>
+                                            </div>
+                                        )}
+                                        {frequentFoods.map((food, i) => (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                key={i}
+                                                onClick={() => {
+                                                    setFormDesc(food.description);
+                                                    setFormCal(food.calories);
+                                                    setFormProt(food.protein);
+                                                    setFormCarbs(food.carbs);
+                                                    setFormFat(food.fat);
+                                                    setFormQty(food.quantity || 100);
+                                                    setFormUnit(food.unit || 'gramas');
+                                                    setAnalyzed(true);
+                                                    setBaseNutrients(food);
+                                                    setDataSource('db');
+                                                    setModalMode('manual');
+                                                }}
+                                                className="flex items-center justify-between p-4 rounded-2xl bg-card border hover:border-primary/40 transition-all text-left group"
+                                                style={{ borderColor: 'var(--border-main)' }}
+                                            >
+                                                <div className="flex flex-col gap-1 min-w-0 flex-1 pr-4">
+                                                    <span className="text-text-main font-bold text-sm truncate">{food.description}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-primary/10 text-primary uppercase">{food.calories} kcal</span>
+                                                        <span className="text-[10px] text-text-muted font-bold tracking-tight">{food.quantity} {food.unit}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-muted group-hover:bg-primary group-hover:text-white transition-colors">
+                                                    <Plus size={16} />
+                                                </div>
+                                            </motion.button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-center text-text-muted italic opacity-60">
+                                        Basado nos itens que você costuma registrar nos últimos 30 dias.
+                                    </p>
+                                </div>
+                            )}
+
+                            {modalMode === 'quick' && (
+                                <div className="flex flex-col gap-5">
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-text-main font-bold">Registro Direto</h4>
+                                        <p className="text-text-muted text-xs">Informe os dados manualmente sem busca.</p>
+                                    </div>
+
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1">Nome do Alimento</label>
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                placeholder="Ex: Almoço Caseiro, Salada Especial..."
+                                                value={formDesc}
+                                                onChange={(e) => setFormDesc(e.target.value)}
+                                                className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-text-main font-bold outline-none focus:border-primary/50 transition-colors"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1">Calorias (kcal)</label>
+                                                <input
+                                                    type="number"
+                                                    value={formCal || ''}
+                                                    onChange={(e) => setFormCal(parseInt(e.target.value) || 0)}
+                                                    className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-text-main font-bold outline-none focus:border-primary/50 transition-colors"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1">Proteína (g)</label>
+                                                <input
+                                                    type="number"
+                                                    value={formProt || ''}
+                                                    onChange={(e) => setFormProt(parseFloat(e.target.value) || 0)}
+                                                    className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-text-main font-bold outline-none focus:border-primary/50 transition-colors"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1">Carbos (g)</label>
+                                                <input
+                                                    type="number"
+                                                    value={formCarbs || ''}
+                                                    onChange={(e) => setFormCarbs(parseFloat(e.target.value) || 0)}
+                                                    className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-text-main font-bold outline-none focus:border-primary/50 transition-colors"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1">Gordura (g)</label>
+                                                <input
+                                                    type="number"
+                                                    value={formFat || ''}
+                                                    onChange={(e) => setFormFat(parseFloat(e.target.value) || 0)}
+                                                    className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-text-main font-bold outline-none focus:border-primary/50 transition-colors"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={() => {
+                                            if (!formDesc.trim() || !formCal) {
+                                                toast.error('Informe nome e calorias.');
+                                                return;
+                                            }
+                                            saveMeal();
+                                        }}
+                                        disabled={saving}
+                                        className="w-full py-4 rounded-2xl font-black text-white shadow-xl flex items-center justify-center gap-2 mt-2"
+                                        style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', opacity: saving ? 0.7 : 1 }}
+                                    >
+                                        {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                                        {saving ? 'Registrando...' : 'Salvar Registro'}
+                                    </motion.button>
+                                </div>
                             )}
                         </motion.div>
                     </motion.div>
@@ -1982,7 +2181,7 @@ function MacroProgress({ label, current, target, color, icon }: { label: string;
                     </div>
                     <span className="text-[10px] uppercase font-black tracking-widest text-text-muted">{label}</span>
                 </div>
-                <span className="text-xs font-bold text-text-main">{current} <span className="text-[10px] text-text-muted font-normal">/ {target}g</span></span>
+                <span className="text-xs font-bold text-text-main">{current.toFixed(1).replace('.0', '')} <span className="text-[10px] text-text-muted font-normal">/ {target}g</span></span>
             </div>
             <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)' }}>
                 <motion.div

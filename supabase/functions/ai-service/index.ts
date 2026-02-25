@@ -92,6 +92,48 @@ serve(async (req) => {
                     OPENAI_API_KEY
                 );
                 break;
+            case 'GENERATE_CARDIO_PLAN':
+                result = await handleAIRequest(
+                    getGenerateCardioPlanPrompt(payload),
+                    true,
+                    GEMINI_API_KEY,
+                    OPENAI_API_KEY
+                );
+                break;
+            case 'GENERATE_MODALITY_PLAN':
+                result = await handleAIRequest(
+                    getGenerateModalityPlanPrompt(payload),
+                    true,
+                    GEMINI_API_KEY,
+                    OPENAI_API_KEY
+                );
+                break;
+            case 'GENERATE_MODALITY_EXERCISES':
+                result = await handleAIRequest(
+                    getGenerateModalityExercisesPrompt(payload),
+                    true,
+                    GEMINI_API_KEY,
+                    OPENAI_API_KEY
+                );
+                break;
+            case 'GENERATE_EXERCISE_INSTRUCTIONS':
+                result = await handleAIRequest(
+                    getGenerateExerciseInstructionsPrompt(payload),
+                    false,
+                    GEMINI_API_KEY,
+                    OPENAI_API_KEY
+                );
+                result = { instructions: typeof result === 'string' ? result : result?.instructions ?? '' };
+                break;
+            case 'MODERATE_CONTENT':
+                result = await handleAIRequest(
+                    `Avalie se este nome é adequado para um app fitness: "${payload.input}". Contexto: cadastro de ${payload.context ?? 'item'}. Responda APENAS com uma linha: APROVADO ou BLOQUEADO: <motivo curto em português>`,
+                    false,
+                    GEMINI_API_KEY,
+                    OPENAI_API_KEY
+                );
+                result = { verdict: typeof result === 'string' ? result.trim() : 'APROVADO' };
+                break;
             default:
                 throw new Error(`Unknown action: ${action}`);
         }
@@ -226,6 +268,25 @@ function getGenerateDietPrompt(data: any) {
 
 function getAnalyzeBodyPrompt() {
     return `Analise a foto corporal como personal profissional. Estime % gordura, pontos fortes e áreas de melhoria. Seja motivador.`;
+}
+
+function getGenerateCardioPlanPrompt(data: any) {
+    const { profile, cardioType, activeDays, goalMinutes } = data;
+    return `Crie plano de cardio JSON 4 semanas. Tipo: ${cardioType}. Dias: ${activeDays?.join(', ')}. Duração por sessão: ${goalMinutes}min. Perfil: ${JSON.stringify(profile ?? {})}. Formato: { "name": "Plano Cardio ...", "description": "...", "estimated_weeks": 4, "weeks": [{ "week": 1, "days": [{ "day": 1, "name": "...", "type": "cardio", "exercises": [{ "exercise_id": "c01", "name": "...", "sets": 1, "reps": "${goalMinutes ?? 30}min", "rest_seconds": 60, "instructions": "..." }] }] }] }`;
+}
+
+function getGenerateModalityPlanPrompt(data: any) {
+    const { profile, modality } = data;
+    return `Crie plano de treino JSON 4 semanas para a modalidade esportiva "${modality?.name}" (${modality?.description ?? ''}). Adapte ao perfil: ${JSON.stringify(profile ?? {})}. Formato: { "name": "Plano ${modality?.name ?? 'Modalidade'}", "description": "...", "estimated_weeks": 4, "weeks": [{ "week": 1, "days": [{ "day": 1, "name": "...", "type": "strength", "exercises": [{ "exercise_id": "m01", "name": "...", "sets": 3, "reps": "12", "rest_seconds": 60, "instructions": "..." }] }] }] }`;
+}
+
+function getGenerateModalityExercisesPrompt(data: any) {
+    const { modality, count } = data;
+    return `Liste ${count ?? 6} exercícios específicos para a modalidade "${modality?.name}" (${modality?.description ?? ''}). Retorne APENAS JSON: { "exercises": [{ "name": "...", "muscle_group": "...", "equipment": "livre", "instructions": "..." }] }`;
+}
+
+function getGenerateExerciseInstructionsPrompt(data: any) {
+    return `Gere instruções de execução em 2-3 frases para o exercício "${data.exerciseName}" (categoria: ${data.category}${data.modalityName ? ', modalidade: ' + data.modalityName : ''}). Seja objetivo e técnico.`;
 }
 
 // Minimal parseSafeJSON for Edge Function

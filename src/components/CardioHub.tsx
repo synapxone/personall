@@ -324,7 +324,7 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
 
             {/* Bottom action */}
             {view === 'create' && (
-                <div className="fixed bottom-0 left-0 right-0 p-4" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-[60]" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
                     <button
                         onClick={handleCreatePlan}
                         disabled={saving}

@@ -746,19 +746,13 @@ export default function WorkoutDayView({ plan, profile, onComplete, hideHeader =
                         {todayData.exercises.map((exercise: Exercise, i: number) => {
                             const done = isExerciseCompleted(i);
                             const expanded = expandedIndex === i || (expandedIndex === null && !done && i === todayData.exercises.findIndex((_, idx) => !isExerciseCompleted(idx)));
-                            const media = mediaData[exercise.exercise_id];
-                            const isLoadingMedia = loadingMedia[exercise.exercise_id];
                             const sets = setsProgress[i] || [];
 
                             return (
                                 <motion.div key={i} layout className="rounded-2xl overflow-hidden transition-all duration-300 relative group" style={{ backgroundColor: 'var(--bg-card)', border: `1px solid ${done ? 'rgba(var(--proteina-rgb),0.4)' : expanded ? 'rgba(var(--primary-rgb),0.4)' : 'rgba(var(--text-main-rgb),0.06)'}`, boxShadow: expanded ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : 'none' }}>
                                     <div className="flex items-center gap-3 p-4 cursor-pointer relative z-10" onClick={() => setExpandedIndex(expanded ? null : i)}>
-                                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center opacity-90 border shadow-inner" style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)', borderColor: 'var(--border-main)' }}>
-                                            {media?.type === 'video'
-                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                                                : media?.url
-                                                    ? <img src={media.url} alt={exercise.name} className="w-full h-full object-cover" />
-                                                    : <Zap size={24} className="text-primary" />}
+                                        <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(var(--primary-rgb),0.18), rgba(var(--primary-rgb),0.06))', border: '1px solid rgba(var(--primary-rgb),0.15)' }}>
+                                            <Dumbbell size={22} className="text-primary opacity-80" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className={`font-semibold text-sm truncate ${done ? 'text-proteina' : 'text-text-main'}`}>{exercise.name}</p>
@@ -871,28 +865,6 @@ export default function WorkoutDayView({ plan, profile, onComplete, hideHeader =
                                                         {exercise.tips && <p className="text-primary/80 text-xs mt-3 italic p-2 bg-primary/5 rounded-lg border border-primary/10">💡 Dica: {exercise.tips}</p>}
                                                     </div>
 
-                                                    {isLoadingMedia && (
-                                                        <div className="flex items-center justify-center gap-2 py-4 text-purple-400 text-sm">
-                                                            <Loader2 size={16} className="animate-spin" />
-                                                            <span>Gerando demonstração…</span>
-                                                        </div>
-                                                    )}
-                                                    {!isLoadingMedia && media && (
-                                                        <div className="rounded-xl overflow-hidden border mt-3 shadow-lg relative aspect-video" style={{ backgroundColor: 'rgba(var(--text-main-rgb), 0.05)', borderColor: 'var(--border-main)' }}>
-                                                            {media.type === 'video'
-                                                                ? <video src={media.url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded-xl" />
-                                                                : <img src={media.url} alt={exercise.name} className="w-full h-full object-cover rounded-xl" />}
-                                                        </div>
-                                                    )}
-                                                    {!isLoadingMedia && !media && (
-                                                        <div className="rounded-xl mt-3 flex items-center justify-center relative bg-gradient-to-r from-gray-800 to-gray-900 border aspect-video overflow-hidden" style={{ borderColor: 'var(--border-main)' }}>
-                                                            <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" alt="Gym" className="absolute inset-0 w-full h-full object-cover opacity-20" />
-                                                            <div className="relative z-10 flex flex-col items-center opacity-70">
-                                                                <Activity size={32} className="text-text-muted mb-2" />
-                                                                <span className="text-text-muted text-xs font-semibold tracking-wider">PREPARE-SE</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </motion.div>
                                         )}
