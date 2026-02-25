@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Plus, Loader2, X, ChevronRight, Sparkles, PenLine, Play, Trophy } from 'lucide-react';
+import { ChevronLeft, Plus, Loader2, ChevronRight, Sparkles, Play, Trophy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { aiService } from '../services/aiService';
 import { moderateContent } from '../services/moderationService';

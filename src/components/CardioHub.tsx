@@ -35,7 +35,7 @@ interface Props {
 export default function CardioHub({ plan, profile, onBack, onPlanChange, onComplete }: Props) {
     const [view, setView] = useState<HubView>('menu');
     const [sessions, setSessions] = useState<CardioSession[]>([]);
-    const [loadingSessions, setLoadingSessions] = useState(true);
+    const [, setLoadingSessions] = useState(true);
     const [sessionType, setSessionType] = useState(CARDIO_TYPES[0].id);
 
     // Create plan state

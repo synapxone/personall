@@ -91,11 +91,13 @@ export default function CardioSessionTracker({ profile, plan, cardioType: initia
             });
 
             // Update gamification
-            await supabase.rpc('add_points', { p_user_id: profile.id, p_points: pts }).catch(() =>
-                supabase.from('gamification').select('points').eq('user_id', profile.id).single().then(({ data }) => {
-                    if (data) supabase.from('gamification').update({ points: data.points + pts }).eq('user_id', profile.id);
-                })
-            );
+            const rpcRes = await supabase.rpc('add_points', { p_user_id: profile.id, p_points: pts });
+            if (rpcRes.error) {
+                const { data } = await supabase.from('gamification').select('points').eq('user_id', profile.id).single();
+                if (data) {
+                    await supabase.from('gamification').update({ points: data.points + pts }).eq('user_id', profile.id);
+                }
+            }
 
             setDone(true);
             onComplete(pts);

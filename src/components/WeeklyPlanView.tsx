@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, TrendingUp, Flame, Target, BarChart2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
-import type { WorkoutPlan, Profile, Modality, WorkoutSession } from '../types';
+import type { WorkoutPlan, Profile, Modality } from '../types';
 import WorkoutDayView from './WorkoutDay';
 
 interface Props {
@@ -14,9 +14,6 @@ interface Props {
     onComplete: (pts: number) => void;
     onEditPlan: () => void;
 }
-
-const WEEK_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-const WEEK_SHORT = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 
 interface WeekStats {
     totalSessions: number;

@@ -346,7 +346,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
         const numQty = typeof qty === 'number' ? qty : 1;
         // Request for 100g to keep database clean
-        const searchDesc = `100g de ${food}`;
+        const searchDesc = `100g de ${food} `;
         setAnalyzeLoading(true);
         setAnalyzed(false);
         try {
@@ -661,7 +661,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 toast.error('Erro ao salvar refeições.', { id: toastId });
                 return;
             }
-            toast.success(`${items.length} ${items.length === 1 ? 'item registrado' : 'itens registrados'}!`, { id: toastId });
+            toast.success(`${items.length} ${items.length === 1 ? 'item registrado' : 'itens registrados'} !`, { id: toastId });
             setShowModal(false);
             resetForm();
             setPhotoItems([]);
@@ -809,7 +809,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     toast.error(`Falha ao atualizar nutrientes no banco.`, { id: toastId });
                 }
             } catch (e) {
-                toast.error(`O cálculo de IA falhou. Continue usando com 0 calorias ou edite depois.`, { id: toastId });
+                toast.error(`O cálculo de IA falhou.Continue usando com 0 calorias ou edite depois.`, { id: toastId });
             }
         }
     }
@@ -1095,7 +1095,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                 <div className="h-2 rounded-full overflow-hidden bg-blue-500/5 border" style={{ borderColor: 'rgba(var(--text-main-rgb), 0.1)' }}>
                     <motion.div
                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                        animate={{ width: `${Math.min((waterCups / Math.max(goalCups, 1)) * 100, 100)}%` }}
+                        animate={{ width: `${Math.min((waterCups / Math.max(goalCups, 1)) * 100, 100)}% ` }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                     />
                 </div>
@@ -1230,7 +1230,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                     <div className="w-full flex items-end" style={{ height: '64px' }}>
                                         <motion.div
                                             initial={{ height: 0 }}
-                                            animate={{ height: `${pct}%` }}
+                                            animate={{ height: `${pct}% ` }}
                                             transition={{ duration: 0.5 }}
                                             className="w-full rounded-t-md"
                                             style={{ backgroundColor: h.calories >= goal ? 'var(--proteina)' : 'var(--primary)', opacity: 0.7 }}
@@ -1592,7 +1592,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                             className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap"
                                                             style={{
                                                                 backgroundColor: formUnit === u ? 'rgba(var(--primary-rgb), 0.25)' : 'rgba(var(--text-main-rgb), 0.04)',
-                                                                border: `1px solid ${formUnit === u ? 'var(--primary)' : 'var(--border-main)'}`,
+                                                                border: `1px solid ${formUnit === u ? 'var(--primary)' : 'var(--border-main)'} `,
                                                                 color: formUnit === u ? 'var(--primary)' : 'var(--text-muted)',
                                                             }}
                                                         >
@@ -1618,10 +1618,10 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     initial={{ opacity: 0, y: 8 }}
                                                     animate={{ opacity: analyzeLoading ? 0.4 : 1, y: 0 }}
                                                     className="flex flex-col items-center gap-1 py-3 rounded-xl"
-                                                    style={{ backgroundColor: `${m.color}15`, border: `1px solid ${m.color}30` }}
+                                                    style={{ backgroundColor: `${m.color} 15`, border: `1px solid ${m.color} 30` }}
                                                 >
                                                     {analyzeLoading
-                                                        ? <div className="w-8 h-4 rounded animate-pulse" style={{ backgroundColor: `${m.color}30` }} />
+                                                        ? <div className="w-8 h-4 rounded animate-pulse" style={{ backgroundColor: `${m.color} 30` }} />
                                                         : <span className="text-lg font-bold text-text-main">{m.value}</span>}
                                                     <span className="text-xs" style={{ color: m.color }}>{m.unit}</span>
                                                     <span className="text-text-muted text-xs">{m.label}</span>
@@ -1727,7 +1727,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             <div
                                                 key={m.label}
                                                 className="flex flex-col items-center gap-1 py-3 rounded-xl"
-                                                style={{ backgroundColor: `${m.color}15`, border: `1px solid ${m.color}30` }}
+                                                style={{ backgroundColor: `${m.color} 15`, border: `1px solid ${m.color} 30` }}
                                             >
                                                 <span className="text-lg font-bold text-text-main">{m.value}</span>
                                                 <span className="text-xs" style={{ color: m.color }}>{m.unit}</span>
@@ -1842,7 +1842,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     value={f.value}
                                                     onChange={(e) => f.set(parseFloat(e.target.value) || 0)}
                                                     className="w-full px-3 py-2.5 rounded-xl text-text-main text-sm font-bold outline-none text-center"
-                                                    style={{ backgroundColor: `${f.color}15`, border: `1px solid ${f.color}40` }}
+                                                    style={{ backgroundColor: `${f.color} 15`, border: `1px solid ${f.color} 40` }}
                                                 />
                                             </div>
                                         ))}
@@ -1977,7 +1977,7 @@ function MacroProgress({ label, current, target, color, icon }: { label: string;
         <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-end">
                 <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: `${color}15`, color: color }}>
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: `${color} 15`, color: color }}>
                         {icon}
                     </div>
                     <span className="text-[10px] uppercase font-black tracking-widest text-text-muted">{label}</span>

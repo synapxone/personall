@@ -5,7 +5,6 @@ import {
     Loader2, Check, MapPin, Clock, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import { aiService } from '../services/aiService';
 import type { Profile, WorkoutPlan, CommunityExercise } from '../types';
 import WeeklyPlanView from './WeeklyPlanView';
@@ -101,7 +100,7 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
         const selectedDayIndices = customDays.map((v, i) => v ? i : -1).filter(i => i >= 0);
         if (selectedDayIndices.length === 0) { setError('Selecione pelo menos um dia de treino.'); return; }
 
-        const days = selectedDayIndices.map((dayIdx, i) => ({
+        const days = selectedDayIndices.map((dayIdx) => ({
             day: dayIdx + 1,
             name: WEEK_DAYS_PT[dayIdx],
             type: 'strength' as const,
