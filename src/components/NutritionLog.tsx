@@ -1316,16 +1316,16 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             {/* Header consistent with image */}
                             <div className="flex flex-col gap-4">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
                                             {/* Icon placeholder or representative image */}
-                                            <GlassWater size={24} className="text-primary" />
+                                            <GlassWater size={20} className="text-primary" />
                                         </div>
-                                        <div className="flex flex-col">
-                                            <h3 className="text-text-main font-bold text-lg leading-tight">
+                                        <div className="flex flex-col min-w-0 pr-2">
+                                            <h3 className="text-text-main font-bold text-base leading-tight truncate">
                                                 {MEAL_TYPES.find((m) => m.id === modalMealType)?.label || 'Refeição'}
                                             </h3>
-                                            <p className="text-text-muted text-xs font-medium">
+                                            <p className="text-text-muted text-[10px] font-medium whitespace-nowrap">
                                                 {getTodayTotals().calories} / {goal} kcal
                                             </p>
                                         </div>
@@ -1367,12 +1367,12 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                 else if (tab.id === 'frequent') setModalMode('frequent');
                                                 else if (tab.id === 'quick') setModalMode('quick');
                                             }}
-                                            className={`flex flex-col items-center gap-1.5 min-w-[72px] p-2 transition-all rounded-2xl ${isActive ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-white/5'}`}
+                                            className={`flex flex-col items-center gap-1 min-w-[64px] p-2 transition-all rounded-2xl ${isActive ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-white/5'}`}
                                         >
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isActive ? 'border-primary/30 bg-primary/10' : 'border-white/10'}`}>
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${isActive ? 'border-primary/30 bg-primary/10' : 'border-white/10'}`}>
                                                 {tab.icon}
                                             </div>
-                                            <span className="text-[10px] font-bold whitespace-nowrap">{tab.label}</span>
+                                            <span className="text-[9px] font-bold whitespace-nowrap">{tab.label}</span>
                                         </button>
                                     );
                                 })}
@@ -1629,8 +1629,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         <div className="flex flex-col gap-2 p-1">
                                             <label className="text-text-muted text-xs font-semibold uppercase tracking-wider">Ajustar Quantidade</label>
                                             <div className="flex flex-col gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/5">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/5">
                                                         <button
                                                             onClick={() => handleQtyChange(Math.max(0.1, (typeof formQty === 'number' ? formQty : 100) - 10))}
                                                             className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-text-main hover:bg-primary/20"
@@ -1641,7 +1641,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                             type="number"
                                                             value={formQty}
                                                             onChange={(e) => handleQtyChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                            className="flex-1 min-w-0 bg-transparent text-center text-xl font-black text-text-main outline-none"
+                                                            className="flex-1 min-w-0 bg-transparent text-center text-lg font-black text-text-main outline-none"
                                                             placeholder="100"
                                                         />
                                                         <button
@@ -1654,7 +1654,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                                     <select
                                                         value={formUnit}
                                                         onChange={(e) => handleUnitChange(e.target.value)}
-                                                        className="w-28 h-12 rounded-2xl bg-white/5 border border-white/5 text-text-main font-bold text-sm px-2 outline-none appearance-none text-center"
+                                                        className="flex-shrink-0 w-24 h-12 rounded-2xl bg-white/5 border border-white/5 text-text-main font-bold text-xs px-2 outline-none appearance-none text-center"
                                                     >
                                                         {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
                                                     </select>
