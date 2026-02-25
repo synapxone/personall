@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft, Dumbbell, Sparkles, PenLine, ChevronRight,
-    Loader2, Check, MapPin, Clock, X
+    Loader2, Check, MapPin, Clock, X, RotateCcw
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { aiService } from '../services/aiService';
@@ -30,6 +30,7 @@ const SPLITS: SplitTemplate[] = [
 
 const WEEK_DAYS_PT = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 const WEEK_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const MUSCLE_GROUP_OPTIONS = ['Peito', 'Costas', 'Pernas', 'Ombros', 'Braços', 'Abdome'];
 
 type HubView = 'menu' | 'template' | 'custom' | 'ai' | 'plan';
 
@@ -60,6 +61,8 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
     const [aiSplit, setAiSplit] = useState('PPL');
     const [aiLocation, setAiLocation] = useState<'gym' | 'home'>(profile.training_location ?? 'gym');
     const [aiMinutes, setAiMinutes] = useState(profile.available_minutes ?? 60);
+    const [aiMuscleGroups, setAiMuscleGroups] = useState<string[]>([]);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
 
     async function deactivatePreviousPlan() {
         if (plan?.id) {
@@ -148,6 +151,7 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
                 training_location: aiLocation,
                 available_minutes: aiMinutes,
                 active_days: WEEK_DAYS_PT.filter((_, i) => activeDaysBitmask[i]),
+                ...(aiMuscleGroups.length > 0 && { focus_muscles: aiMuscleGroups }),
             } as any);
             await deactivatePreviousPlan();
             const { data: saved } = await supabase.from('workout_plans').insert({
@@ -274,6 +278,41 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
                                     <ChevronRight size={18} className="text-text-muted shrink-0" />
                                 </button>
                             ))}
+
+                            {/* Reset button */}
+                            {plan && !showResetConfirm && (
+                                <button
+                                    onClick={() => setShowResetConfirm(true)}
+                                    className="flex items-center gap-3 p-3 rounded-2xl text-left mt-1"
+                                    style={{ backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}
+                                >
+                                    <RotateCcw size={16} style={{ color: '#ef4444' }} />
+                                    <p className="text-sm font-medium" style={{ color: '#ef4444' }}>Resetar plano atual</p>
+                                </button>
+                            )}
+                            {plan && showResetConfirm && (
+                                <div className="flex flex-col gap-2 p-3 rounded-2xl"
+                                    style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                                    <p className="text-xs font-semibold" style={{ color: '#ef4444' }}>Confirmar reset do plano atual?</p>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setShowResetConfirm(false)}
+                                            className="flex-1 py-2 rounded-xl text-xs font-semibold text-text-muted"
+                                            style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.06)' }}>
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                await supabase.from('workout_plans').update({ is_active: false }).eq('id', plan.id);
+                                                setShowResetConfirm(false);
+                                                onBack();
+                                            }}
+                                            className="flex-1 py-2 rounded-xl text-xs font-bold text-white"
+                                            style={{ backgroundColor: '#ef4444' }}>
+                                            Resetar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
@@ -459,6 +498,28 @@ export default function MusculacaoHub({ plan, profile, onBack, onPlanChange, onC
                                     className="w-full accent-primary h-2 rounded-full" />
                                 <div className="flex justify-between text-[9px] text-text-muted mt-1">
                                     <span>20 min</span><span>70 min</span><span>120 min</span>
+                                </div>
+                            </div>
+
+                            {/* Muscle groups */}
+                            <div>
+                                <p className="text-xs text-text-muted font-semibold mb-2">Grupos musculares em foco <span className="font-normal">(opcional)</span></p>
+                                <div className="flex flex-wrap gap-2">
+                                    {MUSCLE_GROUP_OPTIONS.map(mg => (
+                                        <button
+                                            key={mg}
+                                            onClick={() => setAiMuscleGroups(prev =>
+                                                prev.includes(mg) ? prev.filter(x => x !== mg) : [...prev, mg]
+                                            )}
+                                            className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                                            style={{
+                                                backgroundColor: aiMuscleGroups.includes(mg) ? 'var(--primary)' : 'rgba(var(--text-main-rgb),0.06)',
+                                                color: aiMuscleGroups.includes(mg) ? '#fff' : 'var(--text-muted)',
+                                            }}
+                                        >
+                                            {mg}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 

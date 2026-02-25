@@ -16,6 +16,12 @@ interface Props {
     onComplete: (pointsEarned: number) => void;
     /** When true, hides the top header (used inside WeeklyPlanView which provides its own header) */
     hideHeader?: boolean;
+    /** When true, triggers opening the single-day edit/regen config */
+    triggerEditDay?: boolean;
+    /** When true, triggers opening the full-week rebuild config */
+    triggerEditWeek?: boolean;
+    /** Called after a trigger has been consumed so parent can reset it */
+    onTriggerConsumed?: () => void;
 }
 
 const WEEK_DAYS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
@@ -41,7 +47,7 @@ type ActiveSetModal = {
     countdown: number;
 };
 
-export default function WorkoutDayView({ plan, profile, onComplete, hideHeader = false }: Props) {
+export default function WorkoutDayView({ plan, profile, onComplete, hideHeader = false, triggerEditDay, triggerEditWeek, onTriggerConsumed }: Props) {
     const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => {
         const dayOfWeek = new Date().getDay();
         return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -93,6 +99,14 @@ export default function WorkoutDayView({ plan, profile, onComplete, hideHeader =
     useEffect(() => {
         setLocalPlan(plan);
     }, [plan]);
+
+    useEffect(() => {
+        if (triggerEditDay) { setShowConfig(true); onTriggerConsumed?.(); }
+    }, [triggerEditDay]);
+
+    useEffect(() => {
+        if (triggerEditWeek) { setShowWeekConfig(true); onTriggerConsumed?.(); }
+    }, [triggerEditWeek]);
 
     // Check if workout session already exists for today
     useEffect(() => {

@@ -28,6 +28,8 @@
   --carbos-rgb: 251, 191, 36;
   --gordura: #F87171;
   --gordura-rgb: 248, 113, 113;
+  --modalidade: #60A5FA;
+  --modalidade-rgb: 96, 165, 250;
   --border-main: rgba(255, 255, 255, 0.05);
 }
 
@@ -51,6 +53,8 @@ html.light {
   --carbos-rgb: 255, 183, 77;
   --gordura: #F06292;
   --gordura-rgb: 240, 98, 146;
+  --modalidade: #4FC3F7;
+  --modalidade-rgb: 79, 195, 247;
   --border-main: rgba(28, 28, 30, 0.08);
 }
 

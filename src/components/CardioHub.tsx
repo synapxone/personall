@@ -22,7 +22,7 @@ const CARDIO_TYPES = [
 const WEEK_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const WEEK_DAYS_PT = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-type HubView = 'menu' | 'session' | 'create';
+type HubView = 'menu' | 'session' | 'create' | 'manual';
 
 interface Props {
     plan: WorkoutPlan | null;
@@ -101,6 +101,45 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
         finally { setSaving(false); }
     }
 
+    async function handleCreateManualPlan() {
+        const activeDayIndices = planDays.map((on, i) => on ? i : -1).filter(i => i >= 0);
+        if (activeDayIndices.length === 0) { setError('Selecione pelo menos um dia.'); return; }
+        setSaving(true); setError('');
+        try {
+            const typeLabel = CARDIO_TYPES.find(t => t.id === planType)?.label ?? planType;
+            // Build 4-week structure manually
+            const weeks = Array.from({ length: 4 }, (_, w) => ({
+                week: w + 1,
+                days: Array.from({ length: 7 }, (_, d) => {
+                    const isActive = activeDayIndices.includes(d);
+                    return {
+                        day: d + 1,
+                        name: isActive ? typeLabel : 'Descanso',
+                        type: isActive ? 'cardio' : 'rest',
+                        exercises: isActive ? [{
+                            name: typeLabel,
+                            duration_minutes: planMinutes,
+                            instructions: `Execute ${planMinutes} minutos de ${typeLabel.toLowerCase()} em ritmo moderado.`,
+                        }] : [],
+                    };
+                }),
+            }));
+            if (plan?.id) await supabase.from('workout_plans').update({ is_active: false }).eq('id', plan.id);
+            const { data: saved } = await supabase.from('workout_plans').insert({
+                user_id: profile.id,
+                name: `${typeLabel} — Manual`,
+                plan_data: { weeks },
+                estimated_weeks: 4,
+                is_active: true,
+                category: 'cardio',
+                plan_type: 'custom',
+                split_type: planType,
+            }).select().single();
+            if (saved) { onPlanChange(saved as WorkoutPlan); setView('menu'); }
+        } catch { setError('Erro ao salvar o plano.'); }
+        finally { setSaving(false); }
+    }
+
     // ─── SESSION TRACKER view ───
     if (view === 'session') {
         return (
@@ -128,7 +167,7 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
                 <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-accent flex items-center gap-1"><Activity size={10} /> Cardio</p>
                     <h2 className="font-bold text-base text-text-main">
-                        {view === 'menu' ? 'Cardio' : 'Criar Plano de Cardio'}
+                        {view === 'menu' ? 'Cardio' : view === 'manual' ? 'Plano Manual' : 'Criar Plano com IA'}
                     </h2>
                 </div>
             </div>
@@ -227,9 +266,23 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
                                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--accent-rgb),0.1)' }}>
                                     <Plus size={20} className="text-accent" />
                                 </div>
-                                <div>
-                                    <p className="font-semibold text-sm text-text-main">{plan ? 'Recriar plano de cardio' : 'Criar plano de cardio'}</p>
+                                                <div>
+                                    <p className="font-semibold text-sm text-text-main">{plan ? 'Recriar plano (IA)' : 'Criar plano com IA'}</p>
                                     <p className="text-xs text-text-muted">IA monta um programa semanal</p>
+                                </div>
+                                <ChevronRight size={16} className="text-text-muted ml-auto shrink-0" />
+                            </button>
+                            <button
+                                onClick={() => setView('manual')}
+                                className="flex items-center gap-3 p-4 rounded-2xl text-left"
+                                style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}
+                            >
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)' }}>
+                                    <Clock size={20} className="text-primary" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-sm text-text-main">Criar plano manual</p>
+                                    <p className="text-xs text-text-muted">Escolha tipo, dias e duração sem IA</p>
                                 </div>
                                 <ChevronRight size={16} className="text-text-muted ml-auto shrink-0" />
                             </button>
@@ -258,6 +311,60 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
                                     </div>
                                 </div>
                             )}
+                        </motion.div>
+                    )}
+
+                    {/* ── MANUAL PLAN ── */}
+                    {view === 'manual' && (
+                        <motion.div key="manual" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
+                            <p className="text-xs text-text-muted">Tipo de cardio:</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {CARDIO_TYPES.map(t => (
+                                    <button key={t.id} onClick={() => setPlanType(t.id)}
+                                        className="py-3 px-2 rounded-2xl flex flex-col items-center gap-1 transition-all"
+                                        style={{
+                                            backgroundColor: planType === t.id ? 'rgba(var(--primary-rgb),0.12)' : 'rgba(var(--text-main-rgb),0.04)',
+                                            border: `1px solid ${planType === t.id ? 'rgba(var(--primary-rgb),0.3)' : 'var(--border-main)'}`,
+                                        }}>
+                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                                            style={{
+                                                background: planType === t.id
+                                                    ? 'linear-gradient(135deg, rgba(var(--primary-rgb),0.22), rgba(var(--primary-rgb),0.08))'
+                                                    : 'rgba(var(--text-main-rgb),0.06)',
+                                                color: planType === t.id ? 'var(--primary)' : 'var(--text-muted)',
+                                            }}>
+                                            {t.icon}
+                                        </div>
+                                        <span className="text-[10px] font-semibold" style={{ color: planType === t.id ? 'var(--primary)' : 'var(--text-muted)' }}>{t.label}</span>
+                                        {planType === t.id && <Check size={12} className="text-primary" />}
+                                    </button>
+                                ))}
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-muted font-semibold mb-2">Dias por semana:</p>
+                                <div className="flex gap-2">
+                                    {WEEK_SHORT.map((d, i) => (
+                                        <button key={i} onClick={() => setPlanDays(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
+                                            className="w-10 h-10 rounded-xl text-xs font-bold transition-all"
+                                            style={{
+                                                backgroundColor: planDays[i] ? 'var(--primary)' : 'rgba(var(--text-main-rgb),0.06)',
+                                                color: planDays[i] ? '#fff' : 'var(--text-muted)',
+                                            }}>
+                                            {d}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <p className="text-xs text-text-muted font-semibold">Duração por sessão</p>
+                                    <span className="text-sm font-bold text-primary flex items-center gap-1"><Clock size={14} /> {planMinutes} min</span>
+                                </div>
+                                <input type="range" min={10} max={90} step={5} value={planMinutes}
+                                    onChange={e => setPlanMinutes(+e.target.value)}
+                                    className="w-full accent-blue-500 h-2 rounded-full" />
+                            </div>
+                            {error && <p className="text-xs text-gordura">{error}</p>}
                         </motion.div>
                     )}
 
@@ -323,16 +430,27 @@ export default function CardioHub({ plan, profile, onBack, onPlanChange, onCompl
             </div>
 
             {/* Bottom action */}
-            {view === 'create' && (
+            {(view === 'create' || view === 'manual') && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 z-[60]" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
-                    <button
-                        onClick={handleCreatePlan}
-                        disabled={saving}
-                        className="w-full py-4 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                        style={{ background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.7))' }}
-                    >
-                        {saving ? <><Loader2 size={18} className="animate-spin" /> Gerando...</> : <><Zap size={18} /> Gerar Plano de Cardio</>}
-                    </button>
+                    {view === 'create' ? (
+                        <button
+                            onClick={handleCreatePlan}
+                            disabled={saving}
+                            className="w-full py-4 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                            style={{ background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.7))' }}
+                        >
+                            {saving ? <><Loader2 size={18} className="animate-spin" /> Gerando...</> : <><Zap size={18} /> Gerar Plano com IA</>}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleCreateManualPlan}
+                            disabled={saving}
+                            className="w-full py-4 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                            style={{ background: 'linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb),0.7))' }}
+                        >
+                            {saving ? <><Loader2 size={18} className="animate-spin" /> Salvando...</> : <><Check size={18} /> Salvar Plano</>}
+                        </button>
+                    )}
                 </div>
             )}
         </div>

@@ -14,6 +14,7 @@ export default {
         proteina: 'var(--proteina)',
         carbos: 'var(--carbos)',
         gordura: 'var(--gordura)',
+        modalidade: 'var(--modalidade)',
       },
     },
   },

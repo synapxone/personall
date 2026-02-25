@@ -139,8 +139,8 @@ export default function WorkoutHub({ musculacaoPlan, cardioPlan, modalidadePlan,
             label: 'Modalidade',
             desc: 'Esportes, artes e atividades',
             plan: modalidadePlan,
-            color: 'var(--proteina)',
-            colorRgb: 'var(--proteina-rgb)',
+            color: 'var(--modalidade)',
+            colorRgb: 'var(--modalidade-rgb)',
             cta: modalidadePlan ? 'Continuar' : 'Escolher modalidade',
         },
     ];
@@ -274,7 +274,7 @@ export default function WorkoutHub({ musculacaoPlan, cardioPlan, modalidadePlan,
             <div className="grid grid-cols-3 gap-2">
                 {[
                     { icon: <Dumbbell size={14} className="text-primary" />, val: musculacaoPlan?.split_type ?? (musculacaoPlan ? '—' : 'Sem plano'), label: 'Split' },
-                    { icon: <Target size={14} className="text-proteina" />, val: modalidadePlan?.name?.split(' ')[0] ?? 'Nenhuma', label: 'Modalidade' },
+                    { icon: <Target size={14} className="text-modalidade" />, val: modalidadePlan?.name?.split(' ')[0] ?? 'Nenhuma', label: 'Modalidade' },
                     { icon: <TrendingUp size={14} className="text-accent" />, val: totalWorkouts, label: 'Sessões' },
                 ].map(({ icon, val, label }) => (
                     <div key={label} className="rounded-xl p-3 text-center bg-card border" style={{ borderColor: 'var(--border-main)' }}>

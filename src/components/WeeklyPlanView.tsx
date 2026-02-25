@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, TrendingUp, Flame, Target, BarChart2 } from 'lucide-react';
+import { ChevronLeft, TrendingUp, Flame, Target, BarChart2, ChevronDown, Settings2, CalendarClock, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import type { WorkoutPlan, Profile, Modality } from '../types';
@@ -25,6 +25,9 @@ interface WeekStats {
 export default function WeeklyPlanView({ plan, profile, modality, onBack, onComplete, onEditPlan }: Props) {
     const [statsCollapsed, setStatsCollapsed] = useState(false);
     const [weekStats, setWeekStats] = useState<WeekStats | null>(null);
+    const [showEditSheet, setShowEditSheet] = useState(false);
+    const [triggerEditDay, setTriggerEditDay] = useState(false);
+    const [triggerEditWeek, setTriggerEditWeek] = useState(false);
 
     useEffect(() => {
         loadStats();
@@ -93,11 +96,11 @@ export default function WeeklyPlanView({ plan, profile, modality, onBack, onComp
                     <h2 className="font-bold text-base text-text-main truncate">{plan.name}</h2>
                 </div>
                 <button
-                    onClick={onEditPlan}
-                    className="text-xs text-primary font-semibold px-3 py-1.5 rounded-xl"
+                    onClick={() => setShowEditSheet(true)}
+                    className="text-xs text-primary font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1"
                     style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)' }}
                 >
-                    Editar
+                    Editar <ChevronDown size={12} />
                 </button>
             </div>
 
@@ -200,8 +203,53 @@ export default function WeeklyPlanView({ plan, profile, modality, onBack, onComp
                         onComplete(pts);
                     }}
                     hideHeader
+                    triggerEditDay={triggerEditDay}
+                    triggerEditWeek={triggerEditWeek}
+                    onTriggerConsumed={() => { setTriggerEditDay(false); setTriggerEditWeek(false); }}
                 />
             </div>
+
+            {/* Edit options sheet */}
+            <AnimatePresence>
+                {showEditSheet && (
+                    <>
+                        <motion.div
+                            className="fixed inset-0 z-[70]"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setShowEditSheet(false)}
+                        />
+                        <motion.div
+                            className="fixed bottom-0 left-0 right-0 z-[71] rounded-t-3xl p-5 flex flex-col gap-3"
+                            style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}
+                            initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                        >
+                            <div className="w-10 h-1 rounded-full bg-text-muted/30 mx-auto mb-1" />
+                            <p className="text-xs text-text-muted font-bold uppercase tracking-widest mb-1">O que deseja editar?</p>
+                            {[
+                                { icon: <Settings2 size={20} />, label: 'Editar treino de hoje', desc: 'Regenera os exercícios do dia atual com IA', color: 'var(--accent)', action: () => { setTriggerEditDay(true); setShowEditSheet(false); } },
+                                { icon: <CalendarClock size={20} />, label: 'Editar semana inteira', desc: 'Reorganiza todos os dias da semana', color: 'var(--primary)', action: () => { setTriggerEditWeek(true); setShowEditSheet(false); } },
+                                { icon: <RotateCcw size={20} />, label: 'Recriar plano completo', desc: 'Cria um plano novo do zero', color: '#ef4444', action: () => { onEditPlan(); setShowEditSheet(false); } },
+                            ].map(({ icon, label, desc, color, action }) => (
+                                <button key={label} onClick={action}
+                                    className="flex items-center gap-4 p-4 rounded-2xl text-left"
+                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}>
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                        style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
+                                        {icon}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-sm text-text-main">{label}</p>
+                                        <p className="text-xs text-text-muted">{desc}</p>
+                                    </div>
+                                </button>
+                            ))}
+                            <div className="pb-6" />
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

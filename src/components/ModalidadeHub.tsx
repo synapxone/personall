@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Plus, Loader2, ChevronRight, Sparkles, Play, Trophy } from 'lucide-react';
+import { ChevronLeft, Plus, Loader2, ChevronRight, Sparkles, Play, Trophy, Activity, Bike, Waves, Shield, Wind, Target, Dumbbell, CalendarDays, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { aiService } from '../services/aiService';
 import { moderateContent } from '../services/moderationService';
-import type { Profile, WorkoutPlan, Modality } from '../types';
+import type { Profile, WorkoutPlan, Modality, CommunityExercise } from '../types';
 import WeeklyPlanView from './WeeklyPlanView';
+import ExercisePicker from './ExercisePicker';
 
-type HubView = 'grid' | 'modality' | 'plan' | 'add';
+type HubView = 'grid' | 'modality' | 'plan' | 'add' | 'manual';
 
 interface Props {
     plan: WorkoutPlan | null;
@@ -18,6 +19,37 @@ interface Props {
 }
 
 const EMOJI_SUGGESTIONS = ['🏋️', '🤸', '🧘', '🥊', '🏊', '🚴', '🤼', '⚡', '🎯', '🏃', '💪', '🦵'];
+const WEEK_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+const MODALITY_ICON_MAP: Record<string, React.ReactNode> = {
+    pilates: <Target size={24} />,
+    boxe: <Shield size={24} />,
+    'boxe tailandês': <Shield size={24} />,
+    muay: <Shield size={24} />,
+    jump: <Activity size={24} />,
+    karatê: <Shield size={24} />,
+    karate: <Shield size={24} />,
+    yoga: <Wind size={24} />,
+    natação: <Waves size={24} />,
+    natacao: <Waves size={24} />,
+    ciclismo: <Bike size={24} />,
+    corrida: <Activity size={24} />,
+    aeróbica: <Activity size={24} />,
+    aerobica: <Activity size={24} />,
+    dança: <Activity size={24} />,
+    danca: <Activity size={24} />,
+    funcional: <Dumbbell size={24} />,
+    crossfit: <Dumbbell size={24} />,
+};
+
+function getModalityIcon(name: string, emoji: string, size = 24): React.ReactNode {
+    const key = name.toLowerCase().trim();
+    for (const k of Object.keys(MODALITY_ICON_MAP)) {
+        if (key.includes(k)) return MODALITY_ICON_MAP[k];
+    }
+    // Fallback: render emoji
+    return <span style={{ fontSize: size * 0.85 }}>{emoji}</span>;
+}
 
 export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onComplete }: Props) {
     const [view, setView] = useState<HubView>('grid');
@@ -34,6 +66,13 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
     const [moderating, setModerating] = useState(false);
     const [modError, setModError] = useState('');
     const [saving, setSaving] = useState(false);
+
+    // Manual plan state
+    const [showExercisePicker, setShowExercisePicker] = useState(false);
+    const [manualExercises, setManualExercises] = useState<CommunityExercise[]>([]);
+    const [manualDays, setManualDays] = useState<boolean[]>(Array(7).fill(false));
+    const [manualSaving, setManualSaving] = useState(false);
+    const [manualError, setManualError] = useState('');
 
     useEffect(() => {
         loadModalities();
@@ -58,7 +97,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
 
         setSaving(true);
         try {
-            // Save modality
             const { data: inserted, error: insErr } = await supabase.from('modalities').insert({
                 name: newName.trim(),
                 icon: newIcon,
@@ -68,7 +106,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
 
             if (insErr || !inserted) throw insErr ?? new Error('Insert failed');
 
-            // AI generates base exercises for this modality (best-effort)
             const exercises = await aiService.generateModalityExercises(
                 { name: inserted.name, description: inserted.description },
                 6
@@ -116,6 +153,48 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
         finally { setGenerating(false); }
     }
 
+    async function handleCreateManualPlan() {
+        if (!selectedModality) return;
+        const activeDayIndices = manualDays.map((on, i) => on ? i : -1).filter(i => i >= 0);
+        if (activeDayIndices.length === 0) { setManualError('Selecione pelo menos um dia.'); return; }
+        if (manualExercises.length === 0) { setManualError('Selecione pelo menos um exercício.'); return; }
+        setManualSaving(true); setManualError('');
+        try {
+            const exercises = manualExercises.map(ex => ({
+                name: ex.name,
+                sets: 3,
+                reps: '12',
+                rest_seconds: 60,
+                instructions: ex.instructions ?? '',
+            }));
+            const weeks = Array.from({ length: 4 }, (_, w) => ({
+                week: w + 1,
+                days: Array.from({ length: 7 }, (_, d) => {
+                    const isActive = activeDayIndices.includes(d);
+                    return {
+                        day: d + 1,
+                        name: isActive ? selectedModality.name : 'Descanso',
+                        type: isActive ? 'strength' : 'rest',
+                        exercises: isActive ? exercises : [],
+                    };
+                }),
+            }));
+            if (plan?.id) await supabase.from('workout_plans').update({ is_active: false }).eq('id', plan.id);
+            const { data: saved } = await supabase.from('workout_plans').insert({
+                user_id: profile.id,
+                name: `${selectedModality.name} — Manual`,
+                plan_data: { weeks },
+                estimated_weeks: 4,
+                is_active: true,
+                category: 'modalidade',
+                plan_type: 'custom',
+                modality_id: selectedModality.id,
+            }).select().single();
+            if (saved) { onPlanChange(saved as WorkoutPlan); setView('plan'); }
+        } catch { setManualError('Erro ao salvar plano.'); }
+        finally { setManualSaving(false); }
+    }
+
     // ── Plan view ──
     if (view === 'plan' && plan && selectedModality) {
         return (
@@ -139,6 +218,7 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                         if (view === 'grid') onBack();
                         else if (view === 'modality') setView('grid');
                         else if (view === 'add') setView('grid');
+                        else if (view === 'manual') setView('modality');
                     }}
                     className="p-2 rounded-xl"
                     style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.06)' }}
@@ -150,7 +230,8 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                     <h2 className="font-bold text-base text-text-main">
                         {view === 'grid' ? 'Escolha uma modalidade' :
                             view === 'add' ? 'Nova Modalidade' :
-                                view === 'modality' ? selectedModality?.name ?? '' : ''}
+                                view === 'manual' ? `${selectedModality?.name} — Manual` :
+                                    view === 'modality' ? selectedModality?.name ?? '' : ''}
                     </h2>
                 </div>
                 {view === 'grid' && (
@@ -182,9 +263,12 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                             className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
                                             style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}
                                         >
-                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                                                style={{ background: 'linear-gradient(135deg, rgba(var(--proteina-rgb),0.15), rgba(var(--text-main-rgb),0.06))' }}>
-                                                {m.icon}
+                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, rgba(var(--proteina-rgb),0.15), rgba(var(--text-main-rgb),0.06))',
+                                                    color: 'var(--proteina)',
+                                                }}>
+                                                {getModalityIcon(m.name, m.icon, 22)}
                                             </div>
                                             <p className="text-xs font-semibold text-text-main text-center leading-tight">{m.name}</p>
                                         </motion.button>
@@ -211,9 +295,12 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                             {/* Hero card */}
                             <div className="rounded-2xl p-6 flex flex-col items-center text-center gap-3"
                                 style={{ background: 'linear-gradient(135deg, rgba(var(--proteina-rgb),0.1), rgba(var(--primary-rgb),0.05))', border: '1px solid rgba(var(--proteina-rgb),0.15)' }}>
-                                <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
-                                    style={{ background: 'linear-gradient(135deg, rgba(var(--proteina-rgb),0.2), rgba(var(--primary-rgb),0.08))' }}>
-                                    {selectedModality.icon}
+                                <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
+                                    style={{
+                                        background: 'linear-gradient(135deg, rgba(var(--proteina-rgb),0.2), rgba(var(--primary-rgb),0.08))',
+                                        color: 'var(--proteina)',
+                                    }}>
+                                    {getModalityIcon(selectedModality.name, selectedModality.icon, 36)}
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-extrabold text-text-main">{selectedModality.name}</h3>
@@ -224,7 +311,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                             </div>
 
                             {plan?.modality_id === selectedModality.id ? (
-                                /* Has active plan for this modality */
                                 <button
                                     onClick={() => setView('plan')}
                                     className="flex items-center gap-3 p-4 rounded-2xl text-left"
@@ -242,35 +328,115 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 </button>
                             ) : null}
 
-                            {/* Create/Recreate options */}
-                            {[
-                                {
-                                    icon: <Sparkles size={20} />,
-                                    label: plan?.modality_id === selectedModality.id ? 'Recriar com IA' : 'Gerar com IA',
-                                    desc: 'IA cria treino baseado no seu perfil + modalidade',
-                                    color: 'var(--accent)',
-                                    action: handleGeneratePlan,
-                                },
-                            ].map(({ icon, label, desc, color, action }) => (
-                                <button
-                                    key={label}
-                                    onClick={action}
-                                    disabled={generating}
-                                    className="flex items-center gap-4 p-4 rounded-2xl text-left disabled:opacity-50"
-                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}
-                                >
-                                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-                                        style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)` }}>
-                                        {generating ? <Loader2 size={20} className="animate-spin" style={{ color }} /> : <span style={{ color }}>{icon}</span>}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-text-main">{generating ? 'Gerando plano...' : label}</p>
-                                        <p className="text-xs text-text-muted">{desc}</p>
-                                    </div>
-                                </button>
-                            ))}
+                            {/* AI option */}
+                            <button
+                                onClick={handleGeneratePlan}
+                                disabled={generating}
+                                className="flex items-center gap-4 p-4 rounded-2xl text-left disabled:opacity-50"
+                                style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}
+                            >
+                                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                                    style={{ backgroundColor: 'rgba(var(--accent-rgb),0.12)', color: 'var(--accent)' }}>
+                                    {generating ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-text-main">{generating ? 'Gerando plano...' : plan?.modality_id === selectedModality.id ? 'Recriar com IA' : 'Gerar com IA'}</p>
+                                    <p className="text-xs text-text-muted">IA cria treino baseado no seu perfil</p>
+                                </div>
+                            </button>
+
+                            {/* Manual option */}
+                            <button
+                                onClick={() => { setManualExercises([]); setManualDays(Array(7).fill(false)); setView('manual'); }}
+                                className="flex items-center gap-4 p-4 rounded-2xl text-left"
+                                style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px solid var(--border-main)' }}
+                            >
+                                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                                    style={{ backgroundColor: 'rgba(var(--primary-rgb),0.1)', color: 'var(--primary)' }}>
+                                    <CalendarDays size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-text-main">Criar Manual</p>
+                                    <p className="text-xs text-text-muted">Escolha os exercícios e os dias você mesmo</p>
+                                </div>
+                            </button>
 
                             {error && <p className="text-xs text-gordura">{error}</p>}
+                        </motion.div>
+                    )}
+
+                    {/* ── MANUAL PLAN ── */}
+                    {view === 'manual' && selectedModality && (
+                        <motion.div key="manual" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-5">
+                            {/* Day picker */}
+                            <div>
+                                <p className="text-xs text-text-muted font-semibold mb-2">Dias de treino:</p>
+                                <div className="flex gap-2">
+                                    {WEEK_SHORT.map((d, i) => (
+                                        <button key={i} onClick={() => setManualDays(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
+                                            className="w-10 h-10 rounded-xl text-xs font-bold transition-all"
+                                            style={{
+                                                backgroundColor: manualDays[i] ? 'var(--proteina)' : 'rgba(var(--text-main-rgb),0.06)',
+                                                color: manualDays[i] ? '#fff' : 'var(--text-muted)',
+                                            }}>
+                                            {d}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Exercise picker trigger */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs text-text-muted font-semibold">Exercícios selecionados ({manualExercises.length})</p>
+                                    <button
+                                        onClick={() => setShowExercisePicker(true)}
+                                        className="text-xs text-proteina font-bold flex items-center gap-1"
+                                    >
+                                        <Plus size={14} /> Adicionar
+                                    </button>
+                                </div>
+                                {manualExercises.length === 0 ? (
+                                    <button
+                                        onClick={() => setShowExercisePicker(true)}
+                                        className="w-full py-10 rounded-2xl flex flex-col items-center gap-2 text-text-muted"
+                                        style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.04)', border: '1px dashed var(--border-main)' }}
+                                    >
+                                        <Dumbbell size={28} className="opacity-30" />
+                                        <p className="text-sm">Toque para adicionar exercícios</p>
+                                    </button>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        {manualExercises.map(ex => (
+                                            <div key={ex.id} className="flex items-center gap-3 p-3 rounded-xl"
+                                                style={{ backgroundColor: 'rgba(var(--proteina-rgb),0.08)', border: '1px solid rgba(var(--proteina-rgb),0.15)' }}>
+                                                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                                                    style={{ backgroundColor: 'rgba(var(--proteina-rgb),0.15)', color: 'var(--proteina)' }}>
+                                                    <Dumbbell size={14} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-text-main truncate">{ex.name}</p>
+                                                    {ex.muscle_group && <p className="text-xs text-text-muted">{ex.muscle_group}</p>}
+                                                </div>
+                                                <button onClick={() => setManualExercises(prev => prev.filter(e => e.id !== ex.id))}
+                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-text-muted"
+                                                    style={{ backgroundColor: 'rgba(var(--text-main-rgb),0.08)' }}>
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button
+                                            onClick={() => setShowExercisePicker(true)}
+                                            className="py-2 rounded-xl text-xs font-semibold text-proteina flex items-center justify-center gap-1"
+                                            style={{ backgroundColor: 'rgba(var(--proteina-rgb),0.08)' }}
+                                        >
+                                            <Plus size={14} /> Adicionar mais
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {manualError && <p className="text-xs text-gordura">{manualError}</p>}
                         </motion.div>
                     )}
 
@@ -283,7 +449,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 <p className="text-sm text-text-muted">Sua modalidade fica disponível para todos os usuários!</p>
                             </div>
 
-                            {/* Icon picker */}
                             <div>
                                 <p className="text-xs text-text-muted font-semibold mb-2">Ícone</p>
                                 <div className="flex flex-wrap gap-2">
@@ -303,7 +468,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 </div>
                             </div>
 
-                            {/* Name */}
                             <div>
                                 <p className="text-xs text-text-muted font-semibold mb-2">Nome da modalidade *</p>
                                 <input
@@ -316,7 +480,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 />
                             </div>
 
-                            {/* Description */}
                             <div>
                                 <p className="text-xs text-text-muted font-semibold mb-2">Descrição (opcional)</p>
                                 <input
@@ -329,7 +492,6 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 />
                             </div>
 
-                            {/* Moderation status */}
                             {moderating && (
                                 <div className="flex items-center gap-2 text-xs text-text-muted">
                                     <Loader2 size={14} className="animate-spin" />
@@ -339,16 +501,16 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                             {modError && <p className="text-xs text-gordura">{modError}</p>}
 
                             <p className="text-[10px] text-text-muted leading-relaxed">
-                                A IA vai gerar automaticamente alguns exercícios básicos para sua modalidade. Você poderá adicionar mais depois.
+                                A IA vai gerar automaticamente alguns exercícios básicos para sua modalidade.
                             </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* Bottom button for Add */}
+            {/* Bottom buttons */}
             {view === 'add' && (
-                <div className="fixed bottom-0 left-0 right-0 p-4" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-[60]" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
                     <button
                         onClick={handleAddModality}
                         disabled={!newName.trim() || saving || moderating}
@@ -360,6 +522,32 @@ export default function ModalidadeHub({ plan, profile, onBack, onPlanChange, onC
                                 : <><Plus size={18} /> Cadastrar Modalidade</>}
                     </button>
                 </div>
+            )}
+
+            {view === 'manual' && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-[60]" style={{ backgroundColor: 'var(--bg-main)', borderTop: '1px solid var(--border-main)' }}>
+                    <button
+                        onClick={handleCreateManualPlan}
+                        disabled={manualSaving}
+                        className="w-full py-4 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                        style={{ background: 'linear-gradient(135deg, var(--proteina), rgba(var(--proteina-rgb),0.7))' }}
+                    >
+                        {manualSaving ? <><Loader2 size={18} className="animate-spin" /> Salvando...</> : <><Check size={18} /> Salvar Plano Manual</>}
+                    </button>
+                </div>
+            )}
+
+            {/* ExercisePicker overlay */}
+            {showExercisePicker && selectedModality && (
+                <ExercisePicker
+                    category="musculacao"
+                    modalityId={selectedModality.id}
+                    selected={manualExercises}
+                    onToggle={ex => setManualExercises(prev =>
+                        prev.some(e => e.id === ex.id) ? prev.filter(e => e.id !== ex.id) : [...prev, ex]
+                    )}
+                    onClose={() => setShowExercisePicker(false)}
+                />
             )}
         </div>
     );
