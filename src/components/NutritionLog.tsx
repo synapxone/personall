@@ -937,8 +937,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const carbGoal = Math.round((goal * 0.4) / 4);
     const fatGoal = Math.round((goal * 0.3) / 9);
 
-    const circumference = 2 * Math.PI * 72;
-    const waterCircumference = 2 * Math.PI * 79;
+    const circumference = 2 * Math.PI * 68;
+    const waterCircumference = 2 * Math.PI * 78;
     const waterGoalMl = profile.weight * 35;
     const goalCups = Math.ceil(waterGoalMl / 250);
     const waterPct = Math.min((waterCups / Math.max(goalCups, 1)) * 100, 100);
@@ -1018,11 +1018,11 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                     <div className="relative w-40 h-40 flex-shrink-0">
                         <svg width="160" height="160" viewBox="0 0 160 160" className="transform -rotate-90">
                             {/* Background Track */}
-                            <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(var(--text-main-rgb), 0.05)" strokeWidth="12" />
+                            <circle cx="80" cy="80" r="68" fill="none" stroke="rgba(var(--text-main-rgb), 0.05)" strokeWidth="12" />
 
                             {/* Water Outer Ring (Thin Blue Line) */}
                             <motion.circle
-                                cx="80" cy="80" r="79" fill="none"
+                                cx="80" cy="80" r="78" fill="none"
                                 stroke="#3b82f6"
                                 strokeWidth="2"
                                 strokeDasharray={waterCircumference}
@@ -1030,13 +1030,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                 animate={{ strokeDashoffset: waterCircumference - (waterPct / 100) * waterCircumference }}
                                 transition={{ duration: 1.5, ease: "easeOut" }}
                                 strokeLinecap="round"
-                                style={{ opacity: 0.6 }}
+                                style={{ opacity: 0.8 }}
                             />
 
                             {totals.calories > goal ? (
                                 /* Over goal - show failure gradient */
                                 <motion.circle
-                                    cx="80" cy="80" r="72" fill="none"
+                                    cx="80" cy="80" r="68" fill="none"
                                     stroke="url(#failGradient)"
                                     strokeWidth="12"
                                     strokeDasharray={circumference}
@@ -1050,7 +1050,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                 <>
                                     {/* Protein segment */}
                                     <motion.circle
-                                        cx="80" cy="80" r="72" fill="none"
+                                        cx="80" cy="80" r="68" fill="none"
                                         stroke="var(--proteina)"
                                         strokeWidth="12"
                                         strokeDasharray={circumference}
@@ -1062,7 +1062,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                     {/* Carbs segment */}
                                     {carbItemPct > 0 && (
                                         <motion.circle
-                                            cx="80" cy="80" r="72" fill="none"
+                                            cx="80" cy="80" r="68" fill="none"
                                             stroke="var(--carbos)"
                                             strokeWidth="12"
                                             strokeDasharray={circumference}
@@ -1076,7 +1076,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                     {/* Fat segment */}
                                     {fatItemPct > 0 && (
                                         <motion.circle
-                                            cx="80" cy="80" r="72" fill="none"
+                                            cx="80" cy="80" r="68" fill="none"
                                             stroke="var(--gordura)"
                                             strokeWidth="12"
                                             strokeDasharray={circumference}
@@ -1361,13 +1361,13 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             </div>
 
                             {/* Horizontal Tabs per image */}
-                            <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-none no-scrollbar">
+                            <div className="flex items-center gap-2 overflow-x-auto py-2 custom-scrollbar">
                                 {[
                                     { id: 'barcode', label: 'Barras', icon: <Barcode size={18} /> },
                                     { id: 'frequent', label: 'Histórico', icon: <History size={18} /> },
                                     { id: 'manual', label: 'Buscar', icon: <Search size={18} /> },
                                     { id: 'camera', label: 'Foto', icon: <Camera size={18} /> },
-                                    { id: 'quick', label: 'Direto', icon: <PlusCircle size={18} /> },
+                                    { id: 'quick', label: 'manual', icon: <PlusCircle size={18} /> },
                                 ].map((tab) => {
                                     const isActive = modalMode === tab.id ||
                                         (tab.id === 'manual' && (modalMode === 'manual' || modalMode === 'photoItems' || modalMode === 'photo'));
