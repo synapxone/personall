@@ -379,7 +379,8 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
 
 ### v1.6.0 — Segurança & Arquitetura Pro (Edge Functions)
-- **Migração para Backend**: Toda a lógica de IA (Gemini/OpenAI) agora reside em Supabase Edge Functions. Chave de API Gemini removida 100% do frontend.
+- **Identidade Visual**: Atualizado o favicon do site e ícone do PWA para o novo SVG oficial.
+- **Migração para Backend**: Toda a lógica de IA (Gemini/OpenAI) fora do frontend.
 - **Reliability (Contingência)**: Implementado fallback inteligente para OpenAI se o Gemini falhar ou estiver instável.
 - **Gamificação Unificada**: Centralização da lógica de ganho de XP, níveis e streaks no `gamificationService.ts`, garantindo consistência entre treinos, dieta e evolução.
 - **Dashboard Data-Driven**: O gráfico de "Desempenho Semanal" agora exibe dados reais baseados nas últimas 7 sessões de treino, substituindo o placeholder estático.
