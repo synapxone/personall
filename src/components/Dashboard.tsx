@@ -337,7 +337,7 @@ export default function Dashboard({ profile, workoutPlan, gamification, onSignOu
                                     <p className="text-text-main font-bold text-lg">Nenhum plano ativo</p>
                                     <p className="text-text-muted text-sm">Você ainda não tem um plano de treino. Complete o onboarding para gerar um.</p>
                                     <div className="flex flex-col items-center gap-1 opacity-20 hover:opacity-100 transition-opacity">
-                                        <span className="text-[10px] font-bold tracking-widest text-white/20">NIUME v1.3.3</span>
+                                        <span className="text-[10px] font-bold tracking-widest text-white/20">NIUME v1.3.4</span>
                                     </div>
                                 </div>
                         )}

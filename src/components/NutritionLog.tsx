@@ -157,8 +157,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [suggestLoading, setSuggestLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [formQty, setFormQty] = useState<number | string>('');
-    const [formUnit, setFormUnit] = useState('');
+    const [formQty, setFormQty] = useState<number | string>(100);
+    const [formUnit, setFormUnit] = useState('gramas');
     const [unitOptions, setUnitOptions] = useState<string[]>([]);
     const [baseNutrients, setBaseNutrients] = useState<FoodAnalysis | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -176,6 +176,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [editSaving, setEditSaving] = useState(false);
+    const [editQty, setEditQty] = useState<number | string>('');
+    const [editUnit, setEditUnit] = useState('');
 
     useEffect(() => {
         loadData(selectedDate);
@@ -256,8 +258,9 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
     function onAddDirectly() {
         if (formDesc.trim().length < 2) return;
-        setFormQty(1);
-        loadUnitsAndAnalyze(formDesc, 1, '');
+        setFormQty(100);
+        setFormUnit('gramas');
+        loadUnitsAndAnalyze(formDesc, 100, 'gramas');
     }
 
     const getUnitFactor = useCallback((unit: string, qty: number, unitWeight: number = 100): number => {
@@ -268,7 +271,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             return qty / 100;
         }
 
-        if (['kg', 'quilo', 'quilos'].includes(u)) {
+        if (['kg', 'quilo', 'quilos', 'l', 'litro', 'litros'].includes(u)) {
             return (qty * 1000) / 100;
         }
 
@@ -276,8 +279,15 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
             return (qty * 28.35) / 100;
         }
 
+        // Smart defaults for informal units if we don't have a specific unitWeight from IA/DB
+        // (If unitWeight is exactly 100, it's likely a fallback)
+        if (unitWeight === 100) {
+            if (u.includes('colher')) return (qty * 15) / 100; // Average tablespoon
+            if (u.includes('copo')) return (qty * 200) / 100;  // Average cup
+            if (u.includes('xícara')) return (qty * 200) / 100;
+        }
+
         // Unit based (relative to unitWeight which is weight of 1 unit)
-        // factor = (qty * weightOfOneUnit) / 100
         return (qty * unitWeight) / 100;
     }, []);
 
@@ -722,6 +732,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         setEditProt(selectedMeal.protein);
         setEditCarbs(selectedMeal.carbs);
         setEditFat(selectedMeal.fat);
+        setEditQty(selectedMeal.quantity || 1);
+        setEditUnit(selectedMeal.unit || 'unidade');
         setDetailMode('edit');
     }
 
@@ -743,30 +755,37 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     }
 
     async function saveEditMeal() {
-        if (!selectedMeal) return;
+        if (!selectedMeal || !editDesc.trim()) return;
         setEditSaving(true);
-        const { error } = await supabase.from('meals').update({
-            description: editDesc,
-            calories: editCal,
-            protein: editProt,
-            carbs: editCarbs,
-            fat: editFat,
-        }).eq('id', selectedMeal.id);
-        if (error) {
-            toast.error('Erro ao salvar alterações.');
-        } else {
+        try {
+            const { error } = await supabase.from('meals')
+                .update({
+                    description: editDesc,
+                    calories: editCal,
+                    protein: editProt,
+                    carbs: editCarbs,
+                    fat: editFat,
+                    quantity: Number(editQty),
+                    unit: editUnit
+                })
+                .eq('id', selectedMeal.id);
+
+            if (error) throw error;
             toast.success('Refeição atualizada!');
             const updated = meals.map((m) =>
                 m.id === selectedMeal.id
-                    ? { ...m, description: editDesc, calories: editCal, protein: editProt, carbs: editCarbs, fat: editFat }
+                    ? { ...m, description: editDesc, calories: editCal, protein: editProt, carbs: editCarbs, fat: editFat, quantity: Number(editQty), unit: editUnit }
                     : m
             );
             await updateDailyNutrition(updated);
             setSelectedMeal(null);
             await loadData(selectedDate);
             onUpdate();
+        } catch (e: any) {
+            toast.error('Erro ao salvar: ' + e.message);
+        } finally {
+            setEditSaving(false);
         }
-        setEditSaving(false);
     }
 
     const totals = getTodayTotals();
@@ -1623,6 +1642,40 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                             className="w-full px-3 py-3 rounded-xl text-text-main text-sm outline-none"
                                             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
                                         />
+                                    </div>
+
+                                    {/* Qty and Unit */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col gap-1.5 flex-1">
+                                            <label className="text-text-muted text-xs font-medium">Quantidade</label>
+                                            <input
+                                                type="number"
+                                                min={0.1}
+                                                step={0.1}
+                                                value={editQty}
+                                                onChange={(e) => setEditQty(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="w-full px-3 py-3 rounded-xl text-text-main text-sm font-bold outline-none text-center"
+                                                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-main)' }}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5 flex-1">
+                                            <label className="text-text-muted text-xs font-medium">Unidade</label>
+                                            <select
+                                                value={editUnit}
+                                                onChange={(e) => setEditUnit(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-xl text-text-main text-sm font-semibold outline-none bg-card border"
+                                                style={{ borderColor: 'var(--border-main)' }}
+                                            >
+                                                <option value="gramas">gramas</option>
+                                                <option value="unidade">unidade</option>
+                                                <option value="fatia">fatia</option>
+                                                <option value="colher">colher</option>
+                                                <option value="copo">copo</option>
+                                                <option value="ml">ml</option>
+                                                <option value="litro">litro</option>
+                                                <option value="embalagem">embalagem</option>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     {/* Macro inputs */}

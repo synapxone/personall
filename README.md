@@ -449,3 +449,7 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
   - **Hidratação:** Design dos copos de água mais sutil (tons de cinza claro e linhas finas) para um visual mais limpo.
   - **Scanner de Código de Barras (Resiliência):** A câmera agora permanece aberta em caso de produto não encontrado ou erro de leitura, permitindo que o usuário decida se deseja tentar novamente ou fechar manualmente.
   - **Cálculo Local (Hotfix):** Normalização de strings de unidades (g, gramas, oz) para garantir consistência no cálculo de macros instantâneo.
+- **Refinamento de Unidades e Edição (v1.3.4):**
+  - **Conversão de Unidades Expandida:** Adicionado suporte para "litro", "copo" (200ml), "colher" (15g), "ml" e "porção", com cálculos matemáticos automáticos.
+  - **Edição de Quantidade:** Agora é possível editar a quantidade e a unidade de uma refeição já registrada diretamente no modal de detalhes.
+  - **Padrão 100g:** O sistema agora inicia com "100 gramas" como padrão para facilitar o registro rápido.

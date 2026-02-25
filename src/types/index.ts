@@ -99,6 +99,8 @@ export type Meal = {
   protein: number;
   carbs: number;
   fat: number;
+  quantity?: number;
+  unit?: string;
   logged_at: string;
 };
 
