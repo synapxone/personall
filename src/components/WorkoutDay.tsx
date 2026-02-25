@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Settings2, X, Loader2, BedDouble, Zap, Target, Activity, Calendar, CalendarClock, Bell, Dumbbell, CheckCheck } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Timer, Trophy, Play, Pause, Save, Copy, Settings2, X, Loader2, BedDouble, Target, Activity, Calendar, CalendarClock, Bell, Dumbbell, CheckCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exerciseMediaService } from '../services/exerciseMediaService';
 import type { MediaResult } from '../services/exerciseMediaService';
