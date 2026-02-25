@@ -96,16 +96,59 @@ export const aiService = {
         }
     },
 
-    async analyzeFoodText(description: string): Promise<FoodAnalysis> {
+    async analyzeFoodText(description: string): Promise<FoodAnalysis[]> {
+        let aiResults: FoodAnalysis[] = [];
         try {
-            return await geminiService.analyzeFoodText(description);
+            aiResults = await geminiService.analyzeFoodText(description);
         } catch (e: any) {
             if (hasOpenAI()) {
                 console.warn('Gemini failed, falling back to OpenAI...', e);
-                return await openaiService.analyzeFoodText(description);
+                aiResults = await openaiService.analyzeFoodText(description);
+            } else {
+                throw e;
             }
-            throw e;
         }
+
+        const finalResults: FoodAnalysis[] = [];
+        for (const item of aiResults) {
+            // Check if this specific item exists in our database
+            const { data: dbItem, error } = await supabase
+                .from('food_database')
+                .select('*')
+                .ilike('name', item.description)
+                .limit(1)
+                .maybeSingle();
+
+            if (dbItem && !error) {
+                // Use database values if available
+                finalResults.push({
+                    description: dbItem.name,
+                    calories: dbItem.calories,
+                    protein: Number(dbItem.protein),
+                    carbs: Number(dbItem.carbs),
+                    fat: Number(dbItem.fat)
+                });
+            } else {
+                // Item not in database. Save it to enrich the database
+                if (item.calories > 0 || item.protein > 0 || item.carbs > 0 || item.fat > 0) {
+                    try {
+                        await supabase.from('food_database').insert({
+                            name: item.description,
+                            calories: item.calories,
+                            protein: item.protein,
+                            carbs: item.carbs,
+                            fat: item.fat,
+                            serving_size: '100g',
+                            source: 'AI_Crowdsourced'
+                        });
+                    } catch (dbErr) {
+                        console.warn('Failed to crowdsource food item:', dbErr);
+                    }
+                }
+                finalResults.push(item);
+            }
+        }
+        return finalResults;
     },
 
     async analyzeFoodPhoto(base64: string, mimeType = 'image/jpeg'): Promise<FoodAnalysis> {

@@ -144,10 +144,13 @@ Os valores nutricionais DEVEM ser estimativas realistas (> 0 se houver comida).`
         return JSON.parse(text).foods;
     },
 
-    async analyzeFoodText(description: string): Promise<FoodAnalysis> {
-        const prompt = `Estime nutrientes para "${description}". Retorne APENAS JSON: { "description": "...", "calories": número, "protein": número, "carbs": número, "fat": número }. Seja realista.`;
+    async analyzeFoodText(description: string): Promise<FoodAnalysis[]> {
+        const prompt = `Analise e estime nutrientes para "${description}". Se houver múltiplos itens (ex: arroz com feijão), separe-os. Pratos compostos (ex: strogonoff) ficam em um item só.
+        Retorne APENAS um objeto JSON com uma chave "items" contendo o array: { "items": [{ "description": "...", "calories": número, "protein": número, "carbs": número, "fat": número }] }. 
+        Seja realista nas estimativas.`;
         const text = await callOpenAI(prompt, true);
-        return JSON.parse(text);
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed.items) ? parsed.items : [parsed];
     },
 
     async getAssistantResponse(userMessage: string, context: string): Promise<string> {

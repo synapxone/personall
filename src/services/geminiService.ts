@@ -281,28 +281,33 @@ Retorne APENAS um array JSON válido. Sem texto extra, sem markdown.`;
         return parseSafeJSON(text);
     },
 
-    async analyzeFoodText(description: string): Promise<FoodAnalysis> {
-        const prompt = `Você é um nutricionista especialista. Estime os valores nutricionais (calorias, proteínas, carboidratos e gorduras) para o alimento ou refeição descrito abaixo.
-
-ALIMENTO: "${description}"
-
-Retorne APENAS um objeto JSON no seguinte formato:
-{
-  "description": "${description}",
-  "calories": (valor em kcal),
-  "protein": (valor em gramas),
-  "carbs": (valor em gramas),
-  "fat": (valor em gramas)
-}
+    async analyzeFoodText(description: string): Promise<FoodAnalysis[]> {
+        const prompt = `Você é um nutricionista especialista. Analise o texto abaixo e identifique se ele contém um ou mais alimentos.
+        
+ALIMENTO/REFEIÇÃO: "${description}"
 
 REGRAS:
-- Considere uma porção padrão/média de restaurante ou residencial.
-- Seja realista e nunca retorne zero se for um alimento calórico.
-- Use apenas números inteiros para os valores nutricionais.
-- Retorne APENAS o JSON, sem texto explicativo.`;
+1. SEPARAÇÃO: Se o usuário descrever múltiplos itens (ex: "arroz com feijão e bife", "pão com ovo e café"), separe-os em itens individuais.
+2. PRATOS COMPOSTOS: Se for um prato conhecido que é servido como uma unidade (ex: "bife a cavalo", "manteiga de amendoim", "strogonoff", "feijoada", "x-tudo"), trate como UM ÚNICO item.
+3. VALORES: Estime calorias, proteínas, carboidratos e gorduras para uma porção média/padrão de cada item identificado.
+4. REALISMO: Nunca retorne zero para alimentos calóricos. Use valores de tabelas como TACO/USDA.
+
+Retorne APENAS um array JSON no seguinte formato:
+[
+  {
+    "description": "Nome do Alimento",
+    "calories": 120,
+    "protein": 5,
+    "carbs": 20,
+    "fat": 2
+  }
+]
+
+Retorne APENAS o array JSON, sem markdown ou explicações.`;
 
         const text = await generateWithFallback(prompt);
-        return parseSafeJSON(text);
+        const parsed = parseSafeJSON(text);
+        return Array.isArray(parsed) ? (parsed as FoodAnalysis[]) : [parsed as FoodAnalysis];
     },
 
     async analyzeFoodPhoto(base64: string, mimeType = 'image/jpeg'): Promise<FoodAnalysis> {

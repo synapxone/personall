@@ -287,12 +287,18 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
 
             setIsFromDb(false);
 
-            const result = await aiService.analyzeFoodText(fullDesc);
-            setFormCal(result.calories);
-            setFormProt(result.protein);
-            setFormCarbs(result.carbs);
-            setFormFat(result.fat);
-            setAnalyzed(true);
+            const results = await aiService.analyzeFoodText(fullDesc);
+            if (results.length === 1) {
+                const result = results[0];
+                setFormCal(result.calories);
+                setFormProt(result.protein);
+                setFormCarbs(result.carbs);
+                setFormFat(result.fat);
+                setAnalyzed(true);
+            } else if (results.length > 1) {
+                setPhotoItems(results);
+                setModalMode('photoItems');
+            }
         } catch {
             // keep zeros
         } finally {
@@ -641,7 +647,8 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
         if (!analyzed && formCal === 0) {
             const toastId = toast.loading(`Calculando nutrientes do alimento...`);
             try {
-                const result = await aiService.analyzeFoodText(fullDescription);
+                const results = await aiService.analyzeFoodText(fullDescription);
+                const result = results[0] || { calories: 0, protein: 0, carbs: 0, fat: 0 };
                 const { error: updateErr } = await supabase.from('meals').update({
                     calories: result.calories,
                     protein: result.protein,

@@ -361,7 +361,6 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 ### Últimas Atualizações e Correções (Fev/2026):
 ### v1.3.1
 - Correção: Caixa de login na Landing Page não é mais transparente.
-- Funcionalidade: Expansão do banco de dados nutricional brasileiro (TACO) para maior precisão e performance.
 - Interface: Diferenciação visual entre dados vindos do Banco de Dados (ícone azul) e da IA (ícone verde) no Log Nutricional.
 - Estabilidade: Otimização do visualizador 3D para dispositivos móveis e correção de inicialização da câmera no scanner.
 
