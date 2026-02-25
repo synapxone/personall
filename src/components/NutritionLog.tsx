@@ -1310,7 +1310,7 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="w-full h-full max-w-lg mx-auto p-6 flex flex-col gap-4 overflow-y-auto"
+                            className="w-full h-full max-w-lg mx-auto p-6 flex flex-col gap-4 overflow-y-auto overflow-x-hidden max-w-full md:max-w-lg"
                             style={{ backgroundColor: 'var(--bg-main)' }}
                         >
                             {/* Header consistent with image */}
