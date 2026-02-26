@@ -31,7 +31,7 @@ export type ModerationResult =
  */
 export async function moderateContent(
     input: string,
-    context: 'exercício' | 'modalidade' = 'exercício'
+    _context: 'exercício' | 'modalidade' = 'exercício'
 ): Promise<ModerationResult> {
     const lower = input.toLowerCase().trim();
 
@@ -42,26 +42,26 @@ export async function moderateContent(
         return { ok: false, reason: 'O nome não pode ter mais de 60 caracteres.' };
     }
 
-    // Layer 1: blocklist
+    // Layer 1: blocklist from database
     const blocklist = await getBlocklist();
     const blocked = blocklist.find(w => lower.includes(w));
     if (blocked) {
         return { ok: false, reason: `O nome contém um termo não permitido.` };
     }
 
-    // Layer 2: AI context check (best-effort, fail open)
-    try {
-        const { data, error } = await supabase.functions.invoke('ai-service', {
-            body: {
-                action: 'MODERATE_CONTENT',
-                payload: { input, context }
-            }
-        });
-        if (!error && data?.result === 'BLOQUEADO') {
-            return { ok: false, reason: data.reason || 'Conteúdo não permitido em um app fitness.' };
-        }
-    } catch {
-        // Fail open — if AI check unavailable, allow content
+    // Layer 2: Fast local heuristic regex (replace AI)
+    // Basic checks for spam, excessive repeats, or invalid characters
+    const isSpam = /([a-z])\1{4,}/i.test(lower); // e.g., "aaaaaa"
+    const hasUrls = /(http|www\.|(?:\w+\.(?:com|net|org|br|io)))/i.test(lower);
+
+    if (isSpam || hasUrls) {
+        return { ok: false, reason: 'O conteúdo parece conter spam ou links.' };
+    }
+
+    // Add a hardcoded fallback blocklist in case DB fails or is empty
+    const fallbackBlocklist = ['teste', 'asdf', 'merda', 'caralho', 'porra', 'buceta', 'piroca', 'puta'];
+    if (fallbackBlocklist.some(w => lower.includes(w))) {
+        return { ok: false, reason: 'O conteúdo contém palavras inapropriadas.' };
     }
 
     return { ok: true };

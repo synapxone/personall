@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { OnboardingData, FoodAnalysis, Profile, Modality, CommunityExercise } from '../types';
+import { dietGenerator } from './dietGenerator';
+import { workoutGenerator } from './workoutGenerator';
 
 // Pure calculation logic ported from former geminiService
 function calculateBMR(data: OnboardingData): number {
@@ -35,8 +37,13 @@ const callAiService = async (action: string, payload: any) => {
 export const aiService = {
     calculateCalorieGoal,
 
-    async generateWorkoutPlan(data: OnboardingData & { active_days?: string[] }): Promise<any> {
-        return await callAiService('GENERATE_WORKOUT', data);
+    async generateWorkoutPlan(data: OnboardingData & { active_days?: string[], split_type?: string, training_location?: string, experience_level?: string }): Promise<any> {
+        return await workoutGenerator.generateClientSide(
+            { gender: data.gender, experience_level: data.experience_level || 'intermediate' } as Partial<Profile>,
+            data.split_type || 'Full Body',
+            data.active_days || [],
+            data.training_location || 'gym'
+        );
     },
 
     async generateWorkoutSingleDay(profile: Partial<Profile>, dayName: string, availableMinutes: number, location: string, avoidExercises: string[] = []): Promise<any> {
@@ -44,9 +51,7 @@ export const aiService = {
     },
 
     async generateDietPlan(data: OnboardingData): Promise<any> {
-        // We pass the calculated goal to the AI to ensure consistency
-        const daily_calorie_goal = calculateCalorieGoal(data);
-        return await callAiService('GENERATE_DIET', { ...data, daily_calorie_goal });
+        return await dietGenerator.generateClientSide(data);
     },
 
     async analyzeBodyPhoto(base64: string, mimeType = 'image/jpeg'): Promise<string> {
@@ -54,8 +59,8 @@ export const aiService = {
         return typeof result === 'string' ? result : result.analysis || JSON.stringify(result);
     },
 
-    async moderateProfilePhoto(base64: string, mimeType = 'image/jpeg'): Promise<{ approved: boolean; reason?: string }> {
-        const result = await callAiService('MODERATE_PHOTO', { base64, mimeType });
+    async moderateProfilePhoto(photoUrl: string): Promise<{ approved: boolean; reason?: string }> {
+        const result = await callAiService('MODERATE_PHOTO', { photoUrl });
         const verdict: string = result?.verdict ?? 'APROVADO';
         if (verdict.startsWith('BLOQUEADO')) {
             const reason = verdict.replace(/^BLOQUEADO:\s*/i, '').trim();
@@ -64,14 +69,26 @@ export const aiService = {
         return { approved: true };
     },
 
-    async suggestUnits(food: string): Promise<string[]> {
-        const result = await callAiService('SUGGEST_UNITS', { food });
-        return result.units || [];
+    async suggestUnits(_food: string): Promise<string[]> {
+        return ['g', 'ml', 'unidade', 'fatia', 'porção', 'xícara', 'colher de sopa'];
     },
 
     async suggestFoods(query: string): Promise<string[]> {
-        const result = await callAiService('SUGGEST_FOODS', { query });
-        return result.foods || [];
+        if (!query || query.length < 2) return [];
+        try {
+            const { data, error } = await supabase
+                .from('food_database')
+                .select('name')
+                .ilike('name', `%${query}%`)
+                .limit(8);
+
+            if (error || !data) return [];
+            // Remove duplicates and extract just the names
+            return Array.from(new Set(data.map(item => item.name)));
+        } catch (e) {
+            console.error('Failed to search foods:', e);
+            return [];
+        }
     },
 
     async analyzeFoodText(description: string): Promise<FoodAnalysis[]> {

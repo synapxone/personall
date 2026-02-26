@@ -2,6 +2,10 @@
 
 Aplicativo de fitness pessoal com IA — treinos, nutrição, gamificação e acompanhamento de evolução. (Antigo Personall)
 
+> **v1.9.0** — Substituição de IA por Lógica Determinística: Transição da geração de treinos, cardápios, busca de alimentos e sugestão de unidades da Edge Function para lógicas locais baseadas em dados. Redução drástica de latência e custos, com eliminação de alucinações em dados estruturais.
+>
+> **v1.8.1** — Experiência Assistida & Mascot 2.0: Feedback visual dinâmico com o Mascote animado e mensagens humoradas durante o processamento de IA. Alertas proativos mais inteligentes com interface aprimorada e botões de resposta rápida (Quick Replies) no chat do Pers.
+>
 > **v1.8.0** — Apoio Nutricional Positivo: Remoção de alertas de "meta batida" e substituição por mensagens motivacionais quando o limite calórico é excedido. O gráfico agora assume tons suaves para reduzir sentimentos de culpa e focar na consistência a longo prazo.
 >
 > **v1.7.2** — Precisão Nutricional: correção no cálculo de unidades Individuais (ex: biscoitos, bombons) com estimativa de peso unitário via IA e feedback visual no log de dieta. Nova coluna `unit_weight` no banco de dados.
@@ -385,6 +389,20 @@ O niume utiliza **Capacitor** para rodar nativamente em iOS e Android. Para mant
 ---
 
 ## Histórico / Changelog Diário (Comunicação entre Agentes)
+
+### v1.9.0 — Substituição de IA por Lógica Determinística
+- **Otimização de Custos e Latência**: Funções core (Treino, Dieta, Busca) agora rodam localmente sem depender do LLM, economizando recursos e eliminando os >5s de espera.
+- **Gerador de Dieta Determinístico**: Algoritmo matemático que calcula macros via TDEE e distribui em refeições predefinidas baseadas nas preferências do usuário.
+- **Gerador de Treinos Baseado em Templates**: Lógica de fatias capilares (PPL, Full Body, etc) que seleciona exercícios reais do repositório mantendo gifs funcionais e IDs precisos.
+- **Busca de Alimentos Otimizada**: Busca direta no `food_database` local via `ilike`, garantindo rapidez e veracidade dos dados nutricionais exibidos.
+- **Sugestão de Unidades Local**: Unidades de medida agora são retornadas instantaneamente (g, ml, unidade, etc) sem consulta externa.
+- **Moderação Heurística**: Filtro anti-spam e fallback de blocklist local para nomes personalizados de itens e exercícios.
+
+### v1.8.1 — Experiência Assistida & Mascot 2.0
+- **Mascote Animado**: O Pers agora exibe poses variadas (neutral, happy, thinking) de forma mais integrada.
+- **Loading Humorado**: Mensagens rotativas de carregamento ("Consultando os deuses da hipertrofia...", etc) para as análises de IA no Chat e no Log de Nutrição por foto.
+- **Alertas Proativos Golden Zone**: Lógica refinada para premiar usuários que atingem a meta com precisão cirúrgica e alertas sutis de déficit de proteína.
+- **Quick Replies**: Botões de acesso rápido ao abrir o chat para dúvidas comuns (treino, macros, desempenho).
 
 ### v1.8.0 — Apoio Nutricional & Mindset Positivo
 - **Mensagens Motivacionais**: Introduzido sistema de frases de apoio quando o usuário excede a meta calórica, focando em consistência e equilíbrio em vez de culpa.

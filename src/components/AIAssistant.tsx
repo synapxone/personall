@@ -87,19 +87,43 @@ function computeAlert(data: NutritionData, profile: Profile): NutritionAlert | n
     const calRemaining = Math.max(0, data.calGoal - data.calories);
     const calExcess = Math.max(0, data.calories - data.calGoal);
 
+    if (protPct >= 1.0 && calPct < 1.0) {
+        return {
+            type: 'goal_hit',
+            message: `👑 Meta de proteína batida e calorias sob controle! Você está no caminho certo para grandes ganhos!`,
+            autoPrompt: `Bati minha meta de proteínas hoje sem estourar as calorias. Como posso manter esse equilíbrio durante a semana inteira? O que sugere para o jantar?`,
+        };
+    }
+
+    if (calPct >= 0.95 && calPct <= 1.05 && protPct >= 0.9) {
+        return {
+            type: 'goal_hit',
+            message: `🎯 No ponto! Você atingiu suas metas com precisão cirúrgica hoje. O Pers está impressionado!`,
+            autoPrompt: `Consegui atingir exatamente minhas metas hoje. Me dê parabéns e me diga por que isso é tão importante para o meu objetivo de ${profile.goal}.`,
+        };
+    }
+
     if (calPct >= 1.0) {
         return {
             type: 'cal_over',
-            message: `Você passou da meta calórica em ${calExcess} kcal hoje! 🛑 Evite refeições pesadas no restante do dia.`,
-            autoPrompt: `Passei ${calExcess} kcal da minha meta hoje (${data.calories}/${data.calGoal} kcal). O que posso fazer para minimizar o impacto? O que é seguro comer no restante do dia?`,
+            message: `Você passou da meta calórica em ${calExcess} kcal! 🛑 Momento de foco: prefira alimentos leves pelo resto do dia.`,
+            autoPrompt: `Passei ${calExcess} kcal da minha meta hoje (${data.calories}/${data.calGoal} kcal). O que posso fazer para minimizar o impacto sem passar fome?`,
         };
     }
 
     if (calPct >= 0.8 && protPct < 0.5) {
         return {
             type: 'prot_low',
-            message: `Quase na meta calórica (${Math.round(calPct * 100)}%)! Mas só ${data.protein}g de ${data.protGoal}g de proteína. 💪 Quer uma sugestão proteica que caiba nos ${calRemaining} kcal restantes?`,
-            autoPrompt: `Estou com ${data.calories} kcal de ${data.calGoal} (faltam ${calRemaining} kcal) mas só ${data.protein}g de ${data.protGoal}g de proteína. Me sugira uma refeição rica em proteína que caiba no déficit calórico restante.`,
+            message: `Meta calórica quase batida, mas sua proteína está baixa (${Math.round(protPct * 100)}%). 🍖 Foque em carnes magras ou ovos agora.`,
+            autoPrompt: `Estou perto do meu limite calórico, mas quase não comi proteína hoje (${data.protein}g/${data.protGoal}g). Me sugira lanches práticos com alta densidade de proteína mas poucas calorias.`,
+        };
+    }
+
+    if (calPct > 0.5 && protPct < 0.3) {
+        return {
+            type: 'prot_low',
+            message: `Hora de focar na proteína! Você já consumiu metade das calorias mas apenas ${Math.round(protPct * 100)}% da proteína diária.`,
+            autoPrompt: `Como aumentar minha ingestão de proteína sem ganhar gordura?`,
         };
     }
 
@@ -162,7 +186,29 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
     const [nutritionAlert, setNutritionAlert] = useState<NutritionAlert | null>(null);
     const [alertDismissed, setAlertDismissed] = useState(false);
 
+    const [loadingMessage, setLoadingMessage] = useState('Pers está pensando...');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        let interval: any;
+        if (loading) {
+            setLoadingMessage('Pers está pensando...');
+            const LOADING_MESSAGES = [
+                "Consultando os deuses da hipertrofia...",
+                "Analisando seu potencial anabólico...",
+                "Calculando se isso brota músculo ou barriga...",
+                "Pers está de olho na sua meta...",
+                "Quase lá! Só mais um segundo...",
+                "Verificando se seus macros estão em dia...",
+                "Processando dados nutricionais incríveis...",
+                "Escaneando bíceps virtuais para melhor resposta..."
+            ];
+            interval = setInterval(() => {
+                setLoadingMessage(LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]);
+            }, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [loading]);
     const inputRef = useRef<HTMLInputElement>(null);
     const contextRef = useRef<string>('');
     const prevNutritionRef = useRef<(NutritionData & { lastMessage?: string }) | null>(null);
@@ -372,23 +418,22 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                 border: '1px solid var(--border-main)',
                             }}
                         >
+                            {/* Mascot Bust */}
+                            <div className="absolute -top-10 -left-6 w-16 h-16 drop-shadow-lg pointer-events-none">
+                                <Mascot size={70} bust={true} pose="happy" />
+                            </div>
+
                             {/* Dismiss */}
                             <button
                                 onClick={() => setAlertDismissed(true)}
-                                className="absolute top-2.5 right-2.5 text-text-muted hover:text-text-main transition-colors"
+                                className="absolute top-2.5 right-2.5 text-text-muted hover:text-text-main transition-colors z-10"
                             >
                                 <X size={13} />
                             </button>
 
                             {/* Header */}
-                            <div className="flex items-center gap-2 pr-4">
-                                <div
-                                    className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }}
-                                >
-                                    💪
-                                </div>
-                                <span className="text-xs font-bold" style={{ color: 'var(--primary)' }}>Pers</span>
+                            <div className="flex items-center gap-2 pr-4 ml-6">
+                                <span className="text-xs font-bold" style={{ color: 'var(--primary)' }}>Dica do Pers</span>
                             </div>
 
                             {/* Message */}
@@ -537,8 +582,28 @@ export default function AIAssistant({ profile, nutritionData }: Props) {
                                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)', borderRadius: '18px 18px 18px 4px' }}
                                     >
                                         <Loader2 size={14} className="animate-spin text-primary" />
-                                        <span className="text-text-muted text-sm">Pers está pensando...</span>
+                                        <span className="text-text-muted text-xs font-medium italic">{loadingMessage}</span>
                                     </div>
+                                </div>
+                            )}
+
+                            {messages.length <= 1 && !loading && (
+                                <div className="flex flex-wrap gap-2 py-2 mb-2">
+                                    {[
+                                        "Avaliar meu desempenho",
+                                        "Sugestão de almoço proteico",
+                                        "Dicas para emagrecer",
+                                        "Falar sobre meus macros"
+                                    ].map(text => (
+                                        <button
+                                            key={text}
+                                            onClick={() => doSend(text)}
+                                            className="px-3 py-1.5 rounded-full border border-primary/30 text-[11px] font-medium text-primary hover:bg-primary/10 transition-colors"
+                                            style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)' }}
+                                        >
+                                            {text}
+                                        </button>
+                                    ))}
                                 </div>
                             )}
 

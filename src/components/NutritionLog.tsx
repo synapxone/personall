@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getLocalYYYYMMDD } from '../lib/dateUtils';
 import { aiService } from '../services/aiService';
+import Mascot from './Mascot';
 import { gamificationService } from '../lib/gamificationService';
 import BarcodeScanner from './BarcodeScanner';
 import type { Profile, Meal, MealType, FoodAnalysis } from '../types';
@@ -162,6 +163,29 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [detectedItems, setDetectedItems] = useState<string[]>([]);
+
+    const [analyzeLoadingMessage, setAnalyzeLoadingMessage] = useState('Analisando seu prato...');
+
+    useEffect(() => {
+        let interval: any;
+        if (analyzeLoading) {
+            setAnalyzeLoadingMessage('Analisando seu prato...');
+            const messages = [
+                "Escaneando o prato... detectando níveis perigosos de delícia.",
+                "Consultando os deuses da hipertrofia...",
+                "Calculando se isso brota músculo ou barriga...",
+                "Analisando se esse prato merece um 'cheat day'...",
+                "Contando as calorias... 1, 2, 3... são muitas!",
+                "Verificando se tem proteína o suficiente para esse bíceps...",
+                "Procurando por macros escondidos...",
+                "Quase lá! Só mais um segundo enquanto eu julgo sua dieta (brincadeira!)."
+            ];
+            interval = setInterval(() => {
+                setAnalyzeLoadingMessage(messages[Math.floor(Math.random() * messages.length)]);
+            }, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [analyzeLoading]);
 
     // Form state
     const [formDesc, setFormDesc] = useState('');
@@ -1415,8 +1439,16 @@ export default function NutritionLog({ profile, onUpdate, onNutritionChange }: P
                                         <div className="flex flex-col gap-4">
                                             {detectedItems.length === 0 ? (
                                                 <div className="flex flex-col items-center gap-4 py-8">
-                                                    <Loader2 size={32} className="animate-spin text-primary" />
-                                                    <p className="text-text-muted text-center max-w-xs">{analyzeLoading ? 'A IA está identificando os alimentos...' : 'Preparando análise...'}</p>
+                                                    <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary/20 bg-bg-main">
+                                                        <Mascot size={80} bust={true} pose="thinking" />
+                                                    </div>
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Loader2 size={16} className="animate-spin text-primary" />
+                                                            <span className="text-text-main font-medium">Analisando Refeição...</span>
+                                                        </div>
+                                                        <p className="text-text-muted text-center max-w-xs text-sm italic">{analyzeLoadingMessage}</p>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col gap-2">

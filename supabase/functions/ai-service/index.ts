@@ -1,11 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
     try {
@@ -135,11 +133,27 @@ serve(async (req) => {
                 result = { verdict: typeof result === 'string' ? result.trim() : 'APROVADO' };
                 break;
             case 'MODERATE_PHOTO': {
-                // safetySettings=BLOCK_NONE required so Gemini doesn't refuse to evaluate
-                // potentially sensitive images (this is a content-moderation use case).
+                // Fetch image from Storage URL internally — avoids sending large base64
+                // in the request body (which can exceed relay limits and cause 400).
+                if (!payload.photoUrl) throw new Error('MODERATE_PHOTO requires photoUrl');
+                const imgResp = await fetch(payload.photoUrl);
+                if (!imgResp.ok) throw new Error(`Failed to fetch photo for moderation: ${imgResp.status}`);
+                const buffer = await imgResp.arrayBuffer();
+                const uint8 = new Uint8Array(buffer);
+                // Convert to base64 in chunks to avoid call-stack overflow on large arrays
+                let binary = '';
+                const CHUNK = 8192;
+                for (let i = 0; i < uint8.length; i += CHUNK) {
+                    binary += String.fromCharCode(...uint8.subarray(i, Math.min(i + CHUNK, uint8.length)));
+                }
+                const imgBase64 = btoa(binary);
+                const imgMime = imgResp.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg';
+
+                // BLOCK_NONE required so Gemini doesn't refuse a moderation request due
+                // to its own safety filters being triggered by the image content.
                 const photoSafetySettings = [
-                    { category: 'HARM_CATEGORY_HARASSMENT',       threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
                     { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
                     { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
                 ];
@@ -148,8 +162,8 @@ serve(async (req) => {
                     false,
                     GEMINI_API_KEY,
                     OPENAI_API_KEY,
-                    payload.base64,
-                    payload.mimeType,
+                    imgBase64,
+                    imgMime,
                     photoSafetySettings
                 );
                 result = { verdict: typeof result === 'string' ? result.trim() : 'APROVADO' };
@@ -164,8 +178,9 @@ serve(async (req) => {
         });
 
     } catch (error) {
-        console.error('Edge Function Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error('Edge Function Error:', msg);
+        return new Response(JSON.stringify({ error: msg }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         });

@@ -107,26 +107,38 @@ export default function ProfileView({ profile, onSignOut, onRefresh }: Props) {
             return;
         }
         setAvatarUploading(true);
+        let uploadedPath: string | null = null;
         try {
-            // Compress to ≤800px JPEG for moderation (avoids edge function size limit)
-            const { blob, base64, mimeType } = await resizeImage(file);
+            // 1. Compress to ≤800px JPEG
+            const { blob } = await resizeImage(file);
 
-            const moderation = await aiService.moderateProfilePhoto(base64, mimeType);
-            if (!moderation.approved) {
-                toast.error(`Foto não permitida: ${moderation.reason ?? 'conteúdo inapropriado'}`);
-                return;
-            }
-            // Upload the compressed blob to Storage
+            // 2. Upload to Storage first — edge function will fetch via URL
+            //    (avoids sending large base64 in the edge function request body)
             const filename = `${profile.id}/${Date.now()}.jpg`;
             const { data: uploadData, error: uploadErr } = await supabase.storage
                 .from('profile-photos')
                 .upload(filename, blob, { upsert: true, contentType: 'image/jpeg' });
             if (uploadErr || !uploadData) throw uploadErr ?? new Error('Upload falhou');
+            uploadedPath = uploadData.path;
             const { data: urlData } = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path);
-            await supabase.from('profiles').update({ photo_url: urlData.publicUrl }).eq('id', profile.id);
+            const photoUrl = urlData.publicUrl;
+
+            // 3. Moderate via URL — edge function fetches image internally
+            const moderation = await aiService.moderateProfilePhoto(photoUrl);
+            if (!moderation.approved) {
+                await supabase.storage.from('profile-photos').remove([uploadedPath]);
+                toast.error(`Foto não permitida: ${moderation.reason ?? 'conteúdo inapropriado'}`);
+                return;
+            }
+
+            // 4. Save approved URL to profile
+            await supabase.from('profiles').update({ photo_url: photoUrl }).eq('id', profile.id);
             toast.success('Foto de perfil atualizada!');
             onRefresh();
         } catch (err: any) {
+            if (uploadedPath) {
+                await supabase.storage.from('profile-photos').remove([uploadedPath]).catch(() => {});
+            }
             toast.error(err?.message ?? 'Erro ao enviar foto.');
         } finally {
             setAvatarUploading(false);
